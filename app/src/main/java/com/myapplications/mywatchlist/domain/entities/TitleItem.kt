@@ -1,4 +1,4 @@
-package com.myapplications.mywatchlist.data.entities
+package com.myapplications.mywatchlist.domain.entities
 
 import java.time.LocalDateTime
 

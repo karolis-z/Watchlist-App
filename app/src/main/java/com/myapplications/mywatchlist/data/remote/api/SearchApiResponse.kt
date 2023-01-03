@@ -1,6 +1,6 @@
 package com.myapplications.mywatchlist.data.remote.api
 
-import com.myapplications.mywatchlist.data.entities.TitleItem
+import com.myapplications.mywatchlist.domain.entities.TitleItem
 
 data class SearchApiResponse(
     val page: Int,
