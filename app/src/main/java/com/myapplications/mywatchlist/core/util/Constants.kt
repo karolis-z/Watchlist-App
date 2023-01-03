@@ -1,0 +1,9 @@
+package com.myapplications.mywatchlist.core.util
+
+object Constants {
+
+    // API CONSTANTS
+    const val API_KEY = "93c88359ad260c494d6a032561235630"
+    const val API_BASE_URL = "https://api.themoviedb.org/3/"
+
+}
