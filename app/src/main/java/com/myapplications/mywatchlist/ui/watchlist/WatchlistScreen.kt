@@ -9,12 +9,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.myapplications.mywatchlist.data.entities.TitleItemApiModel
 
 @Composable
 fun WatchlistScreen() {
-    val viewModel: WatchlistViewModel = viewModel()
+    val viewModel = hiltViewModel<WatchlistViewModel>()
     val uiState = viewModel.uiState.collectAsState()
 
     LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {

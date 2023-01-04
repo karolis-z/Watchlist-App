@@ -1,3 +1,14 @@
 <resources>
     <string name="app_name">My Watchlist</string>
+    
+    <!-- SCREEN TITLES -->
+    <string name="title_watchlist">Watchlist</string>
+    <string name="title_search">Search</string>
+    <string name="title_trending">Trending</string>
+
+    <!-- CONTENT DESCRIPTIONS -->
+    <string name="cd_watchlist_icon">Watchlist</string>
+    <string name="cd_search_icon">Search</string>
+    <string name="cd_trending_icon">Trending</string>
+
 </resources>
