@@ -7,8 +7,8 @@ data class TitleItem(
     val name: String,
     val type: TitleType,
     val mediaId: Long,
-    val overview: String,
-    val posterLink: String,
+    val overview: String?,  // A Title can possibly not have an overview text
+    val posterLink: String?,// A Title can possibly not have a poster associated with it
     val genres: List<Genre>,
     val releaseDate: LocalDate,
     val voteCount: Long,

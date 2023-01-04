@@ -47,20 +47,23 @@ object MyGsonConverter {
             results.forEachIndexed { index, jsonElement ->
                 try {
                     val resultJson = jsonElement.asJsonObject
-                    val titleItem = TitleItemApiModel(
-                        id = 0,
-                        name = getName(resultJson),
-                        type = getMediaType(resultJson),
-                        mediaId = resultJson.get("id").asLong,
-                        overview = getOverview(resultJson),
-                        posterLink = getPosterLink(resultJson),
-                        genres = resultJson.get("genre_ids").asJsonArray.map { it.asInt },
-                        releaseDate = getReleaseDate(resultJson),
-                        voteCount = resultJson.get("vote_count").asLong,
-                        voteAverage = resultJson.get("vote_average").asDouble
-                    )
-                    Log.d(TAG, "deserialize: titleItem = $titleItem")
-                    titleItems.add(titleItem)
+                    val mediaTypeString = resultJson.get("media_type").asString
+                    if (mediaTypeString == "movie" || mediaTypeString == "tv") {
+                        val titleItem = TitleItemApiModel(
+                            id = 0,
+                            name = getName(resultJson),
+                            type = getMediaType(resultJson),
+                            mediaId = resultJson.get("id").asLong,
+                            overview = getOverview(resultJson),
+                            posterLink = getPosterLink(resultJson),
+                            genres = resultJson.get("genre_ids").asJsonArray.map { it.asInt },
+                            releaseDate = getReleaseDate(resultJson),
+                            voteCount = resultJson.get("vote_count").asLong,
+                            voteAverage = resultJson.get("vote_average").asDouble
+                        )
+                        Log.d(TAG, "deserialize: titleItem = $titleItem")
+                        titleItems.add(titleItem)
+                    }
                 } catch (e: Exception) {
                     val error = "Could not parse element #$index. Reason: $e"
                     Log.e(TAG, "deserialize: $error", e)
@@ -94,12 +97,13 @@ object MyGsonConverter {
          * the "results" object of the root JsonObject.
          */
         private fun getMediaType(resultJsonObject: JsonObject): TitleTypeApiModel {
-            //val titleNameJson = resultJsonObject.get("title") ?: resultJsonObject.get("name")
             val typeString = resultJsonObject.get("media_type").asString
             return when (typeString) {
                 TitleTypeApiModel.TV.propertyName -> TitleTypeApiModel.TV
                 TitleTypeApiModel.MOVIE.propertyName -> TitleTypeApiModel.MOVIE
-                else -> TitleTypeApiModel.UNKNOWN
+                else -> {
+                    throw Exception("$TAG: getMediaType: unknown media type received.")
+                }
             }
         }
 
