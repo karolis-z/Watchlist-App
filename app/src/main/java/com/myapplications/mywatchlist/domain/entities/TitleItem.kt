@@ -1,6 +1,6 @@
 package com.myapplications.mywatchlist.domain.entities
 
-import java.time.LocalDateTime
+import java.time.LocalDate
 
 data class TitleItem(
     val id: Long,
@@ -10,7 +10,7 @@ data class TitleItem(
     val overview: String,
     val posterLink: String,
     val genres: List<Genre>,
-    val firstAirDate: LocalDateTime,
+    val releaseDate: LocalDate,
     val voteCount: Long,
     val voteAverage: Double,
 )
