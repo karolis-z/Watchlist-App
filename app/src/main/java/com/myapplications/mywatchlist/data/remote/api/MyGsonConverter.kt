@@ -5,6 +5,7 @@ import com.google.gson.*
 import com.myapplications.mywatchlist.core.util.Constants
 import com.myapplications.mywatchlist.data.entities.TitleItemApiModel
 import com.myapplications.mywatchlist.data.entities.TitleTypeApiModel
+import com.myapplications.mywatchlist.domain.entities.Genre
 import java.lang.reflect.Type
 import java.time.LocalDate
 
@@ -13,17 +14,17 @@ private const val TAG = "GSON_CONVERTER"
 object MyGsonConverter {
 
     fun create() : Gson = GsonBuilder().apply {
-        registerTypeAdapter(SearchApiResponse::class.java, MyJsonDeserializer())
+        registerTypeAdapter(ApiResponse::class.java, MyJsonDeserializer())
         setLenient()
     }.create()
 
-    private class MyJsonDeserializer : JsonDeserializer<SearchApiResponse> {
+    private class MyJsonDeserializer : JsonDeserializer<ApiResponse> {
 
         override fun deserialize(
             json: JsonElement?,
             typeOfT: Type?,
             context: JsonDeserializationContext?
-        ): SearchApiResponse {
+        ): ApiResponse {
             val mJson = try {
                 json?.asJsonObject as JsonObject
             } catch (e: Exception) {
@@ -32,6 +33,59 @@ object MyGsonConverter {
                 // Returning a response which should be checked for totalResults before proceeding
                 return emptyResponse()
             }
+
+            // Check if this is deserialization of Genres or a Search query
+            return if (!mJson.get("genres").isJsonNull){
+                handleGenresResponse(mJson)
+            } else {
+                handleSearchResponse(mJson)
+            }
+        }
+
+        /**
+         * Handles the response if it is for the [TmdbApi.getTvGenres] or [TmdbApi.getMovieGenres] query.
+         * @param mJson the root [JsonObject] received from the request.
+         * @return [ApiResponse.GenresResponse]
+         */
+        private fun handleGenresResponse(mJson: JsonObject): ApiResponse.GenresResponse {
+            val genresJsonArray = try {
+                mJson.get("genres").asJsonArray
+            } catch (e: Exception) {
+                val error = "Could not parse genres response as a JsonArray."
+                Log.e(TAG, "handleGenresResponse: $error", e)
+                // Returning a null as a list to indicate unsuccessful response
+                // TODO: Consider changing this pattern to return a Success/Failure object
+                return ApiResponse.GenresResponse(null)
+            }
+
+            val genresList = mutableListOf<Genre>()
+            genresJsonArray.forEachIndexed { index, jsonElement ->
+                try {
+                    val genreJson = jsonElement.asJsonObject
+                    val genre = Genre(
+                        id = genreJson.get("id").asLong,
+                        name = genreJson.get("name").asString
+                    )
+                    genresList.add(genre)
+                } catch (e: Exception) {
+                    val error = "Could not parse genresJsonArray element #$index to a Genre object"
+                    Log.e(TAG, "handleGenresResponse: $error", e)
+                }
+            }
+            // If list has at least one element - return it. Else - return null.
+            return if (genresList.isNotEmpty()) {
+                ApiResponse.GenresResponse(genres = genresList)
+            } else {
+                ApiResponse.GenresResponse(genres = null)
+            }
+        }
+
+        /**
+         * Handles the response if it is for the [TmdbApi.search] query.
+         * @param mJson the root [JsonObject] received from the request.
+         * @return [ApiResponse.SearchApiResponse]
+         */
+        private fun handleSearchResponse(mJson: JsonObject): ApiResponse.SearchApiResponse {
             val page = mJson.get("page").asInt
             val pageCount = mJson.get("total_pages").asInt
             val resultCount = mJson.get("total_results").asInt
@@ -72,7 +126,7 @@ object MyGsonConverter {
 
             // If at least 1 result parsing did not fail - returning a non empty SearchApiResponse
             return if (titleItems.isNotEmpty()){
-                SearchApiResponse(
+                ApiResponse.SearchApiResponse(
                     page = page,
                     titleItems = titleItems,
                     totalPages = pageCount,
@@ -144,16 +198,18 @@ object MyGsonConverter {
         }
 
         /**
-         * Returns an empty [SearchApiResponse] which indicates a successful api request, but with
+         * Returns an empty [ApiResponse.SearchApiResponse] which indicates a successful api request, but with
          * nothing found by the query.
-         * @return [SearchApiResponse] with page, totalPages and totalResults equal to 0 and
+         * @return [ApiResponse.SearchApiResponse] with page, totalPages and totalResults equal to 0 and
          * titleItems set as null.
          */
-        private fun emptyResponse(): SearchApiResponse {
-            return SearchApiResponse(page = 0, titleItems = null, totalPages = 0, totalResults = 0)
+        private fun emptyResponse(): ApiResponse.SearchApiResponse {
+            return ApiResponse.SearchApiResponse(
+                page = 0,
+                titleItems = null,
+                totalPages = 0,
+                totalResults = 0
+            )
         }
     }
-
-
-
 }

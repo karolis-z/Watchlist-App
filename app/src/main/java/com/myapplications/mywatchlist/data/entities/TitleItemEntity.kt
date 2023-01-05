@@ -1,14 +1,11 @@
 package com.myapplications.mywatchlist.data.entities
 
-import androidx.room.Embedded
-import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.PrimaryKey
-import androidx.room.Relation
+import androidx.room.*
 import com.myapplications.mywatchlist.domain.entities.Genre
 import com.myapplications.mywatchlist.domain.entities.TitleType
 import java.time.LocalDate
 
+@Entity
 data class TitleItemEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long,
@@ -30,7 +27,7 @@ data class TitleItemEntity(
         childColumns = ["titleId"]
     )]
 )
-data class GenreEntity(
+data class GenreForTitleEntity(
     val id: Long,
     val name: String,
     val titleId: Long
@@ -42,10 +39,10 @@ data class TitleItemWithGenre(
     @Relation(
         parentColumn = "id",
         entityColumn = "titleId",
-        entity = GenreEntity::class,
+        entity = GenreForTitleEntity::class,
         projection = ["id","name"]
     )
-    val monthsNorthern: List<Genre>,
+    val genres: List<Genre>,
 )
 
 

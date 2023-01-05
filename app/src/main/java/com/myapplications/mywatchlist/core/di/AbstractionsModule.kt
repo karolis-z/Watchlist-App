@@ -1,10 +1,16 @@
 package com.myapplications.mywatchlist.core.di
 
-import com.myapplications.mywatchlist.data.local.LocalDataSource
-import com.myapplications.mywatchlist.data.local.LocalDataSourceImpl
-import com.myapplications.mywatchlist.data.remote.RemoteDataSource
-import com.myapplications.mywatchlist.data.remote.RemoteDataSourceImpl
+import com.myapplications.mywatchlist.data.local.GenresLocalDataSource
+import com.myapplications.mywatchlist.data.local.GenresLocalDataSourceImpl
+import com.myapplications.mywatchlist.data.local.TitlesLocalDataSource
+import com.myapplications.mywatchlist.data.local.TitlesLocalDataSourceImpl
+import com.myapplications.mywatchlist.data.remote.GenresRemoteDataSource
+import com.myapplications.mywatchlist.data.remote.GenresRemoteDataSourceImpl
+import com.myapplications.mywatchlist.data.remote.TitlesRemoteDataSource
+import com.myapplications.mywatchlist.data.remote.TitlesRemoteDataSourceImpl
+import com.myapplications.mywatchlist.data.repositories.GenresRepositoryImpl
 import com.myapplications.mywatchlist.data.repositories.TitlesRepositoryImpl
+import com.myapplications.mywatchlist.domain.repositories.GenresRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -18,9 +24,18 @@ abstract class AbstractionsModule {
     abstract fun bindTitlesRepository(titlesRepositoryImpl: TitlesRepositoryImpl): TitlesRepositoryImpl
 
     @Binds
-    abstract fun bindLocalDataSource(localDataSourceImpl: LocalDataSourceImpl): LocalDataSource
+    abstract fun bindTitlesLocalDataSource(titlesLocalDataSourceImpl: TitlesLocalDataSourceImpl): TitlesLocalDataSource
 
     @Binds
-    abstract fun bindRemoteDataSource(remoteDataSourceImpl: RemoteDataSourceImpl): RemoteDataSource
+    abstract fun bindTitlesRemoteDataSource(titlesRemoteDataSourceImpl: TitlesRemoteDataSourceImpl): TitlesRemoteDataSource
+
+    @Binds
+    abstract fun bindGenresRepository(genresRepositoryImpl: GenresRepositoryImpl): GenresRepository
+
+    @Binds
+    abstract fun bindGenresRemoteDataSource(genresRemoteDataSourceImpl: GenresRemoteDataSourceImpl): GenresRemoteDataSource
+
+    @Binds
+    abstract fun  bindGenresLocalDataSource(genresLocalDataSourceImpl: GenresLocalDataSourceImpl): GenresLocalDataSource
 
 }

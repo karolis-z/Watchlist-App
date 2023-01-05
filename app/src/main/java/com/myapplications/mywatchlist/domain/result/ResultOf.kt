@@ -1,4 +1,4 @@
-package com.myapplications.mywatchlist.core.result
+package com.myapplications.mywatchlist.domain.result
 
 sealed class ResultOf<out T> {
     data class Success<out R>(val data: R): ResultOf<R>()

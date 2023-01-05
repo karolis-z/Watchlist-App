@@ -1,7 +1,7 @@
 package com.myapplications.mywatchlist.domain.repositories
 
-import com.myapplications.mywatchlist.core.result.ResultOf
 import com.myapplications.mywatchlist.domain.entities.TitleItem
+import com.myapplications.mywatchlist.domain.result.ResultOf
 
 interface TitlesRepository {
 
