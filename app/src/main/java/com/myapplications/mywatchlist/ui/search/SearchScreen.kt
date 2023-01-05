@@ -10,7 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.myapplications.mywatchlist.data.entities.TitleItemApiModel
+import com.myapplications.mywatchlist.domain.entities.TitleItem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,8 +39,8 @@ fun SearchScreen() {
             Text(text = "Search")
         }
         LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            items(items = uiState.value) { item: TitleItemApiModel ->
-                TitleItemCard(title = item)
+            items(items = uiState.value) { item: TitleItem ->
+                TitleItemCard(title = item, onWatchlistClicked = { viewModel.onWatchlistClicked(item) })
             }
         }
 
@@ -50,7 +50,8 @@ fun SearchScreen() {
 // TODO: Basic functionality to just test showing the list
 @Composable
 fun TitleItemCard(
-    title: TitleItemApiModel,
+    title: TitleItem,
+    onWatchlistClicked:() -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -65,7 +66,7 @@ fun TitleItemCard(
         Spacer(modifier = Modifier.height(10.dp))
         Text(text = title.voteAverage.toString())
         Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.Bottom) {
-            Button(onClick = { /*TODO*/ }) {
+            Button(onClick = onWatchlistClicked) {
                 Text(text = "Add to Watchlist")
             }
         }

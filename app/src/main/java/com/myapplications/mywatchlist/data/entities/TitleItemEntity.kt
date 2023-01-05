@@ -8,7 +8,7 @@ import java.time.LocalDate
 @Entity
 data class TitleItemEntity(
     @PrimaryKey(autoGenerate = true)
-    val id: Long,
+    val id: Long = 0,
     val name: String,
     val type: TitleType,
     val mediaId: Long,
@@ -34,7 +34,7 @@ data class GenreForTitleEntity(
 )
 
 
-data class TitleItemWithGenre(
+data class TitleItemWithGenres(
     @Embedded val titleItem: TitleItemEntity,
     @Relation(
         parentColumn = "id",

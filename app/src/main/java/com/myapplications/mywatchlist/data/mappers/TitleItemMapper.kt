@@ -1,6 +1,7 @@
 package com.myapplications.mywatchlist.data.mappers
 
 import com.myapplications.mywatchlist.data.entities.TitleItemApiModel
+import com.myapplications.mywatchlist.data.entities.TitleItemEntity
 import com.myapplications.mywatchlist.data.entities.TitleTypeApiModel
 import com.myapplications.mywatchlist.domain.entities.Genre
 import com.myapplications.mywatchlist.domain.entities.TitleItem
@@ -39,4 +40,20 @@ private fun titleTypeApiModelToTitleType(titleTypeApiModel: TitleTypeApiModel): 
         TitleTypeApiModel.MOVIE -> TitleType.MOVIE
         TitleTypeApiModel.TV -> TitleType.TV
     }
+}
+
+/**
+ * Converts [TitleItem] to [TitleItemEntity]
+ */
+fun TitleItem.toTitleItemEntity(): TitleItemEntity {
+    return TitleItemEntity(
+        name = this.name,
+        type = this.type,
+        mediaId = this.mediaId,
+        overview = this.overview,
+        posterLink = this.posterLink,
+        releaseDate = this.releaseDate,
+        voteCount = this.voteCount,
+        voteAverage = this.voteAverage
+    )
 }

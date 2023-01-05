@@ -11,6 +11,7 @@ import com.myapplications.mywatchlist.data.remote.TitlesRemoteDataSourceImpl
 import com.myapplications.mywatchlist.data.repositories.GenresRepositoryImpl
 import com.myapplications.mywatchlist.data.repositories.TitlesRepositoryImpl
 import com.myapplications.mywatchlist.domain.repositories.GenresRepository
+import com.myapplications.mywatchlist.domain.repositories.TitlesRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -21,7 +22,7 @@ import dagger.hilt.components.SingletonComponent
 abstract class AbstractionsModule {
 
     @Binds
-    abstract fun bindTitlesRepository(titlesRepositoryImpl: TitlesRepositoryImpl): TitlesRepositoryImpl
+    abstract fun bindTitlesRepository(titlesRepositoryImpl: TitlesRepositoryImpl): TitlesRepository
 
     @Binds
     abstract fun bindTitlesLocalDataSource(titlesLocalDataSourceImpl: TitlesLocalDataSourceImpl): TitlesLocalDataSource

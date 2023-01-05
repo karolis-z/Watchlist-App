@@ -44,4 +44,8 @@ object AppModule {
     @Provides
     fun provideTitlesDao(db: WatchlistDatabase) = db.titlesDao()
 
+    @Singleton
+    @Provides
+    fun provideGenresDao(db: WatchlistDatabase) = db.genresDao()
+
 }

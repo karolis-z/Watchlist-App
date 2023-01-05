@@ -10,6 +10,7 @@ import com.myapplications.mywatchlist.domain.entities.TitleItem
 import com.myapplications.mywatchlist.domain.result.ResultOf
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
 interface TitlesRemoteDataSource {
     /**
@@ -22,7 +23,7 @@ interface TitlesRemoteDataSource {
     suspend fun searchTitles(query: String, allGenres: List<Genre>): ResultOf<List<TitleItem>>
 }
 
-class TitlesRemoteDataSourceImpl(
+class TitlesRemoteDataSourceImpl @Inject constructor(
     private val api: TmdbApi,
     @IoDispatcher private val dispatcher: CoroutineDispatcher
 ) : TitlesRemoteDataSource {
@@ -41,7 +42,11 @@ class TitlesRemoteDataSourceImpl(
                     throwable = SearchExceptions.FailedApiRequestException(error, e)
                 )
             }
-            val responseBody = apiResponse.body()
+            val responseBody = try {
+                apiResponse.body() as ApiResponse.SearchApiResponse?
+            } catch (e: Exception) {
+                null // Exception and null check will be handled below
+            }
 
             // Checking in case the response was received but body was null or code wasn't 200
             if (apiResponse.code() != 200 || responseBody == null) {

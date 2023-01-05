@@ -59,9 +59,19 @@ class GenresRemoteDataSourceImpl @Inject constructor(
             }
 
             // If response bodies are null or lists of Genre are null - returning Failure
-            val tvGenresResponseBody = tvGenresApiResponse.body()
-            val movieGenresResponseBody = movieGenresApiResponse.body()
-            if (tvGenresResponseBody == null
+            val tvGenresResponseBody = try {
+                tvGenresApiResponse.body() as ApiResponse.GenresResponse?
+            } catch (e: Exception) {
+                null // Exception and null check will be handled below
+            }
+            val movieGenresResponseBody = try {
+                movieGenresApiResponse.body() as ApiResponse.GenresResponse?
+            } catch (e: Exception) {
+                null // Exception and null check will be handled below
+            }
+
+            if (
+                tvGenresResponseBody == null
                 || movieGenresResponseBody == null
                 || tvGenresResponseBody.genres == null
                 || movieGenresResponseBody.genres == null

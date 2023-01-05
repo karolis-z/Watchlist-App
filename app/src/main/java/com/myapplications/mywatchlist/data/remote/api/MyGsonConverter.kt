@@ -25,6 +25,9 @@ object MyGsonConverter {
             typeOfT: Type?,
             context: JsonDeserializationContext?
         ): ApiResponse {
+
+            Log.d(TAG, "deserialize: STARTING")
+
             val mJson = try {
                 json?.asJsonObject as JsonObject
             } catch (e: Exception) {
@@ -34,10 +37,14 @@ object MyGsonConverter {
                 return emptyResponse()
             }
 
+            Log.d(TAG, "deserialize: mJson.get(\"genres\") ${mJson.get("genres")}")
+
             // Check if this is deserialization of Genres or a Search query
-            return if (!mJson.get("genres").isJsonNull){
+            return if (mJson.get("genres") != null){
+                Log.d(TAG, "deserialize: Handling GENRES response")
                 handleGenresResponse(mJson)
             } else {
+                Log.d(TAG, "deserialize: Handling SEARCH response")
                 handleSearchResponse(mJson)
             }
         }
