@@ -15,5 +15,10 @@ interface TitlesRepository {
     /**
      * Bookmarks the [TitleItem] as added to user's watchlist.
      */
-    suspend fun bookmarkTitle(title: TitleItem)
+    suspend fun bookmarkTitle(titleItem: TitleItem)
+
+    /**
+     * Unbookmarks the [TitleItem] so it's not longer represented in the user's watchlist.
+     */
+    suspend fun unBookmarkTitle(titleItem: TitleItem)
 }

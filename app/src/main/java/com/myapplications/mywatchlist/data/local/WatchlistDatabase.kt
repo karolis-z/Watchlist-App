@@ -6,6 +6,8 @@ import androidx.room.TypeConverters
 import com.myapplications.mywatchlist.data.entities.GenreEntity
 import com.myapplications.mywatchlist.data.entities.GenreForTitleEntity
 import com.myapplications.mywatchlist.data.entities.TitleItemEntity
+import com.myapplications.mywatchlist.data.local.genres.GenresDao
+import com.myapplications.mywatchlist.data.local.titles.TitlesDao
 
 @Database(
     entities = [

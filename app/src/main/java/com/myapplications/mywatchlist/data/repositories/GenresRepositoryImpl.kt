@@ -1,7 +1,7 @@
 package com.myapplications.mywatchlist.data.repositories
 
 import com.myapplications.mywatchlist.core.di.IoDispatcher
-import com.myapplications.mywatchlist.data.local.GenresLocalDataSource
+import com.myapplications.mywatchlist.data.local.genres.GenresLocalDataSource
 import com.myapplications.mywatchlist.data.remote.GenresRemoteDataSource
 import com.myapplications.mywatchlist.domain.entities.Genre
 import com.myapplications.mywatchlist.domain.repositories.GenresRepository
@@ -17,6 +17,7 @@ class GenresRepositoryImpl @Inject constructor(
     @IoDispatcher private val dispatcher: CoroutineDispatcher
 ) : GenresRepository {
 
+    // TODO: Add check for internet connection available and return appropriate result
     override suspend fun updateGenresFromApi(): BasicResult = withContext(dispatcher) {
         when (val remoteResult = remoteDataSource.getAllGenresFromApi()) {
             is ResultOf.Failure -> BasicResult.Failure(

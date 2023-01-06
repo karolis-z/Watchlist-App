@@ -1,6 +1,7 @@
 package com.myapplications.mywatchlist.data.entities
 
 import androidx.room.*
+import androidx.room.ForeignKey.CASCADE
 import com.myapplications.mywatchlist.domain.entities.Genre
 import com.myapplications.mywatchlist.domain.entities.TitleType
 import java.time.LocalDate
@@ -24,7 +25,9 @@ data class TitleItemEntity(
     foreignKeys = [ForeignKey(
         entity = TitleItemEntity::class,
         parentColumns = ["id"],
-        childColumns = ["titleId"]
+        childColumns = ["titleId"],
+        onDelete = CASCADE,
+        onUpdate = CASCADE
     )]
 )
 data class GenreForTitleEntity(

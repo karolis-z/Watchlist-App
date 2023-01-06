@@ -1,4 +1,4 @@
-package com.myapplications.mywatchlist.data.local
+package com.myapplications.mywatchlist.data.local.genres
 
 import com.myapplications.mywatchlist.core.di.IoDispatcher
 import com.myapplications.mywatchlist.data.mappers.toGenreEntities

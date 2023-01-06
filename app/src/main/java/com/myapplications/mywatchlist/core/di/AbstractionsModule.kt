@@ -1,9 +1,9 @@
 package com.myapplications.mywatchlist.core.di
 
-import com.myapplications.mywatchlist.data.local.GenresLocalDataSource
-import com.myapplications.mywatchlist.data.local.GenresLocalDataSourceImpl
-import com.myapplications.mywatchlist.data.local.TitlesLocalDataSource
-import com.myapplications.mywatchlist.data.local.TitlesLocalDataSourceImpl
+import com.myapplications.mywatchlist.data.local.genres.GenresLocalDataSource
+import com.myapplications.mywatchlist.data.local.genres.GenresLocalDataSourceImpl
+import com.myapplications.mywatchlist.data.local.titles.TitlesLocalDataSource
+import com.myapplications.mywatchlist.data.local.titles.TitlesLocalDataSourceImpl
 import com.myapplications.mywatchlist.data.remote.GenresRemoteDataSource
 import com.myapplications.mywatchlist.data.remote.GenresRemoteDataSourceImpl
 import com.myapplications.mywatchlist.data.remote.TitlesRemoteDataSource

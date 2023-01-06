@@ -18,7 +18,7 @@ fun SearchScreen() {
     val viewModel = hiltViewModel<SearchViewModel>()
     val uiState = viewModel.uiState.collectAsState()
 
-    var searchValue  by remember { mutableStateOf("") }
+    var searchValue by remember { mutableStateOf("") }
 
     Column() {
         OutlinedTextField(
@@ -40,7 +40,10 @@ fun SearchScreen() {
         }
         LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             items(items = uiState.value) { item: TitleItem ->
-                TitleItemCard(title = item, onWatchlistClicked = { viewModel.onWatchlistClicked(item) })
+                TitleItemCard(
+                    title = item,
+                    onWatchlistClicked = { viewModel.onWatchlistClicked(item) },
+                    onUnWatchlistClicked = { viewModel.onUnwatchlistClicked(item) })
             }
         }
 
@@ -51,7 +54,8 @@ fun SearchScreen() {
 @Composable
 fun TitleItemCard(
     title: TitleItem,
-    onWatchlistClicked:() -> Unit,
+    onWatchlistClicked: () -> Unit,
+    onUnWatchlistClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -68,6 +72,9 @@ fun TitleItemCard(
         Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.Bottom) {
             Button(onClick = onWatchlistClicked) {
                 Text(text = "Add to Watchlist")
+            }
+            Button(onClick = onUnWatchlistClicked) {
+                Text(text = "UnWatchlist")
             }
         }
     }

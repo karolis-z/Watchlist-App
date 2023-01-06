@@ -1,6 +1,5 @@
-package com.myapplications.mywatchlist.data.local
+package com.myapplications.mywatchlist.data.local.titles
 
-import android.util.Log
 import androidx.room.*
 import com.myapplications.mywatchlist.data.entities.GenreForTitleEntity
 import com.myapplications.mywatchlist.data.entities.TitleItemEntity
@@ -27,29 +26,43 @@ interface TitlesDao {
     @Query("SELECT * FROM titleitementity WHERE mediaId=:mediaId AND type=:type")
     suspend fun getTitleItemsWithGenresByTypeAndMediaId(type: TitleType, mediaId: Long): TitleItemWithGenres
 
+    @Query("SELECT * FROM TitleItemEntity WHERE mediaId=:mediaId AND type=:type")
+    suspend fun getTitleItemEntityByTypeAndMediaId(type: TitleType, mediaId: Long): TitleItemEntity
+
+    @Delete
+    suspend fun deleteTitleItemEntity(titleItemEntity: TitleItemEntity)
+
     @Transaction
     suspend fun insertTitleItem(titleItem: TitleItem) {
         val titleItemId = insertTitleItemEntity(titleItemEntity = titleItem.toTitleItemEntity())
-        Log.d(TAG, "bookmarkTitleItem: titleitemId = $titleItemId")
         if (titleItemId >= 0) {
-            val genresToInsert = titleItem.genres.toListOfGenreForTitleEntity(titleItemId)
-            Log.d(TAG, "genresToInsert = $genresToInsert")
-            insertGenresForTitleEntity(genresToInsert)
+            val genresToInsert = titleItem.genres.toListOfGenreForTitleEntity(titleId = titleItemId)
+            insertGenresForTitleEntity(genres = genresToInsert)
         }
     }
 
     @Transaction
     suspend fun updateTitleItem(titleItem: TitleItem) {
-        // Get the existing title item entity and its genres.
-        val titleItemWithGenres = getTitleItemsWithGenresByTypeAndMediaId(
+        /* Updating is trickier that due to relation between TitleItemEntity and GenreForTitleEntity,
+        * so it's simpler to just delete and insert new data. Deleting TitleItemEntity will also
+        * delete GenreForTitleEntity because of onDelete = CASCADE policy set on GenreForTitleEntity. */
+        val titleItemEntity = getTitleItemEntityByTypeAndMediaId(
             type = titleItem.type,
             mediaId = titleItem.mediaId
         )
-        Log.d(TAG, "updateTitleItem: titleItemWithGenres $titleItemWithGenres")
-        TODO("Finish this")
+        deleteTitleItemEntity(titleItemEntity)
 
-        // Create a new one using given titleItem values
-
-        // Update TitleItem
+        // Inserting new TitleItemEntity and GenreForTitleEntity
+        insertTitleItem(titleItem)
     }
+
+    @Transaction
+    suspend fun deleteTitleItem(titleItem: TitleItem) {
+        val titleItemEntity = getTitleItemEntityByTypeAndMediaId(
+            type = titleItem.type,
+            mediaId = titleItem.mediaId
+        )
+        deleteTitleItemEntity(titleItemEntity)
+    }
+
 }

@@ -1,7 +1,7 @@
 package com.myapplications.mywatchlist.data.repositories
 
 import com.myapplications.mywatchlist.core.di.IoDispatcher
-import com.myapplications.mywatchlist.data.local.TitlesLocalDataSource
+import com.myapplications.mywatchlist.data.local.titles.TitlesLocalDataSource
 import com.myapplications.mywatchlist.data.remote.TitlesRemoteDataSource
 import com.myapplications.mywatchlist.domain.entities.TitleItem
 import com.myapplications.mywatchlist.domain.repositories.GenresRepository
@@ -18,13 +18,18 @@ class TitlesRepositoryImpl @Inject constructor(
     @IoDispatcher private val dispatcher: CoroutineDispatcher
 ) : TitlesRepository {
 
+    // TODO: Add check for internet connection available and return appropriate result
     override suspend fun searchTitles(query: String): ResultOf<List<TitleItem>> =
         withContext(dispatcher) {
             val genresList = genresRepository.getAvailableGenres()
             remoteDataSource.searchTitles(query = query, allGenres = genresList)
         }
 
-    override suspend fun bookmarkTitle(titleItem: TitleItem) {
+    override suspend fun bookmarkTitle(titleItem: TitleItem) = withContext(dispatcher) {
         localDataSource.bookmarkTitleItem(titleItem = titleItem)
+    }
+
+    override suspend fun unBookmarkTitle(titleItem: TitleItem) = withContext(dispatcher) {
+        localDataSource.unBookmarkTitleItem(titleItem = titleItem)
     }
 }

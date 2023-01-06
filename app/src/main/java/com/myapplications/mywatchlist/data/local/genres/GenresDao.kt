@@ -1,4 +1,4 @@
-package com.myapplications.mywatchlist.data.local
+package com.myapplications.mywatchlist.data.local.genres
 
 import androidx.room.*
 import com.myapplications.mywatchlist.data.entities.GenreEntity

@@ -1,4 +1,4 @@
-package com.myapplications.mywatchlist.data.local
+package com.myapplications.mywatchlist.data.local.titles
 
 import com.myapplications.mywatchlist.core.di.IoDispatcher
 import com.myapplications.mywatchlist.domain.entities.TitleItem
@@ -12,6 +12,11 @@ interface TitlesLocalDataSource {
      * it is - it will update it in case the information has changed.
      */
     suspend fun bookmarkTitleItem(titleItem: TitleItem)
+
+    /**
+     * Deletes the given [TitleItem] from the local database.
+     */
+    suspend fun unBookmarkTitleItem(titleItem: TitleItem)
 }
 
 class TitlesLocalDataSourceImpl @Inject constructor(
@@ -37,5 +42,16 @@ class TitlesLocalDataSourceImpl @Inject constructor(
         }
     }
 
+    override suspend fun unBookmarkTitleItem(titleItem: TitleItem) {
+        // Just in case, check if title already exists first.
+        val titleItemExists = titlesDao.checkIfTitleItemExists(
+            type = titleItem.type,
+            mediaId = titleItem.mediaId
+        )
 
+        // If exists - deleting.
+        if (titleItemExists) {
+            titlesDao.deleteTitleItem(titleItem)
+        }
+    }
 }

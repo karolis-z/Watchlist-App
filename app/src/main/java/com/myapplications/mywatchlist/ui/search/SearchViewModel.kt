@@ -18,7 +18,6 @@ private const val TAG = "SEARCH_VIEWMODEL"
 
 @HiltViewModel
 class SearchViewModel @Inject constructor(
-    private val api: TmdbApi,
     private val titlesRepository: TitlesRepository
 ) : ViewModel() {
 
@@ -44,6 +43,13 @@ class SearchViewModel @Inject constructor(
     fun onWatchlistClicked(title: TitleItem) {
         viewModelScope.launch {
             titlesRepository.bookmarkTitle(title)
+        }
+    }
+
+    // TODO: TEMP IMPLEMENTATION FOR TESTING
+    fun onUnwatchlistClicked(title: TitleItem) {
+        viewModelScope.launch {
+            titlesRepository.unBookmarkTitle(titleItem = title)
         }
     }
 }
