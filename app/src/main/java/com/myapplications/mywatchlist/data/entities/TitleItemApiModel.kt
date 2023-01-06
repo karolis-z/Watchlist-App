@@ -18,6 +18,5 @@ data class TitleItemApiModel(
 enum class TitleTypeApiModel(val propertyName: String) {
     MOVIE(propertyName = "movie"),
     TV(propertyName = "tv"),
-    UNKNOWN(propertyName = "unknown")
 }
 

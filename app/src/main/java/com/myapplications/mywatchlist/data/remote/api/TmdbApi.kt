@@ -10,6 +10,12 @@ const val apiKey = Constants.API_KEY
 interface TmdbApi {
 
     @GET("search/multi?api_key=$apiKey&include_adult=false")
-    suspend fun search(@Query("query") query: String): Response<SearchApiResponse>
+    suspend fun search(@Query("query") query: String): Response<ApiResponse>
+
+    @GET("genre/movie/list?api_key=$apiKey")
+    suspend fun getMovieGenres(): Response<ApiResponse>
+
+    @GET("genre/tv/list?api_key=$apiKey")
+    suspend fun getTvGenres(): Response<ApiResponse>
 
 }
