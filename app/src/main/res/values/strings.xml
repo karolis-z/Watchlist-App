@@ -11,4 +11,15 @@
     <string name="cd_search_icon">Search</string>
     <string name="cd_trending_icon">Trending</string>
 
+    <!-- TITLE LIST ITEM -->
+    <string name="title_item_vote_score">%s / 10</string>
+    <string name="title_item_bookmark">Watchlist</string>
+    <string name="title_item_bookmarked">In Watchlist</string>
+
+
+    <!-- CONTENT DESCRIPTIONS -->
+    <string name="cd_watchlist_button_watchlist">Put title in watchlist</string>
+    <string name="cd_watchlist_button_watchlisted">Remove title from watchlist</string>
+
+
 </resources>

@@ -7,6 +7,6 @@ object Constants {
     const val API_BASE_URL = "https://api.themoviedb.org/3/"
 
     const val TMDB_IMAGES_BASE_URL = "https://image.tmdb.org/t/p/"
-    const val TMDB_IMAGES_SIZE_W500 = "w500"
+    const val TMDB_IMAGES_SIZE_W500 = "w300"
 
 }
