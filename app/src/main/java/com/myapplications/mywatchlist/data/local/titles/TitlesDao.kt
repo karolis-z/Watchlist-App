@@ -23,11 +23,14 @@ interface TitlesDao {
     @Query("SELECT EXISTS(SELECT * FROM TitleItemEntity WHERE mediaId=:mediaId AND type=:type)")
     suspend fun checkIfTitleItemExists(type: TitleType, mediaId: Long): Boolean
 
-    @Query("SELECT * FROM titleitementity WHERE mediaId=:mediaId AND type=:type")
-    suspend fun getTitleItemsWithGenresByTypeAndMediaId(type: TitleType, mediaId: Long): TitleItemWithGenres
+    @Query("SELECT * FROM titleitementity WHERE mediaId=:mediaId AND type=:type AND isWatchlisted=1")
+    suspend fun getWatchlistedTitleItemsWithGenresByTypeAndMediaId(type: TitleType, mediaId: Long): TitleItemWithGenres?
 
     @Query("SELECT * FROM TitleItemEntity WHERE mediaId=:mediaId AND type=:type")
     suspend fun getTitleItemEntityByTypeAndMediaId(type: TitleType, mediaId: Long): TitleItemEntity
+
+    @Query("SELECT * FROM TitleItemEntity")
+    suspend fun getAllTitleItems(): List<TitleItemWithGenres>?
 
     @Delete
     suspend fun deleteTitleItemEntity(titleItemEntity: TitleItemEntity)

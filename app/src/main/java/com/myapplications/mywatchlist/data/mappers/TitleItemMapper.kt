@@ -23,7 +23,8 @@ fun TitleItemApiModel.toTitleItem(allGenres: List<Genre>): TitleItem {
         genres = allGenres.filter { it.id in setOfGenreIds },
         releaseDate = this.releaseDate,
         voteCount = this.voteCount,
-        voteAverage = this.voteAverage
+        voteAverage = this.voteAverage,
+        isWatchlisted = false // Api model does not have this information and assumes False
     )
 }
 
@@ -54,6 +55,7 @@ fun TitleItem.toTitleItemEntity(): TitleItemEntity {
         posterLink = this.posterLink,
         releaseDate = this.releaseDate,
         voteCount = this.voteCount,
-        voteAverage = this.voteAverage
+        voteAverage = this.voteAverage,
+        isWatchlisted = this.isWatchlisted
     )
 }

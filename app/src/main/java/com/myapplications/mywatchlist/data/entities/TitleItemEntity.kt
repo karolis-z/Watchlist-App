@@ -18,6 +18,7 @@ data class TitleItemEntity(
     val releaseDate: LocalDate,
     val voteCount: Long,
     val voteAverage: Double,
+    val isWatchlisted: Boolean
 )
 
 @Entity(

@@ -18,6 +18,7 @@ class GenresRepositoryImpl @Inject constructor(
 ) : GenresRepository {
 
     // TODO: Add check for internet connection available and return appropriate result
+    // TODO: Implement functionality to download genres only once per day
     override suspend fun updateGenresFromApi(): BasicResult = withContext(dispatcher) {
         when (val remoteResult = remoteDataSource.getAllGenresFromApi()) {
             is ResultOf.Failure -> BasicResult.Failure(

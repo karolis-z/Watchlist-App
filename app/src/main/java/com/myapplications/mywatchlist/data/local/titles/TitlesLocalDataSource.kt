@@ -1,6 +1,7 @@
 package com.myapplications.mywatchlist.data.local.titles
 
 import com.myapplications.mywatchlist.core.di.IoDispatcher
+import com.myapplications.mywatchlist.data.mappers.toTitleItems
 import com.myapplications.mywatchlist.domain.entities.TitleItem
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
@@ -17,6 +18,18 @@ interface TitlesLocalDataSource {
      * Deletes the given [TitleItem] from the local database.
      */
     suspend fun unBookmarkTitleItem(titleItem: TitleItem)
+
+    /**
+     * Returns titles stored in local database.
+     * @return list of [TitleItem] or null if no [TitleItem]s are stored.
+     */
+    suspend fun getAllBookmarkedTitles(): List<TitleItem>?
+
+    /**
+     * @return [Boolean] indicating whether a [TitleItem] already is saved in local database as
+     * watchlisted.
+     */
+    suspend fun checkIfTitleItemWatchlisted(titleItem: TitleItem): Boolean
 }
 
 class TitlesLocalDataSourceImpl @Inject constructor(
@@ -54,4 +67,14 @@ class TitlesLocalDataSourceImpl @Inject constructor(
             titlesDao.deleteTitleItem(titleItem)
         }
     }
+
+    override suspend fun getAllBookmarkedTitles(): List<TitleItem>? = withContext(dispatcher) {
+        val allTitleItemEntities = titlesDao.getAllTitleItems()
+        return@withContext allTitleItemEntities?.toTitleItems()
+    }
+
+    override suspend fun checkIfTitleItemWatchlisted(titleItem: TitleItem): Boolean =
+        withContext(dispatcher) {
+            titlesDao.checkIfTitleItemExists(type = titleItem.type, mediaId = titleItem.mediaId)
+        }
 }

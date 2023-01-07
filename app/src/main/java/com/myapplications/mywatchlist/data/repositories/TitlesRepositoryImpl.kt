@@ -22,14 +22,33 @@ class TitlesRepositoryImpl @Inject constructor(
     override suspend fun searchTitles(query: String): ResultOf<List<TitleItem>> =
         withContext(dispatcher) {
             val genresList = genresRepository.getAvailableGenres()
-            remoteDataSource.searchTitles(query = query, allGenres = genresList)
+            val result = remoteDataSource.searchTitles(query = query, allGenres = genresList)
+            when(result){
+                is ResultOf.Failure -> return@withContext result
+                is ResultOf.Success -> {
+                    val titlesFilteredForWatchlisted = mutableListOf<TitleItem>()
+                    result.data.forEach { titleItem ->
+                        val isWatchlisted = localDataSource.checkIfTitleItemWatchlisted(titleItem)
+                        if (isWatchlisted) {
+                            titlesFilteredForWatchlisted.add(titleItem.copy(isWatchlisted = true))
+                        } else {
+                            titlesFilteredForWatchlisted.add(titleItem)
+                        }
+                    }
+                    return@withContext ResultOf.Success(data = titlesFilteredForWatchlisted)
+                }
+            }
         }
 
     override suspend fun bookmarkTitle(titleItem: TitleItem) = withContext(dispatcher) {
-        localDataSource.bookmarkTitleItem(titleItem = titleItem)
+        localDataSource.bookmarkTitleItem(titleItem = titleItem.copy(isWatchlisted = true))
     }
 
     override suspend fun unBookmarkTitle(titleItem: TitleItem) = withContext(dispatcher) {
         localDataSource.unBookmarkTitleItem(titleItem = titleItem)
+    }
+
+    override suspend fun getWatchlistedTitles(): List<TitleItem>? = withContext(dispatcher) {
+        localDataSource.getAllBookmarkedTitles()
     }
 }

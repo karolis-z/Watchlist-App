@@ -15,6 +15,7 @@ data class TitleItem(
     val releaseDate: LocalDate,
     val voteCount: Long,
     val voteAverage: Double,
+    val isWatchlisted: Boolean
 )
 
 enum class TitleType {

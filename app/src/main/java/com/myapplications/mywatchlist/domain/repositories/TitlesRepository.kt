@@ -21,4 +21,10 @@ interface TitlesRepository {
      * Unbookmarks the [TitleItem] so it's not longer represented in the user's watchlist.
      */
     suspend fun unBookmarkTitle(titleItem: TitleItem)
+
+    /**
+     * Returns titles stored in local database.
+     * @return list of [TitleItem] or null if no [TitleItem]s are stored.
+     */
+    suspend fun getWatchlistedTitles(): List<TitleItem>?
 }
