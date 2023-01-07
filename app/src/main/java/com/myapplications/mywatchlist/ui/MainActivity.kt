@@ -15,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -35,17 +36,36 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val screenList = listOf(Screen.Watchlist, Screen.Search, Screen.Trending)
+        val topLevelScreens = listOf(Screen.Watchlist, Screen.Search, Screen.Trending)
+        val allScreens = listOf(Screen.Watchlist, Screen.Search, Screen.Trending)
 
         setContent {
             MyWatchlistTheme {
                 val navController = rememberNavController()
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentDestination = navBackStackEntry?.destination
+                val currentScreenTitleResId =
+                    allScreens.find { it.route == currentDestination?.route }?.titleResId
+
                 Scaffold(
+                    topBar = {
+                        TopAppBar(
+                            title = {
+                                Text(
+                                    text = if (currentScreenTitleResId == null) {
+                                        ""
+                                    } else {
+                                        stringResource(currentScreenTitleResId)
+                                    },
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            },
+                        )
+                    },
                     bottomBar = {
                         NavigationBar() {
-                            val navBackStackEntry by navController.currentBackStackEntryAsState()
-                            val currentDestination = navBackStackEntry?.destination
-                            for (screen in screenList) {
+                            for (screen in topLevelScreens) {
                                 NavigationBarItem(
                                     icon = {
                                         Icon(
@@ -110,12 +130,14 @@ sealed class Screen(
         icon = Icons.Filled.Bookmarks,
         contentDescResId = R.string.cd_watchlist_icon
     )
+
     object Search : Screen(
         route = "search",
         titleResId = R.string.title_search,
         icon = Icons.Filled.Search,
         contentDescResId = R.string.cd_search_icon
     )
+
     object Trending : Screen(
         route = "trending",
         titleResId = R.string.title_trending,
