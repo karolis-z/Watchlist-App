@@ -4,6 +4,8 @@ import com.myapplications.mywatchlist.core.di.IoDispatcher
 import com.myapplications.mywatchlist.data.mappers.toTitleItems
 import com.myapplications.mywatchlist.domain.entities.TitleItem
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -30,6 +32,11 @@ interface TitlesLocalDataSource {
      * watchlisted.
      */
     suspend fun checkIfTitleItemWatchlisted(titleItem: TitleItem): Boolean
+
+    /**
+     * @return a [Flow] of list of [TitleItem]s that are watchlisted.
+     */
+    fun allWatchlistedTitlesFlow(): Flow<List<TitleItem>>
 }
 
 class TitlesLocalDataSourceImpl @Inject constructor(
@@ -71,6 +78,12 @@ class TitlesLocalDataSourceImpl @Inject constructor(
     override suspend fun getAllBookmarkedTitles(): List<TitleItem>? = withContext(dispatcher) {
         val allTitleItemEntities = titlesDao.getAllTitleItems()
         return@withContext allTitleItemEntities?.toTitleItems()
+    }
+
+    override fun allWatchlistedTitlesFlow(): Flow<List<TitleItem>> {
+        return titlesDao.allWatchlistedTitleItems().map {
+            it.toTitleItems()
+        }
     }
 
     override suspend fun checkIfTitleItemWatchlisted(titleItem: TitleItem): Boolean =

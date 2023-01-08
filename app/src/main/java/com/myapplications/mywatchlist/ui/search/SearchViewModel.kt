@@ -3,7 +3,6 @@ package com.myapplications.mywatchlist.ui.search
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.myapplications.mywatchlist.data.remote.api.TmdbApi
 import com.myapplications.mywatchlist.domain.entities.TitleItem
 import com.myapplications.mywatchlist.domain.repositories.TitlesRepository
 import com.myapplications.mywatchlist.domain.result.ResultOf
@@ -42,14 +41,11 @@ class SearchViewModel @Inject constructor(
     // TODO: TEMP IMPLEMENTATION FOR TESTING
     fun onWatchlistClicked(title: TitleItem) {
         viewModelScope.launch {
-            titlesRepository.bookmarkTitle(title)
-        }
-    }
-
-    // TODO: TEMP IMPLEMENTATION FOR TESTING
-    fun onUnwatchlistClicked(title: TitleItem) {
-        viewModelScope.launch {
-            titlesRepository.unBookmarkTitle(titleItem = title)
+            if (title.isWatchlisted){
+                titlesRepository.unBookmarkTitle(title)
+            } else {
+                titlesRepository.bookmarkTitle(title)
+            }
         }
     }
 }

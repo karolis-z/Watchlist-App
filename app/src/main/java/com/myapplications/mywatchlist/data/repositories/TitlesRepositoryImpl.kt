@@ -8,6 +8,7 @@ import com.myapplications.mywatchlist.domain.repositories.GenresRepository
 import com.myapplications.mywatchlist.domain.repositories.TitlesRepository
 import com.myapplications.mywatchlist.domain.result.ResultOf
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -50,5 +51,9 @@ class TitlesRepositoryImpl @Inject constructor(
 
     override suspend fun getWatchlistedTitles(): List<TitleItem>? = withContext(dispatcher) {
         localDataSource.getAllBookmarkedTitles()
+    }
+
+    override fun allWatchlistedTitleItems(): Flow<List<TitleItem>> {
+        return localDataSource.allWatchlistedTitlesFlow()
     }
 }

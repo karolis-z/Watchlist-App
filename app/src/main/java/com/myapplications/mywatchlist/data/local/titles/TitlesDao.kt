@@ -8,6 +8,7 @@ import com.myapplications.mywatchlist.data.mappers.toListOfGenreForTitleEntity
 import com.myapplications.mywatchlist.data.mappers.toTitleItemEntity
 import com.myapplications.mywatchlist.domain.entities.TitleItem
 import com.myapplications.mywatchlist.domain.entities.TitleType
+import kotlinx.coroutines.flow.Flow
 
 private const val TAG = "TITLES_DAO"
 
@@ -31,6 +32,9 @@ interface TitlesDao {
 
     @Query("SELECT * FROM TitleItemEntity")
     suspend fun getAllTitleItems(): List<TitleItemWithGenres>?
+
+    @Query("SELECT * FROM TitleItemEntity WHERE isWatchlisted=1")
+    fun allWatchlistedTitleItems(): Flow<List<TitleItemWithGenres>>
 
     @Delete
     suspend fun deleteTitleItemEntity(titleItemEntity: TitleItemEntity)

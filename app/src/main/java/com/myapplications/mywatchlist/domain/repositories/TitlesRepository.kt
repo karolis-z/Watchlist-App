@@ -2,6 +2,7 @@ package com.myapplications.mywatchlist.domain.repositories
 
 import com.myapplications.mywatchlist.domain.entities.TitleItem
 import com.myapplications.mywatchlist.domain.result.ResultOf
+import kotlinx.coroutines.flow.Flow
 
 interface TitlesRepository {
 
@@ -27,4 +28,9 @@ interface TitlesRepository {
      * @return list of [TitleItem] or null if no [TitleItem]s are stored.
      */
     suspend fun getWatchlistedTitles(): List<TitleItem>?
+
+    /**
+     * @return a [Flow] of list of [TitleItem]s that are watchlisted.
+     */
+    fun allWatchlistedTitleItems(): Flow<List<TitleItem>>
 }
