@@ -16,6 +16,12 @@
     <string name="title_item_bookmark">Watchlist</string>
     <string name="title_item_bookmarked">In Watchlist</string>
 
+    <!-- WATCHLIST SCREEN -->
+    <string name="watchlist_no_data">No titles watchlisted…</string>
+
+    <!-- SEARCH SCREEN -->
+    <string name="search_not_searched_yet">Let\'s find something to watch!</string>
+    <string name="search_nothing_found">Oops… No titles found</string>
 
     <!-- CONTENT DESCRIPTIONS -->
     <string name="cd_watchlist_button_watchlist">Put title in watchlist</string>

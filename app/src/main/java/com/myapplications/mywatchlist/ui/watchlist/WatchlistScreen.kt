@@ -1,23 +1,22 @@
 package com.myapplications.mywatchlist.ui.watchlist
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.myapplications.mywatchlist.R
-import com.myapplications.mywatchlist.domain.entities.TitleItem
-import com.myapplications.mywatchlist.ui.components.TitleItemCard
+import com.myapplications.mywatchlist.ui.components.LoadingCircle
+import com.myapplications.mywatchlist.ui.components.TitleItemsList
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun WatchlistScreen() {
 
@@ -31,25 +30,32 @@ fun WatchlistScreen() {
     }
 
     if (uiState.value.isLoading) {
-        CircularProgressIndicator()
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            LoadingCircle()
+        }
     } else if (uiState.value.isNoData) {
-        Text(text = "No data")
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(15.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = stringResource(id = R.string.watchlist_no_data),
+                style = MaterialTheme.typography.headlineMedium,
+                textAlign = TextAlign.Center
+            )
+        }
     } else {
         val titleItems = uiState.value.titleItems
         if (titleItems != null) {
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+            TitleItemsList(
+                titleItems = titleItems,
+                placeholderImage = placeholderImage,
+                onWatchlistClicked = { viewModel.onWatchlistClicked(it) },
                 contentPadding = PaddingValues(vertical = 10.dp, horizontal = 5.dp)
-            ) {
-                items(items = titleItems, key = { titleItem -> titleItem.id }) { item: TitleItem ->
-                    TitleItemCard(
-                        title = item,
-                        onWatchlistClicked = { viewModel.onWatchlistClicked(item) },
-                        placeholderImage = placeholderImage,
-                        modifier = Modifier.animateItemPlacement()
-                    )
-                }
-            }
+            )
         }
     }
 }

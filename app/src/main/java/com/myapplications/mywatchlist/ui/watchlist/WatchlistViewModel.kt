@@ -1,6 +1,5 @@
 package com.myapplications.mywatchlist.ui.watchlist
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.myapplications.mywatchlist.domain.entities.TitleItem
@@ -26,12 +25,9 @@ class WatchlistViewModel @Inject constructor(
     private val isNoData = MutableStateFlow(false)
     private val titleItemsFlow = titlesRepository.allWatchlistedTitleItems()
     val uiState = combine(titleItemsFlow, isLoading, isNoData) { titleItems, isLoading, isNoData ->
-        Log.d(TAG, "uiState combine triggered: titleItems = $titleItems, isLoading = $isLoading, isNoData = $isNoData")
         if (titleItems.isNotEmpty()) {
-            Log.d(TAG, "uiState combine: TitleItems are NOT null and NOT empty")
             WatchlistUiState(titleItems = titleItems, isLoading = false, isNoData = false)
         } else {
-            Log.d(TAG, "uiState combine: TitleItems are EMPTY. Not loading, and NO DATA")
             WatchlistUiState(titleItems = null, isLoading = false, isNoData = true)
         }
     }.stateIn(
