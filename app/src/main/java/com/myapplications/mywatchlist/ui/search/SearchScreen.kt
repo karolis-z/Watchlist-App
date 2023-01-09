@@ -32,6 +32,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.myapplications.mywatchlist.R
 import com.myapplications.mywatchlist.ui.components.LoadingCircle
 import com.myapplications.mywatchlist.ui.components.TitleItemsList
+import kotlinx.coroutines.launch
 
 private const val TAG = "SEARCH_SCREEN"
 
@@ -40,6 +41,9 @@ private const val TAG = "SEARCH_SCREEN"
 fun SearchScreen(placeholderImage: Painter) {
     val viewModel = hiltViewModel<SearchViewModel>()
     val uiState = viewModel.uiState.collectAsState()
+
+    // Remember a CoroutineScope to be able to scroll the list
+    val coroutineScope = rememberCoroutineScope()
 
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
@@ -100,6 +104,11 @@ fun SearchScreen(placeholderImage: Painter) {
                         onWatchlistClicked = { viewModel.onWatchlistClicked(it) },
                         state = listState
                     )
+                    LaunchedEffect(titleItems.isNotEmpty()){
+                        coroutineScope.launch {
+                            listState.animateScrollToItem(0)
+                        }
+                    }
                 }
             }
         }
