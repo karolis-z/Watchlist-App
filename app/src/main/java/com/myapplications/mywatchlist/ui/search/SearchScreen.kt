@@ -10,15 +10,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.myapplications.mywatchlist.R
 import com.myapplications.mywatchlist.ui.components.LoadingCircle
 import com.myapplications.mywatchlist.ui.components.TitleItemsList
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchScreen() {
-    val viewModel = hiltViewModel<SearchViewModel>()
+fun SearchScreen(viewModel: SearchViewModel) {
     val uiState = viewModel.uiState.collectAsState()
 
     var searchValue by remember { mutableStateOf("") }

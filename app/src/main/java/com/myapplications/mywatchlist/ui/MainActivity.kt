@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -24,7 +25,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.myapplications.mywatchlist.R
+import com.myapplications.mywatchlist.ui.components.SearchViewAction
 import com.myapplications.mywatchlist.ui.search.SearchScreen
+import com.myapplications.mywatchlist.ui.search.SearchViewModel
 import com.myapplications.mywatchlist.ui.theme.MyWatchlistTheme
 import com.myapplications.mywatchlist.ui.trending.TrendingScreen
 import com.myapplications.mywatchlist.ui.watchlist.WatchlistScreen
@@ -41,6 +44,9 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MyWatchlistTheme {
+
+                val searchViewModel = hiltViewModel<SearchViewModel>()
+
                 val navController = rememberNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
@@ -61,6 +67,14 @@ class MainActivity : ComponentActivity() {
                                     overflow = TextOverflow.Ellipsis
                                 )
                             },
+                            actions = {
+                                if (currentDestination?.route == Screen.Search.route) {
+                                    SearchViewAction(
+                                        placeholderText = stringResource(id = Screen.Search.titleResId),
+                                        onSearchClicked = { searchViewModel.searchTitleClicked(it) }
+                                    )
+                                }
+                            }
                         )
                     },
                     bottomBar = {
@@ -97,7 +111,7 @@ class MainActivity : ComponentActivity() {
                             WatchlistScreen()
                         }
                         composable(Screen.Search.route) {
-                            SearchScreen()
+                            SearchScreen(searchViewModel)
                         }
                         composable(Screen.Trending.route) {
                             TrendingScreen()
