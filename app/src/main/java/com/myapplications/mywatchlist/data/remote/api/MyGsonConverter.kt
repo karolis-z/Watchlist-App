@@ -90,9 +90,9 @@ object MyGsonConverter {
         /**
          * Handles the response if it is for the [TmdbApi.search] query.
          * @param mJson the root [JsonObject] received from the request.
-         * @return [ApiResponse.SearchApiResponse]
+         * @return [ApiResponse.TitlesListResponse]
          */
-        private fun handleSearchResponse(mJson: JsonObject): ApiResponse.SearchApiResponse {
+        private fun handleSearchResponse(mJson: JsonObject): ApiResponse.TitlesListResponse {
             val page = mJson.get("page").asInt
             val pageCount = mJson.get("total_pages").asInt
             val resultCount = mJson.get("total_results").asInt
@@ -133,7 +133,7 @@ object MyGsonConverter {
 
             // If at least 1 result parsing did not fail - returning a non empty SearchApiResponse
             return if (titleItems.isNotEmpty()){
-                ApiResponse.SearchApiResponse(
+                ApiResponse.TitlesListResponse(
                     page = page,
                     titleItems = titleItems,
                     totalPages = pageCount,
@@ -205,13 +205,13 @@ object MyGsonConverter {
         }
 
         /**
-         * Returns an empty [ApiResponse.SearchApiResponse] which indicates a successful api request, but with
+         * Returns an empty [ApiResponse.TitlesListResponse] which indicates a successful api request, but with
          * nothing found by the query.
-         * @return [ApiResponse.SearchApiResponse] with page, totalPages and totalResults equal to 0 and
+         * @return [ApiResponse.TitlesListResponse] with page, totalPages and totalResults equal to 0 and
          * titleItems set as null.
          */
-        private fun emptyResponse(): ApiResponse.SearchApiResponse {
-            return ApiResponse.SearchApiResponse(
+        private fun emptyResponse(): ApiResponse.TitlesListResponse {
+            return ApiResponse.TitlesListResponse(
                 page = 0,
                 titleItems = null,
                 totalPages = 0,

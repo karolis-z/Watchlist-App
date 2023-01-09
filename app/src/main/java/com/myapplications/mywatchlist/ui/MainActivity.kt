@@ -4,19 +4,19 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.StringRes
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmarks
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -46,6 +46,12 @@ class MainActivity : ComponentActivity() {
                 val currentDestination = navBackStackEntry?.destination
                 val currentScreenTitleResId =
                     allScreens.find { it.route == currentDestination?.route }?.titleResId
+
+                val placeholderImage = if (isSystemInDarkTheme()) {
+                    painterResource(id = R.drawable.placeholder_poster_dark)
+                } else {
+                    painterResource(id = R.drawable.placeholder_poster_light)
+                }
 
                 Scaffold(
                     topBar = {
@@ -94,26 +100,18 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.padding(paddingValues)
                     ) {
                         composable(Screen.Watchlist.route) {
-                            WatchlistScreen()
+                            WatchlistScreen(placeholderImage = placeholderImage)
                         }
                         composable(Screen.Search.route) {
-                            SearchScreen()
+                            SearchScreen(placeholderImage = placeholderImage)
                         }
                         composable(Screen.Trending.route) {
-                            TrendingScreen()
+                            TrendingScreen(placeholderImage = placeholderImage)
                         }
                     }
                 }
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    MyWatchlistTheme {
-        WatchlistScreen()
     }
 }
 

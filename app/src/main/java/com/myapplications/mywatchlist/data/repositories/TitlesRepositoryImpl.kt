@@ -24,21 +24,7 @@ class TitlesRepositoryImpl @Inject constructor(
         withContext(dispatcher) {
             val genresList = genresRepository.getAvailableGenres()
             val result = remoteDataSource.searchTitles(query = query, allGenres = genresList)
-            when(result){
-                is ResultOf.Failure -> return@withContext result
-                is ResultOf.Success -> {
-                    val titlesFilteredForWatchlisted = mutableListOf<TitleItem>()
-                    result.data.forEach { titleItem ->
-                        val isWatchlisted = localDataSource.checkIfTitleItemWatchlisted(titleItem)
-                        if (isWatchlisted) {
-                            titlesFilteredForWatchlisted.add(titleItem.copy(isWatchlisted = true))
-                        } else {
-                            titlesFilteredForWatchlisted.add(titleItem)
-                        }
-                    }
-                    return@withContext ResultOf.Success(data = titlesFilteredForWatchlisted)
-                }
-            }
+            return@withContext parseTitlesListResult(result)
         }
 
     override suspend fun bookmarkTitle(titleItem: TitleItem) = withContext(dispatcher) {
@@ -56,4 +42,37 @@ class TitlesRepositoryImpl @Inject constructor(
     override fun allWatchlistedTitleItems(): Flow<List<TitleItem>> {
         return localDataSource.allWatchlistedTitlesFlow()
     }
+
+    // TODO: Add check for internet connection available and return appropriate result
+    override suspend fun getTrendingTitles(): ResultOf<List<TitleItem>> = withContext(dispatcher) {
+        val genresList = genresRepository.getAvailableGenres()
+        val result = remoteDataSource.getTrendingTitles(allGenres = genresList)
+        return@withContext parseTitlesListResult(result)
+    }
+
+    /**
+     * Parses the result fetched from Remote Data Source: if result is Success, then filters the
+     * received list by exchanging titles with those in the local database (if those titles are the
+     * same). This is so UI lists can show whether title items are marked as Watchlisted or not.
+     * @param result is a [ResultOf] returned from remote data source.
+     * @return [ResultOf] that can be further returned to the requester.
+     */
+    private suspend fun parseTitlesListResult(result: ResultOf<List<TitleItem>>): ResultOf<List<TitleItem>> =
+        withContext(dispatcher) {
+            when (result) {
+                is ResultOf.Failure -> return@withContext result
+                is ResultOf.Success -> {
+                    val titlesFilteredForWatchlisted = mutableListOf<TitleItem>()
+                    result.data.forEach { titleItem ->
+                        val isWatchlisted = localDataSource.checkIfTitleItemWatchlisted(titleItem)
+                        if (isWatchlisted) {
+                            titlesFilteredForWatchlisted.add(titleItem.copy(isWatchlisted = true))
+                        } else {
+                            titlesFilteredForWatchlisted.add(titleItem)
+                        }
+                    }
+                    return@withContext ResultOf.Success(data = titlesFilteredForWatchlisted)
+                }
+            }
+        }
 }

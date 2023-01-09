@@ -33,4 +33,9 @@ interface TitlesRepository {
      * @return a [Flow] of list of [TitleItem]s that are watchlisted.
      */
     fun allWatchlistedTitleItems(): Flow<List<TitleItem>>
+
+    /**
+     * @return a list of [TitleItem]s that are trending
+     */
+    suspend fun getTrendingTitles(): ResultOf<List<TitleItem>>
 }

@@ -2,7 +2,7 @@ package com.myapplications.mywatchlist.data.remote
 
 import android.util.Log
 import com.myapplications.mywatchlist.core.di.IoDispatcher
-import com.myapplications.mywatchlist.data.GetGenresExceptions
+import com.myapplications.mywatchlist.data.ApiGetGenresExceptions
 import com.myapplications.mywatchlist.data.remote.api.ApiResponse
 import com.myapplications.mywatchlist.data.remote.api.TmdbApi
 import com.myapplications.mywatchlist.domain.result.ResultOf
@@ -54,7 +54,7 @@ class GenresRemoteDataSourceImpl @Inject constructor(
             ) {
                 return@withContext ResultOf.Failure(
                     message = "Could not either TV or Movie Genre List",
-                    throwable = GetGenresExceptions.FailedApiRequestException(null, null)
+                    throwable = ApiGetGenresExceptions.FailedApiRequestException(null, null)
                 )
             }
 
@@ -78,7 +78,7 @@ class GenresRemoteDataSourceImpl @Inject constructor(
             ) {
                 return@withContext ResultOf.Failure(
                     message = "Genre requests from api were successful but bodies were null",
-                    throwable = GetGenresExceptions.NothingFoundException(null, null)
+                    throwable = ApiGetGenresExceptions.NothingFoundException(null, null)
                 )
             }
 

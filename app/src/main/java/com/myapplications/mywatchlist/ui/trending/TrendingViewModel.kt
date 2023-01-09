@@ -1,4 +1,4 @@
-package com.myapplications.mywatchlist.ui.search
+package com.myapplications.mywatchlist.ui.trending
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,47 +12,34 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-private const val TAG = "SEARCH_VIEWMODEL"
-
 @HiltViewModel
-class SearchViewModel @Inject constructor(
+class TrendingViewModel @Inject constructor(
     private val titlesRepository: TitlesRepository
 ) : ViewModel() {
 
-    private val _uiState: MutableStateFlow<SearchUiState> = MutableStateFlow(SearchUiState())
+    private val _uiState: MutableStateFlow<TrendingUiState> = MutableStateFlow(TrendingUiState())
     val uiState = _uiState.asStateFlow()
 
-    fun searchTitleClicked(query: String) {
+    init {
+        getTrendingTitles()
+    }
+
+    private fun getTrendingTitles() {
         viewModelScope.launch {
             _uiState.update {
-                it.copy(
-                    titleItems = null,
-                    isLoading = true,
-                    isNoData = false,
-                    isSearchFinished = false
-                )
+                it.copy(titleItems = null, isLoading = true, isError = false)
             }
-            val response = titlesRepository.searchTitles(query)
+            val response = titlesRepository.getTrendingTitles()
             when (response) {
                 is ResultOf.Success -> {
                     _uiState.update {
-                        it.copy(
-                            titleItems = response.data,
-                            isLoading = false,
-                            isNoData = false,
-                            isSearchFinished = true
-                        )
+                        it.copy(titleItems = response.data, isLoading = false, isError = false)
                     }
                 }
                 is ResultOf.Failure -> {
                     // TODO: This should be updated for handling different reasons of failure (e.g. no internet connection)
                     _uiState.update {
-                        it.copy(
-                            titleItems = emptyList(),
-                            isLoading = false,
-                            isNoData = true,
-                            isSearchFinished = true
-                        )
+                        it.copy(titleItems = emptyList(), isLoading = false, isError = true)
                     }
                 }
             }
@@ -68,4 +55,5 @@ class SearchViewModel @Inject constructor(
             }
         }
     }
+
 }

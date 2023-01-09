@@ -18,4 +18,6 @@ interface TmdbApi {
     @GET("genre/tv/list?api_key=$apiKey")
     suspend fun getTvGenres(): Response<ApiResponse>
 
+    @GET("trending/all/week?api_key=$apiKey")
+    suspend fun getTrendingTitles(): Response<ApiResponse>
 }

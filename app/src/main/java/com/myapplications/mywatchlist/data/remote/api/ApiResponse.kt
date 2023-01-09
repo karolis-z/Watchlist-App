@@ -8,7 +8,7 @@ sealed class ApiResponse {
     /**
      * Response class for storing results of a query to the TMDB
      */
-    data class SearchApiResponse(
+    data class TitlesListResponse(
         val page: Int,
         val titleItems: List<TitleItemApiModel>?,
         val totalPages: Int,

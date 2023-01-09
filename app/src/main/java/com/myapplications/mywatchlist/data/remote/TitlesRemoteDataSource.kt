@@ -1,7 +1,8 @@
 package com.myapplications.mywatchlist.data.remote
 
+import android.util.Log
 import com.myapplications.mywatchlist.core.di.IoDispatcher
-import com.myapplications.mywatchlist.data.SearchExceptions
+import com.myapplications.mywatchlist.data.ApiGetTitleItemsExceptions
 import com.myapplications.mywatchlist.data.mappers.toTitleItems
 import com.myapplications.mywatchlist.data.remote.api.ApiResponse
 import com.myapplications.mywatchlist.data.remote.api.TmdbApi
@@ -21,7 +22,16 @@ interface TitlesRemoteDataSource {
      * [TitleItem]
      */
     suspend fun searchTitles(query: String, allGenres: List<Genre>): ResultOf<List<TitleItem>>
+
+    /**
+     * Retrieves the titles that are trending this week from TMDB.
+     * @return [ResultOf.Success] containing List of [TitleItem] if successful and [ResultOf.Failure]
+     * if not.
+     */
+    suspend fun getTrendingTitles(allGenres: List<Genre>): ResultOf<List<TitleItem>>
 }
+
+private const val TAG = "TITLES_REMOTE_DATASRC"
 
 class TitlesRemoteDataSourceImpl @Inject constructor(
     private val api: TmdbApi,
@@ -36,29 +46,21 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
             val apiResponse = try {
                 api.search(query)
             } catch (e: Exception) {
-                val error = "Failed to get a response from the api."
-                return@withContext ResultOf.Failure(
-                    message = error,
-                    throwable = SearchExceptions.FailedApiRequestException(error, e)
-                )
+                return@withContext getFailedApiResponseResult(exception = e)
             }
             val responseBody = try {
-                apiResponse.body() as ApiResponse.SearchApiResponse?
+                apiResponse.body() as ApiResponse.TitlesListResponse?
             } catch (e: Exception) {
                 null // Exception and null check will be handled below
             }
 
             // Checking in case the response was received but body was null or code wasn't 200
             if (apiResponse.code() != 200 || responseBody == null) {
-                val error = "Failed to get a response from the api."
-                return@withContext ResultOf.Failure(
-                    message = error,
-                    throwable = SearchExceptions.FailedApiRequestException(error, null)
-                )
+                return@withContext getFailedApiResponseResult(exception = null)
             }
 
             // Returning the parsed result
-            return@withContext parseSearchTitlesApiResponse(
+            return@withContext parseTitleItemsApiResponse(
                 responseBody = responseBody,
                 allGenres = allGenres
             )
@@ -69,18 +71,53 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
      * @param allGenres required to map genre ids received from API to to a list of [Genre] used in
      * [TitleItem]
      */
-    private fun parseSearchTitlesApiResponse(
-        responseBody: ApiResponse.SearchApiResponse,
+    private fun parseTitleItemsApiResponse(
+        responseBody: ApiResponse.TitlesListResponse,
         allGenres: List<Genre>
     ): ResultOf<List<TitleItem>> {
         return if (responseBody.titleItems == null) {
-            val error = "No titles found for the given search"
+            val error = "No titles found for the given search or trending list is empty."
             ResultOf.Failure(
-                message = error, throwable = SearchExceptions.NothingFoundException(error, null)
+                message = error,
+                throwable = ApiGetTitleItemsExceptions.NothingFoundException(error, null)
             )
         } else {
             ResultOf.Success(data = responseBody.titleItems.toTitleItems(allGenres))
         }
     }
 
+    override suspend fun getTrendingTitles(allGenres: List<Genre>): ResultOf<List<TitleItem>> =
+        withContext(dispatcher) {
+            val apiResponse = try {
+                api.getTrendingTitles()
+            } catch (e: Exception) {
+                return@withContext getFailedApiResponseResult(exception = e)
+            }
+
+            val responseBody = try {
+                apiResponse.body() as ApiResponse.TitlesListResponse?
+            } catch (e: Exception) {
+                null // Exception and null check will be handled below
+            }
+
+            // Checking in case the response was received but body was null or code wasn't 200
+            if (apiResponse.code() != 200 || responseBody == null) {
+                return@withContext getFailedApiResponseResult(exception = null)
+            }
+
+            // Returning the parsed result
+            return@withContext parseTitleItemsApiResponse(
+                responseBody = responseBody,
+                allGenres = allGenres
+            )
+        }
+
+    private fun getFailedApiResponseResult(exception: Exception?): ResultOf.Failure {
+        val error = "Failed to get a response from the api."
+        Log.e(TAG, "getFailedApiResponseResult: $exception", exception)
+        return ResultOf.Failure(
+            message = error,
+            throwable = ApiGetTitleItemsExceptions.FailedApiRequestException(error, exception)
+        )
+    }
 }

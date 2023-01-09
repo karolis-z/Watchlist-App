@@ -1,7 +1,6 @@
 package com.myapplications.mywatchlist.ui.search
 
 import androidx.compose.animation.*
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -20,10 +19,10 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.SoftwareKeyboardController
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -38,15 +37,9 @@ private const val TAG = "SEARCH_SCREEN"
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun SearchScreen() {
+fun SearchScreen(placeholderImage: Painter) {
     val viewModel = hiltViewModel<SearchViewModel>()
     val uiState = viewModel.uiState.collectAsState()
-
-    val placeholderImage = if (isSystemInDarkTheme()) {
-        painterResource(id = R.drawable.placeholder_poster_dark)
-    } else {
-        painterResource(id = R.drawable.placeholder_poster_light)
-    }
 
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
@@ -70,6 +63,7 @@ fun SearchScreen() {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .padding(start = 10.dp, end = 10.dp, bottom = 20.dp)
                         .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
