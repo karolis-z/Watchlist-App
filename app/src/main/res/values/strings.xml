@@ -6,11 +6,6 @@
     <string name="title_search">Search</string>
     <string name="title_trending">Trending</string>
 
-    <!-- CONTENT DESCRIPTIONS -->
-    <string name="cd_watchlist_icon">Watchlist</string>
-    <string name="cd_search_icon">Search</string>
-    <string name="cd_trending_icon">Trending</string>
-
     <!-- TITLE LIST ITEM -->
     <string name="title_item_vote_score">%s / 10</string>
     <string name="title_item_bookmark">Watchlist</string>
@@ -22,10 +17,14 @@
     <!-- SEARCH SCREEN -->
     <string name="search_not_searched_yet">Let\'s find something to watch!</string>
     <string name="search_nothing_found">Oops… No titles found</string>
+    <string name="search_searchfield_label">Search for titles…</string>
 
     <!-- CONTENT DESCRIPTIONS -->
+    <string name="cd_watchlist_icon">Watchlist</string>
+    <string name="cd_search_icon">Search</string>
+    <string name="cd_trending_icon">Trending</string>
+    <string name="cd_clear_field">Clear Field</string>
     <string name="cd_watchlist_button_watchlist">Put title in watchlist</string>
     <string name="cd_watchlist_button_watchlisted">Remove title from watchlist</string>
-
 
 </resources>
