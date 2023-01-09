@@ -1,6 +1,11 @@
 package com.myapplications.mywatchlist.ui.components
 
-import androidx.compose.animation.*
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateColor
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -30,9 +35,7 @@ import com.myapplications.mywatchlist.R
 import com.myapplications.mywatchlist.domain.entities.Genre
 import com.myapplications.mywatchlist.domain.entities.TitleItem
 import com.myapplications.mywatchlist.domain.entities.TitleType
-import com.myapplications.mywatchlist.ui.theme.IMDBOrange
-import com.myapplications.mywatchlist.ui.theme.dark_IMDBOrange
-import com.myapplications.mywatchlist.ui.theme.light_IMDBOrange
+import com.myapplications.mywatchlist.ui.theme.*
 import java.time.LocalDate
 
 @Composable
@@ -42,9 +45,6 @@ fun TitleItemCard(
     onWatchlistClicked: () -> Unit, // TODO: Not using this for now while testing
     modifier: Modifier = Modifier
 ) {
-    var isWatchlisted by remember {
-        mutableStateOf(title.isWatchlisted)
-    }
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -120,43 +120,12 @@ fun TitleItemCard(
                         modifier = Modifier.padding(start = 2.dp)
                     )
                     Spacer(modifier = Modifier.weight(1f))
-                    AnimatedVisibility(
-                        visible = isWatchlisted,
-                        enter = fadeIn() + expandHorizontally(expandFrom = Alignment.End),
-                        exit = fadeOut() + shrinkHorizontally(shrinkTowards = Alignment.Start)
-                    ) {
-                        WatchlistedButton(
-                            onWatchlistClicked = {
-                                onWatchlistClicked.invoke()
-                                isWatchlisted = !isWatchlisted
-                            },
-                            modifier = Modifier.height(30.dp)
-                        )
-                    }
-                    AnimatedVisibility(
-                        visible = !isWatchlisted,
-                        enter = fadeIn() + expandHorizontally(expandFrom = Alignment.End),
-                        exit = fadeOut() + shrinkHorizontally(shrinkTowards = Alignment.Start)
-                    ) {
-                        WatchlistButton(
-                            onWatchlistClicked = {
-                                onWatchlistClicked.invoke()
-                                isWatchlisted = !isWatchlisted
-                            },
-                            modifier = Modifier.height(30.dp)
-                        )
-                    }
-//                    if (title.isWatchlisted) {
-//                        WatchlistedButton(
-//                            onWatchlistClicked = onWatchlistClicked,
-//                            modifier = Modifier.height(30.dp)
-//                        )
-//                    } else {
-//                        WatchlistButton(
-//                            onWatchlistClicked = onWatchlistClicked,
-//                            modifier = Modifier.height(30.dp)
-//                        )
-//                    }
+
+                    AnimatedWatchlistButton(
+                        onWatchlistClicked = onWatchlistClicked,
+                        isTitleWatchlisted = title.isWatchlisted,
+                        modifier = Modifier.height(30.dp)
+                    )
                 }
             }
         }
@@ -164,58 +133,72 @@ fun TitleItemCard(
 }
 
 @Composable
-fun WatchlistButton(onWatchlistClicked: () -> Unit, modifier: Modifier = Modifier) {
+fun AnimatedWatchlistButton(
+    onWatchlistClicked: () -> Unit,
+    isTitleWatchlisted: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val buttonPrimaryColor = if (isSystemInDarkTheme()) dark_IMDBOrange else light_IMDBOrange
+    val textColorWatchlisted = MaterialTheme.colorScheme.onBackground
+    val textColorNotWatchlisted = if (isSystemInDarkTheme()) dark_onIMDBOrange else light_onIMDBOrange
 
-    val buttonContainerColor = if (isSystemInDarkTheme()) dark_IMDBOrange else light_IMDBOrange
+    var isWatchListed by remember {
+        mutableStateOf(isTitleWatchlisted)
+    }
+    val transition = updateTransition(isWatchListed, label = "button_transitions")
+    val containerColor by transition.animateColor(label = "container_color") { watchlisted ->
+        if (watchlisted) Color.Transparent else buttonPrimaryColor
+    }
+    val borderColor by transition.animateColor(label = "border_color") { watchlisted ->
+        if (watchlisted) buttonPrimaryColor else Color.Transparent
+    }
+    val textColor by transition.animateColor(label = "text_coolr") { watchlisted ->
+        if (watchlisted) textColorWatchlisted else textColorNotWatchlisted
+    }
 
     Button(
-        onClick = onWatchlistClicked,
+        onClick = {
+            onWatchlistClicked()
+            isWatchListed = !isWatchListed
+        },
         contentPadding = PaddingValues(vertical = 0.dp, horizontal = 10.dp),
-        modifier = modifier,
-        colors = ButtonDefaults.buttonColors(containerColor = buttonContainerColor)
-    ) {
-        Text(
-            text = stringResource(id = R.string.title_item_bookmark),
-            style = MaterialTheme.typography.titleSmall,
-            modifier = Modifier.padding(bottom = 2.dp)
-        )
-        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-        Icon(
-            imageVector = Icons.Outlined.BookmarkBorder,
-            contentDescription = stringResource(id = R.string.cd_watchlist_button_watchlist),
-            modifier = Modifier.size(ButtonDefaults.IconSize)
-        )
-    }
-}
-
-@Composable
-fun WatchlistedButton(onWatchlistClicked: () -> Unit, modifier: Modifier = Modifier) {
-
-    val buttonContainerColor = if (isSystemInDarkTheme()) dark_IMDBOrange else light_IMDBOrange
-
-    OutlinedButton(
-        onClick = onWatchlistClicked,
-        contentPadding = PaddingValues(vertical = 0.dp, horizontal = 10.dp),
-        modifier = modifier,
+        modifier = modifier.animateContentSize(),
         border = BorderStroke(
             width = ButtonDefaults.outlinedButtonBorder.width,
-            color = buttonContainerColor
+            color = borderColor
         ),
-        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
+        colors = ButtonDefaults.buttonColors(containerColor = containerColor)
     ) {
         Text(
-            text = stringResource(id = R.string.title_item_bookmarked),
-            color = MaterialTheme.colorScheme.onSurface,
+            text = if (isWatchListed) {
+                stringResource(id = R.string.title_item_bookmarked)
+            } else {
+                stringResource(id = R.string.title_item_bookmark)
+            },
             style = MaterialTheme.typography.titleSmall,
+            color = textColor,
             modifier = Modifier.padding(bottom = 2.dp)
         )
         Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-        Icon(
-            imageVector = Icons.Filled.Bookmark,
-            contentDescription = stringResource(id = R.string.cd_watchlist_button_watchlisted),
-            modifier = Modifier.size(ButtonDefaults.IconSize),
-            tint = buttonContainerColor
-        )
+        Crossfade(
+            targetState = isWatchListed,
+            animationSpec = tween(easing = LinearEasing)
+        ) { watchlisted ->
+            when(watchlisted){
+                true -> Icon(
+                    imageVector = Icons.Filled.Bookmark,
+                    contentDescription = stringResource(id = R.string.cd_watchlist_button_watchlisted),
+                    modifier = Modifier.size(ButtonDefaults.IconSize),
+                    tint = buttonPrimaryColor
+                )
+                false -> Icon(
+                    imageVector = Icons.Outlined.BookmarkBorder,
+                    contentDescription = stringResource(id = R.string.cd_watchlist_button_watchlist),
+                    modifier = Modifier.size(ButtonDefaults.IconSize),
+                    tint = textColorNotWatchlisted
+                )
+            }
+        }
     }
 }
 
@@ -239,16 +222,4 @@ fun TitleItemCardPreview() {
         onWatchlistClicked = {},
         placeholderImage = painterResource(id = R.drawable.placeholder_poster_light),
     )
-}
-
-@Preview
-@Composable
-fun WatchlistButtonPreviewNotWatchlisted() {
-    WatchlistedButton(onWatchlistClicked = {})
-}
-
-@Preview
-@Composable
-fun WatchlistButtonPreviewWatchlisted() {
-    WatchlistButton(onWatchlistClicked = {})
 }
