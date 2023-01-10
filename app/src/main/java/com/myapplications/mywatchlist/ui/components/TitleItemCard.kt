@@ -114,7 +114,7 @@ fun TitleItemCard(
                     Text(
                         text = stringResource(
                             id = R.string.title_item_vote_score,
-                            title.voteAverage.toString()
+                            "%.1f".format(title.voteAverage)
                         ),
                         style = MaterialTheme.typography.titleSmall,
                         modifier = Modifier.padding(start = 2.dp)
