@@ -4,12 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.myapplications.mywatchlist.data.ApiGetTitleItemsExceptions
 import com.myapplications.mywatchlist.domain.entities.TitleItem
+import com.myapplications.mywatchlist.domain.entities.TitleType
 import com.myapplications.mywatchlist.domain.repositories.TitlesRepository
 import com.myapplications.mywatchlist.domain.result.ResultOf
+import com.myapplications.mywatchlist.ui.components.TitleListFilter
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -18,8 +18,37 @@ class TrendingViewModel @Inject constructor(
     private val titlesRepository: TitlesRepository
 ) : ViewModel() {
 
-    private val _uiState: MutableStateFlow<TrendingUiState> = MutableStateFlow(TrendingUiState())
-    val uiState = _uiState.asStateFlow()
+    private val trendingDataState: MutableStateFlow<TrendingUiState> =
+        MutableStateFlow(TrendingUiState())
+
+    val titleFilter = MutableStateFlow(TitleListFilter.All)
+
+    val uiState =
+        trendingDataState.combine(titleFilter) { uiState: TrendingUiState, titleFilter: TitleListFilter ->
+            val titleItems = uiState.titleItems
+            if (!titleItems.isNullOrEmpty()) {
+                val filteredList = when (titleFilter) {
+                    TitleListFilter.All -> titleItems
+                    TitleListFilter.Movies -> titleItems.filter { it.type == TitleType.MOVIE }
+                    TitleListFilter.TV -> titleItems.filter { it.type == TitleType.TV }
+                }
+                if (filteredList.isEmpty()) {
+                    TrendingUiState(
+                        titleItems = null,
+                        isLoading = false,
+                        error = TrendingError.NO_TITLES
+                    )
+                } else {
+                    TrendingUiState(titleItems = filteredList, isLoading = false, error = null)
+                }
+            } else {
+                uiState
+            }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = TrendingUiState()
+        )
 
     init {
         getTrendingTitles()
@@ -27,13 +56,13 @@ class TrendingViewModel @Inject constructor(
 
     private fun getTrendingTitles() {
         viewModelScope.launch {
-            _uiState.update {
-                it.copy(titleItems = null, isLoading = true, error = null)
+            trendingDataState.update {
+                it.copy(isLoading = true)
             }
             val response = titlesRepository.getTrendingTitles()
             when (response) {
                 is ResultOf.Success -> {
-                    _uiState.update {
+                    trendingDataState.update {
                         it.copy(titleItems = response.data, isLoading = false, error = null)
                     }
                 }
@@ -42,16 +71,17 @@ class TrendingViewModel @Inject constructor(
                     val error: TrendingError =
                         if (exception is ApiGetTitleItemsExceptions) {
                             when (exception) {
-                                is ApiGetTitleItemsExceptions.FailedApiRequestException,
-                                is ApiGetTitleItemsExceptions.NothingFoundException ->
+                                is ApiGetTitleItemsExceptions.FailedApiRequestException ->
                                     TrendingError.FAILED_API_REQUEST
+                                is ApiGetTitleItemsExceptions.NothingFoundException ->
+                                    TrendingError.NO_TITLES
                                 is ApiGetTitleItemsExceptions.NoConnectionException ->
                                     TrendingError.NO_INTERNET
                             }
                         } else {
                             TrendingError.FAILED_API_REQUEST
                         }
-                    _uiState.update {
+                    trendingDataState.update {
                         it.copy(titleItems = emptyList(), isLoading = false, error = error)
                     }
                 }
@@ -59,6 +89,9 @@ class TrendingViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Bookmarks or unbookmarks the chosen [TitleItem]
+     */
     fun onWatchlistClicked(title: TitleItem) {
         viewModelScope.launch {
             if (title.isWatchlisted) {
@@ -67,6 +100,13 @@ class TrendingViewModel @Inject constructor(
                 titlesRepository.bookmarkTitle(title)
             }
         }
+    }
+
+    /**
+     * Applies the user's chosen filter on the Trending list of Titles.
+     */
+    fun onTitleFilterChosen(titleListFilter: TitleListFilter){
+        titleFilter.update { titleListFilter }
     }
 
 }

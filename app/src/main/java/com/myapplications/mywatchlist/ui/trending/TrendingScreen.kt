@@ -13,6 +13,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.myapplications.mywatchlist.R
+import com.myapplications.mywatchlist.ui.components.FilterChipGroup
 import com.myapplications.mywatchlist.ui.components.LoadingCircle
 import com.myapplications.mywatchlist.ui.components.TitleItemsList
 
@@ -21,6 +22,7 @@ fun TrendingScreen(placeholderImage: Painter){
     val viewModel = hiltViewModel<TrendingViewModel>()
 
     val uiState = viewModel.uiState.collectAsState()
+    val filterState = viewModel.titleFilter.collectAsState()
     val error = uiState.value.error
 
     if (uiState.value.isLoading) {
@@ -40,6 +42,8 @@ fun TrendingScreen(placeholderImage: Painter){
                     stringResource(id = R.string.error_no_internet_connection)
                 TrendingError.FAILED_API_REQUEST ->
                     stringResource(id = R.string.error_something_went_wrong)
+                TrendingError.NO_TITLES ->
+                    stringResource(id = R.string.trending_nothing_trending)
             }
             Text(
                 text = errorMessage,
@@ -50,12 +54,21 @@ fun TrendingScreen(placeholderImage: Painter){
     } else {
         val titleItems = uiState.value.titleItems
         if (titleItems != null) {
-            TitleItemsList(
-                titleItems = titleItems,
-                placeholderImage = placeholderImage,
-                onWatchlistClicked = { viewModel.onWatchlistClicked(it) },
-                contentPadding = PaddingValues(vertical = 10.dp, horizontal = 5.dp)
-            )
+            Column(modifier = Modifier.fillMaxSize()) {
+                FilterChipGroup(
+                    onFilterSelected = { viewModel.onTitleFilterChosen(it) },
+                    filter = filterState.value,
+                    modifier = Modifier
+                        .padding(horizontal = 15.dp, vertical = 10.dp)
+                        .fillMaxWidth()
+                )
+                TitleItemsList(
+                    titleItems = titleItems,
+                    placeholderImage = placeholderImage,
+                    onWatchlistClicked = { viewModel.onWatchlistClicked(it) },
+                    contentPadding = PaddingValues(vertical = 10.dp, horizontal = 5.dp)
+                )
+            }
         }
     }
 }

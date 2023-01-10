@@ -10,5 +10,6 @@ data class TrendingUiState(
 
 enum class TrendingError {
     NO_INTERNET,
-    FAILED_API_REQUEST
+    FAILED_API_REQUEST,
+    NO_TITLES
 }

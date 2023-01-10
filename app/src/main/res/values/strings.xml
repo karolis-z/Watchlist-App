@@ -20,10 +20,16 @@
     <string name="search_searchfield_label">Search for titles…</string>
 
     <!-- TRENDING SCREEN -->
+    <string name="trending_nothing_trending">Nothing trending in this category…</string>
 
     <!-- GENERAL ERRORS -->
     <string name="error_no_internet_connection">Please check if you are connected to the internet</string>
     <string name="error_something_went_wrong">Oops…Something went wrong</string>
+
+    <!-- FILTER LABELS -->
+    <string name="filter_all">All</string>
+    <string name="filter_movies">Movies</string>
+    <string name="filter_tv">TV</string>
 
     <!-- CONTENT DESCRIPTIONS -->
     <string name="cd_watchlist_icon">Watchlist</string>
@@ -32,5 +38,6 @@
     <string name="cd_clear_field">Clear Field</string>
     <string name="cd_watchlist_button_watchlist">Put title in watchlist</string>
     <string name="cd_watchlist_button_watchlisted">Remove title from watchlist</string>
+    <string name="cd_selected_filter_chip">Selected filter is %s</string>
 
 </resources>
