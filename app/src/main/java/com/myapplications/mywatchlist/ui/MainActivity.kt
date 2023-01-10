@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.StringRes
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -19,10 +20,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
+import com.google.accompanist.navigation.animation.AnimatedNavHost
+import com.google.accompanist.navigation.animation.composable
+import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.myapplications.mywatchlist.R
 import com.myapplications.mywatchlist.ui.search.SearchScreen
 import com.myapplications.mywatchlist.ui.theme.MyWatchlistTheme
@@ -30,7 +31,7 @@ import com.myapplications.mywatchlist.ui.trending.TrendingScreen
 import com.myapplications.mywatchlist.ui.watchlist.WatchlistScreen
 import dagger.hilt.android.AndroidEntryPoint
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,7 +42,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MyWatchlistTheme {
-                val navController = rememberNavController()
+                val navController = rememberAnimatedNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
                 val currentScreenTitleResId =
@@ -94,18 +95,24 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     }) { paddingValues ->
-                    NavHost(
+                    AnimatedNavHost(
                         navController = navController,
                         startDestination = Screen.Watchlist.route,
                         modifier = Modifier.padding(paddingValues)
                     ) {
-                        composable(Screen.Watchlist.route) {
+                        composable(
+                            route = Screen.Watchlist.route
+                        ) {
                             WatchlistScreen(placeholderImage = placeholderImage)
                         }
-                        composable(Screen.Search.route) {
+                        composable(
+                            route = Screen.Search.route
+                        ) {
                             SearchScreen(placeholderImage = placeholderImage)
                         }
-                        composable(Screen.Trending.route) {
+                        composable(
+                            route = Screen.Trending.route
+                        ) {
                             TrendingScreen(placeholderImage = placeholderImage)
                         }
                     }
