@@ -22,6 +22,14 @@ sealed class ApiResponse {
     data class GenresResponse(
         val genres: List<Genre>?
     ) : ApiResponse()
+
+    data class MovieResponse(
+        val movie: MovieApiModel
+    ) : ApiResponse()
+
+//    data class TvResponse(
+//        val tv: TvApiModel
+//    ) : ApiResponse()
 }
 
 

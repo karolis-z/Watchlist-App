@@ -1,6 +1,7 @@
 package com.myapplications.mywatchlist.data.remote.api
 
 import android.util.Log
+import androidx.datastore.preferences.protobuf.Api
 import com.google.gson.*
 import com.myapplications.mywatchlist.core.util.Constants
 import com.myapplications.mywatchlist.data.entities.TitleItemApiModel
@@ -39,15 +40,31 @@ object MyGsonConverter {
 
             Log.d(TAG, "deserialize: mJson.get(\"genres\") ${mJson.get("genres")}")
 
-            // Check if this is deserialization of Genres or a Search query
-            return if (mJson.get("genres") != null){
+            // Check if this is deserialization of Genres, Movie, Tv or Search/Trending
+            return if (mJson.get("title") != null){
+                Log.d(TAG, "deserialize: Handling MOVIE response")
+                handleMovieResponse(mJson)
+//            } else if (mJson.get("name") != null) {
+//                Log.d(TAG, "deserialize: Handling TV response")
+//                handleTvResponse(mJson)
+            } else if (mJson.get("genres") != null) {
                 Log.d(TAG, "deserialize: Handling GENRES response")
                 handleGenresResponse(mJson)
             } else {
-                Log.d(TAG, "deserialize: Handling SEARCH response")
-                handleSearchResponse(mJson)
+                Log.d(TAG, "deserialize: Handling SEARCH or TRENDING response")
+                handleSearchOrTrendingResponse(mJson)
             }
         }
+
+        private fun handleMovieResponse(mJson: JsonObject): ApiResponse {
+            // TODO
+            return ApiResponse.MovieResponse
+        }
+
+//        private fun handleTvResponse(mJson: JsonObject): ApiResponse {
+//            // TODO
+//            return
+//        }
 
         /**
          * Handles the response if it is for the [TmdbApi.getTvGenres] or [TmdbApi.getMovieGenres] query.
@@ -92,7 +109,7 @@ object MyGsonConverter {
          * @param mJson the root [JsonObject] received from the request.
          * @return [ApiResponse.TitlesListResponse]
          */
-        private fun handleSearchResponse(mJson: JsonObject): ApiResponse.TitlesListResponse {
+        private fun handleSearchOrTrendingResponse(mJson: JsonObject): ApiResponse.TitlesListResponse {
             val page = mJson.get("page").asInt
             val pageCount = mJson.get("total_pages").asInt
             val resultCount = mJson.get("total_results").asInt
