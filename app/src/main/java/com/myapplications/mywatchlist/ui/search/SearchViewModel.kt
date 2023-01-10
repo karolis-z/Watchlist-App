@@ -2,6 +2,7 @@ package com.myapplications.mywatchlist.ui.search
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.myapplications.mywatchlist.data.ApiGetTitleItemsExceptions
 import com.myapplications.mywatchlist.domain.entities.TitleItem
 import com.myapplications.mywatchlist.domain.repositories.TitlesRepository
 import com.myapplications.mywatchlist.domain.result.ResultOf
@@ -28,8 +29,8 @@ class SearchViewModel @Inject constructor(
                 it.copy(
                     titleItems = null,
                     isLoading = true,
-                    isNoData = false,
-                    isSearchFinished = false
+                    isSearchFinished = false,
+                    error = null
                 )
             }
             val response = titlesRepository.searchTitles(query)
@@ -39,19 +40,32 @@ class SearchViewModel @Inject constructor(
                         it.copy(
                             titleItems = response.data,
                             isLoading = false,
-                            isNoData = false,
-                            isSearchFinished = true
+                            isSearchFinished = true,
+                            error = null
                         )
                     }
                 }
                 is ResultOf.Failure -> {
-                    // TODO: This should be updated for handling different reasons of failure (e.g. no internet connection)
+                    val exception = response.throwable
+                    val error: SearchError =
+                        if (exception is ApiGetTitleItemsExceptions) {
+                            when (exception) {
+                                is ApiGetTitleItemsExceptions.FailedApiRequestException ->
+                                    SearchError.FAILED_API_REQUEST
+                                is ApiGetTitleItemsExceptions.NothingFoundException ->
+                                    SearchError.NOTHING_FOUND
+                                is ApiGetTitleItemsExceptions.NoConnectionException ->
+                                    SearchError.NO_INTERNET
+                            }
+                        } else {
+                            SearchError.FAILED_API_REQUEST
+                        }
                     _uiState.update {
                         it.copy(
                             titleItems = emptyList(),
                             isLoading = false,
-                            isNoData = true,
-                            isSearchFinished = true
+                            isSearchFinished = true,
+                            error = error
                         )
                     }
                 }

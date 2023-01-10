@@ -21,12 +21,13 @@ fun TrendingScreen(placeholderImage: Painter){
     val viewModel = hiltViewModel<TrendingViewModel>()
 
     val uiState = viewModel.uiState.collectAsState()
+    val error = uiState.value.error
 
     if (uiState.value.isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             LoadingCircle()
         }
-    } else if (uiState.value.isError) {
+    } else if (error != null) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -34,8 +35,14 @@ fun TrendingScreen(placeholderImage: Painter){
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            val errorMessage = when(error){
+                TrendingError.NO_INTERNET ->
+                    stringResource(id = R.string.error_no_internet_connection)
+                TrendingError.FAILED_API_REQUEST ->
+                    stringResource(id = R.string.error_something_went_wrong)
+            }
             Text(
-                text = stringResource(id = R.string.trending_error_fetching_data),
+                text = errorMessage,
                 style = MaterialTheme.typography.headlineMedium,
                 textAlign = TextAlign.Center
             )

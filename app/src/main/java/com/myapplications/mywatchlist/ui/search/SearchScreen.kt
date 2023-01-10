@@ -41,6 +41,7 @@ private const val TAG = "SEARCH_SCREEN"
 fun SearchScreen(placeholderImage: Painter) {
     val viewModel = hiltViewModel<SearchViewModel>()
     val uiState = viewModel.uiState.collectAsState()
+    val error = uiState.value.error
 
     // Remember a CoroutineScope to be able to scroll the list
     val coroutineScope = rememberCoroutineScope()
@@ -81,7 +82,7 @@ fun SearchScreen(placeholderImage: Painter) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     LoadingCircle()
                 }
-            } else if (uiState.value.isNoData) {
+            } else if (error != null) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -89,8 +90,16 @@ fun SearchScreen(placeholderImage: Painter) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
+                    val errorMessage = when(error) {
+                        SearchError.NO_INTERNET ->
+                            stringResource(id = R.string.error_no_internet_connection)
+                        SearchError.FAILED_API_REQUEST ->
+                            stringResource(id = R.string.error_something_went_wrong)
+                        SearchError.NOTHING_FOUND ->
+                            stringResource(id = R.string.search_nothing_found)
+                    }
                     Text(
-                        text = stringResource(id = R.string.search_nothing_found),
+                        text = errorMessage,
                         style = MaterialTheme.typography.headlineMedium,
                         textAlign = TextAlign.Center
                     )

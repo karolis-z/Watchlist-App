@@ -20,7 +20,10 @@
     <string name="search_searchfield_label">Search for titles…</string>
 
     <!-- TRENDING SCREEN -->
-    <string name="trending_error_fetching_data">Oops…Something went wrong</string>
+
+    <!-- GENERAL ERRORS -->
+    <string name="error_no_internet_connection">Please check if you are connected to the internet</string>
+    <string name="error_something_went_wrong">Oops…Something went wrong</string>
 
     <!-- CONTENT DESCRIPTIONS -->
     <string name="cd_watchlist_icon">Watchlist</string>

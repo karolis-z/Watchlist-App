@@ -44,7 +44,6 @@ class WatchlistViewModel @Inject constructor(
         }
     }
 
-    // TODO: TEMP IMPLEMENTATION FOR TESTING
     fun onWatchlistClicked(title: TitleItem) {
         viewModelScope.launch {
             if (title.isWatchlisted){
