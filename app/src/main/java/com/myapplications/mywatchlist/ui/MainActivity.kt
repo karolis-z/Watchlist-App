@@ -8,6 +8,7 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Bookmarks
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.TrendingUp
@@ -25,6 +26,7 @@ import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.myapplications.mywatchlist.R
+import com.myapplications.mywatchlist.ui.details.DetailsScreen
 import com.myapplications.mywatchlist.ui.search.SearchScreen
 import com.myapplications.mywatchlist.ui.theme.MyWatchlistTheme
 import com.myapplications.mywatchlist.ui.trending.TrendingScreen
@@ -37,8 +39,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val topLevelScreens = listOf(Screen.Watchlist, Screen.Search, Screen.Trending)
-        val allScreens = listOf(Screen.Watchlist, Screen.Search, Screen.Trending)
+        val topLevelScreens = listOf(TopLevelScreens.Watchlist, TopLevelScreens.Search, TopLevelScreens.Trending)
+        val allTopLevelScreens = listOf(TopLevelScreens.Watchlist, TopLevelScreens.Search, TopLevelScreens.Trending)
 
         setContent {
             MyWatchlistTheme {
@@ -46,7 +48,7 @@ class MainActivity : ComponentActivity() {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
                 val currentScreenTitleResId =
-                    allScreens.find { it.route == currentDestination?.route }?.titleResId
+                    allTopLevelScreens.find { it.route == currentDestination?.route }?.titleResId
 
                 val placeholderImage = if (isSystemInDarkTheme()) {
                     painterResource(id = R.drawable.placeholder_poster_dark)
@@ -60,13 +62,23 @@ class MainActivity : ComponentActivity() {
                             title = {
                                 Text(
                                     text = if (currentScreenTitleResId == null) {
-                                        ""
+                                        "" // This works also for the Details Screen
                                     } else {
                                         stringResource(currentScreenTitleResId)
                                     },
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
+                            },
+                            navigationIcon = {
+                                if (currentDestination?.route == OtherScreens.Details.route) {
+                                    IconButton(onClick = { navController.navigateUp() }) {
+                                        Icon(
+                                            imageVector = Icons.Filled.ArrowBack,
+                                            contentDescription = stringResource(id = R.string.cd_back_arrow)
+                                        )
+                                    }
+                                }
                             },
                         )
                     },
@@ -97,23 +109,32 @@ class MainActivity : ComponentActivity() {
                     }) { paddingValues ->
                     AnimatedNavHost(
                         navController = navController,
-                        startDestination = Screen.Watchlist.route,
+                        startDestination = TopLevelScreens.Watchlist.route,
                         modifier = Modifier.padding(paddingValues)
                     ) {
                         composable(
-                            route = Screen.Watchlist.route
+                            route = TopLevelScreens.Watchlist.route
                         ) {
-                            WatchlistScreen(placeholderImage = placeholderImage)
+                            WatchlistScreen(placeholderImage = placeholderImage, onTitleClicked = {
+                                navController.navigate(route = OtherScreens.Details.route)
+                            })
                         }
                         composable(
-                            route = Screen.Search.route
+                            route = TopLevelScreens.Search.route
                         ) {
-                            SearchScreen(placeholderImage = placeholderImage)
+                            SearchScreen(placeholderImage = placeholderImage, onTitleClicked = {
+                                navController.navigate(route = OtherScreens.Details.route)
+                            })
                         }
                         composable(
-                            route = Screen.Trending.route
+                            route = TopLevelScreens.Trending.route
                         ) {
-                            TrendingScreen(placeholderImage = placeholderImage)
+                            TrendingScreen(placeholderImage = placeholderImage, onTitleClicked = {
+                                navController.navigate(route = OtherScreens.Details.route)
+                            })
+                        }
+                        composable(route = OtherScreens.Details.route) {
+                            DetailsScreen()
                         }
                     }
                 }
@@ -123,30 +144,40 @@ class MainActivity : ComponentActivity() {
 }
 
 // TODO: Consider to add required icons as drawables to avoid the heavy extended icons library
-sealed class Screen(
+sealed class TopLevelScreens(
     val route: String,
     @StringRes val titleResId: Int,
     val icon: ImageVector,
     @StringRes val contentDescResId: Int
 ) {
-    object Watchlist : Screen(
+    object Watchlist : TopLevelScreens(
         route = "watchlist",
         titleResId = R.string.title_watchlist,
         icon = Icons.Filled.Bookmarks,
         contentDescResId = R.string.cd_watchlist_icon
     )
 
-    object Search : Screen(
+    object Search : TopLevelScreens(
         route = "search",
         titleResId = R.string.title_search,
         icon = Icons.Filled.Search,
         contentDescResId = R.string.cd_search_icon
     )
 
-    object Trending : Screen(
+    object Trending : TopLevelScreens(
         route = "trending",
         titleResId = R.string.title_trending,
         icon = Icons.Filled.TrendingUp,
         contentDescResId = R.string.cd_trending_icon
+    )
+}
+
+sealed class OtherScreens(
+    val route: String,
+    @StringRes val titleResId: Int,
+) {
+    object Details : OtherScreens(
+        route = "details",
+        titleResId = R.string.title_details
     )
 }

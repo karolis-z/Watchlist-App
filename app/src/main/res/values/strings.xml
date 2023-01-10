@@ -5,6 +5,7 @@
     <string name="title_watchlist">Watchlist</string>
     <string name="title_search">Search</string>
     <string name="title_trending">Trending</string>
+    <string name="title_details">Details</string>
 
     <!-- TITLE LIST ITEM -->
     <string name="title_item_vote_score">%s / 10</string>
@@ -32,5 +33,6 @@
     <string name="cd_clear_field">Clear Field</string>
     <string name="cd_watchlist_button_watchlist">Put title in watchlist</string>
     <string name="cd_watchlist_button_watchlisted">Remove title from watchlist</string>
+    <string name="cd_back_arrow">Navigate back</string>
 
 </resources>

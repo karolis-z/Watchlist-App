@@ -19,6 +19,7 @@ fun TitleItemsList(
     titleItems: List<TitleItem>,
     placeholderImage: Painter,
     onWatchlistClicked: (TitleItem) -> Unit,
+    onTitleClicked: (TitleItem) -> Unit,
     modifier: Modifier = Modifier,
     state: LazyListState = rememberLazyListState(),
     verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(10.dp),
@@ -36,6 +37,7 @@ fun TitleItemsList(
             TitleItemCard(
                 title = item,
                 onWatchlistClicked = { onWatchlistClicked(item) },
+                onTitleClicked = { onTitleClicked(it) },
                 placeholderImage = placeholderImage,
                 modifier = Modifier.animateItemPlacement()
             )

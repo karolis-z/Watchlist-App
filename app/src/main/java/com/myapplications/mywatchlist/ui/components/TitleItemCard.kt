@@ -42,7 +42,8 @@ import java.time.LocalDate
 fun TitleItemCard(
     title: TitleItem,
     placeholderImage: Painter,
-    onWatchlistClicked: () -> Unit, // TODO: Not using this for now while testing
+    onWatchlistClicked: () -> Unit,
+    onTitleClicked: (TitleItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -51,7 +52,7 @@ fun TitleItemCard(
             .height(180.dp)
             .padding(horizontal = 10.dp)
             .clickable {
-
+                onTitleClicked(title)
             }
     ) {
         Row(modifier = Modifier.fillMaxSize()) {
@@ -220,6 +221,7 @@ fun TitleItemCardPreview() {
             isWatchlisted = true
         ),
         onWatchlistClicked = {},
+        onTitleClicked = {},
         placeholderImage = painterResource(id = R.drawable.placeholder_poster_light),
     )
 }
