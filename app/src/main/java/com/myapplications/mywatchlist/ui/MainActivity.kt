@@ -21,7 +21,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.navArgument
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
@@ -71,7 +73,7 @@ class MainActivity : ComponentActivity() {
                                 )
                             },
                             navigationIcon = {
-                                if (currentDestination?.route == OtherScreens.Details.route) {
+                                if (currentDestination?.route?.contains(OtherScreens.Details.route) == true) {
                                     IconButton(onClick = { navController.navigateUp() }) {
                                         Icon(
                                             imageVector = Icons.Filled.ArrowBack,
@@ -115,26 +117,42 @@ class MainActivity : ComponentActivity() {
                         composable(
                             route = TopLevelScreens.Watchlist.route
                         ) {
-                            WatchlistScreen(placeholderImage = placeholderImage, onTitleClicked = {
-                                navController.navigate(route = OtherScreens.Details.route)
-                            })
+                            WatchlistScreen(
+                                placeholderImage = placeholderImage,
+                                onTitleClicked = { title ->
+                                    navController.navigate(route = OtherScreens.Details.route + "/${title.mediaId}&${title.type.name}")
+                                })
                         }
                         composable(
                             route = TopLevelScreens.Search.route
                         ) {
-                            SearchScreen(placeholderImage = placeholderImage, onTitleClicked = {
-                                navController.navigate(route = OtherScreens.Details.route)
-                            })
+                            SearchScreen(
+                                placeholderImage = placeholderImage,
+                                onTitleClicked = { title ->
+                                    navController.navigate(route = OtherScreens.Details.route + "/${title.mediaId}&${title.type.name}")
+                                })
                         }
                         composable(
                             route = TopLevelScreens.Trending.route
                         ) {
-                            TrendingScreen(placeholderImage = placeholderImage, onTitleClicked = {
-                                navController.navigate(route = OtherScreens.Details.route)
-                            })
+                            TrendingScreen(
+                                placeholderImage = placeholderImage,
+                                onTitleClicked = { title ->
+                                    navController.navigate(route = OtherScreens.Details.route + "/${title.mediaId}&${title.type.name}")
+                                })
                         }
-                        composable(route = OtherScreens.Details.route) {
-                            DetailsScreen()
+                        composable(
+                            route = OtherScreens.Details.route + "/{titleId}&{titleType}",
+                            arguments = listOf(
+                                navArgument("titleId") {type = NavType.IntType},
+                                navArgument("titleType") {type = NavType.StringType}
+                            )
+                        ) { backStackEntry ->
+                            val titleId = backStackEntry.arguments?.getInt("titleId")
+                            val titleType = backStackEntry.arguments?.getString("titleType")
+                            if (titleId != null && titleType != null) {
+                                DetailsScreen(titleId = titleId, titleType = titleType)
+                            }
                         }
                     }
                 }
