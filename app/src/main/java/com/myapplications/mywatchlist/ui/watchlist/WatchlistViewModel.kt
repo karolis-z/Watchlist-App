@@ -3,13 +3,12 @@ package com.myapplications.mywatchlist.ui.watchlist
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.myapplications.mywatchlist.domain.entities.TitleItem
+import com.myapplications.mywatchlist.domain.entities.TitleType
 import com.myapplications.mywatchlist.domain.repositories.GenresRepository
 import com.myapplications.mywatchlist.domain.repositories.TitlesRepository
+import com.myapplications.mywatchlist.ui.components.TitleListFilter
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -21,14 +20,38 @@ class WatchlistViewModel @Inject constructor(
     private val genresRepository: GenresRepository
 ): ViewModel() {
 
-    private val isLoading = MutableStateFlow(true)
-    private val isNoData = MutableStateFlow(false)
+    private val titleFilter = MutableStateFlow(TitleListFilter.All)
     private val titleItemsFlow = titlesRepository.allWatchlistedTitleItems()
-    val uiState = combine(titleItemsFlow, isLoading, isNoData) { titleItems, isLoading, isNoData ->
+
+    val uiState = combine(titleItemsFlow, titleFilter) { titleItems, titleFilter ->
         if (titleItems.isNotEmpty()) {
-            WatchlistUiState(titleItems = titleItems, isLoading = false, isNoData = false)
+            val filteredList = when (titleFilter) {
+                TitleListFilter.All -> titleItems
+                TitleListFilter.Movies -> titleItems.filter { it.type == TitleType.MOVIE }
+                TitleListFilter.TV -> titleItems.filter { it.type == TitleType.TV }
+            }
+            if (filteredList.isEmpty()) {
+                WatchlistUiState(
+                    titleItems = null,
+                    isLoading = false,
+                    isNoData = true,
+                    filter = titleFilter
+                )
+            } else {
+                WatchlistUiState(
+                    titleItems = filteredList,
+                    isLoading = false,
+                    isNoData = false,
+                    filter = titleFilter
+                )
+            }
         } else {
-            WatchlistUiState(titleItems = null, isLoading = false, isNoData = true)
+            WatchlistUiState(
+                titleItems = null,
+                isLoading = false,
+                isNoData = true,
+                filter = titleFilter
+            )
         }
     }.stateIn(
         scope = viewModelScope,
@@ -44,6 +67,9 @@ class WatchlistViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Bookmarks or unbookmarks the chosen [TitleItem]
+     */
     fun onWatchlistClicked(title: TitleItem) {
         viewModelScope.launch {
             if (title.isWatchlisted){
@@ -52,6 +78,13 @@ class WatchlistViewModel @Inject constructor(
                 titlesRepository.bookmarkTitle(title)
             }
         }
+    }
+
+    /**
+     * Applies the user's chosen filter on the Trending list of Titles.
+     */
+    fun onTitleFilterChosen(titleListFilter: TitleListFilter){
+        titleFilter.update { titleListFilter }
     }
 
 }

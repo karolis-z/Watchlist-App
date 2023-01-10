@@ -13,6 +13,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.myapplications.mywatchlist.R
+import com.myapplications.mywatchlist.ui.components.FilterChipGroup
 import com.myapplications.mywatchlist.ui.components.LoadingCircle
 import com.myapplications.mywatchlist.ui.components.TitleItemsList
 
@@ -43,12 +44,21 @@ fun WatchlistScreen(placeholderImage: Painter) {
     } else {
         val titleItems = uiState.value.titleItems
         if (titleItems != null) {
-            TitleItemsList(
-                titleItems = titleItems,
-                placeholderImage = placeholderImage,
-                onWatchlistClicked = { viewModel.onWatchlistClicked(it) },
-                contentPadding = PaddingValues(vertical = 10.dp, horizontal = 5.dp)
-            )
+            Column(modifier = Modifier.fillMaxSize()) {
+                FilterChipGroup(
+                    onFilterSelected = { viewModel.onTitleFilterChosen(it) },
+                    filter = uiState.value.filter,
+                    modifier = Modifier
+                        .padding(horizontal = 15.dp, vertical = 10.dp)
+                        .fillMaxWidth()
+                )
+                TitleItemsList(
+                    titleItems = titleItems,
+                    placeholderImage = placeholderImage,
+                    onWatchlistClicked = { viewModel.onWatchlistClicked(it) },
+                    contentPadding = PaddingValues(vertical = 10.dp, horizontal = 5.dp)
+                )
+            }
         }
     }
 }
