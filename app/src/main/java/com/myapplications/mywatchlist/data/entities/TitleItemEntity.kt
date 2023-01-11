@@ -15,7 +15,7 @@ data class TitleItemEntity(
     val mediaId: Long,
     val overview: String?,  // A Title can possibly not have an overview text
     val posterLink: String?,// A Title can possibly not have a poster associated with it
-    val releaseDate: LocalDate,
+    val releaseDate: LocalDate?,
     val voteCount: Long,
     val voteAverage: Double,
     val isWatchlisted: Boolean
