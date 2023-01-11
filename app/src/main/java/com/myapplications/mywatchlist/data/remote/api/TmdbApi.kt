@@ -22,6 +22,6 @@ interface TmdbApi {
     @GET("trending/all/week?api_key=$apiKey")
     suspend fun getTrendingTitles(): Response<ApiResponse>
 
-    @GET("movie/{titleId}?api_key$apiKey&append_to_response=credits,videos")
+    @GET("movie/{titleId}?api_key=$apiKey&append_to_response=credits,videos")
     suspend fun getMovie(@Path("titleId") titleId: Long): Response<ApiResponse>
 }

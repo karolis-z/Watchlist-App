@@ -144,7 +144,7 @@ class MainActivity : ComponentActivity() {
                         composable(
                             route = OtherScreens.Details.route + "/{titleId}&{titleType}",
                             arguments = listOf(
-                                navArgument("titleId") {type = NavType.IntType},
+                                navArgument("titleId") {type = NavType.LongType},
                                 navArgument("titleType") {type = NavType.StringType}
                             )
                         ) { backStackEntry ->
