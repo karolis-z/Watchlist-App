@@ -1,13 +1,13 @@
 package com.myapplications.mywatchlist.data.entities
 
 import com.myapplications.mywatchlist.domain.entities.CastMember
-import com.myapplications.mywatchlist.domain.entities.Genre
 import com.myapplications.mywatchlist.domain.entities.Status
 import java.time.LocalDate
 
 data class MovieApiModel(
     val id: Long,               //This represents the mediaId (could match Id of TV)
     val name: String,
+    val imdbId: String?,        // A Title can possibly not have an Imdb Id.
     val overview: String?,      // A Title can possibly not have an overview text
     val tagline: String?,       // A Title can possibly not have a tagline text
     val posterLink: String?,    // A Title can possibly not have a poster associated with it

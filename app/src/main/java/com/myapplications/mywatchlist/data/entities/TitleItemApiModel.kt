@@ -10,7 +10,7 @@ data class TitleItemApiModel(
     val overview: String?,
     val posterLink: String?,
     val genres: List<Int>,
-    val releaseDate: LocalDate,
+    val releaseDate: LocalDate?,
     val voteCount: Long,
     val voteAverage: Double,
 )
