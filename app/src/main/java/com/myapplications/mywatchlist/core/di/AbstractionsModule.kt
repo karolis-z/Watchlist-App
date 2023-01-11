@@ -7,6 +7,7 @@ import com.myapplications.mywatchlist.data.local.genres.GenresLocalDataSourceImp
 import com.myapplications.mywatchlist.data.local.titles.TitlesLocalDataSource
 import com.myapplications.mywatchlist.data.local.titles.TitlesLocalDataSourceImpl
 import com.myapplications.mywatchlist.data.remote.*
+import com.myapplications.mywatchlist.data.repositories.DetailsRepositoryImpl
 import com.myapplications.mywatchlist.data.repositories.GenresRepositoryImpl
 import com.myapplications.mywatchlist.data.repositories.TitlesRepositoryImpl
 import com.myapplications.mywatchlist.domain.repositories.DetailsRepository
@@ -40,7 +41,7 @@ abstract class AbstractionsModule {
     abstract fun bindGenresLocalDataSource(genresLocalDataSourceImpl: GenresLocalDataSourceImpl): GenresLocalDataSource
 
     @Binds
-    abstract fun bindDetailsRepository(detailsDataSourceImpl: LocalDetailsDataSourceImpl): DetailsRepository
+    abstract fun bindDetailsRepository(detailsRepositoryImpl: DetailsRepositoryImpl): DetailsRepository
 
     @Binds
     abstract fun bindDetailsRemoteDataSource(detailsDataSourceImpl: RemoteDetailsDataSourceImpl): RemoteDetailsDataSource

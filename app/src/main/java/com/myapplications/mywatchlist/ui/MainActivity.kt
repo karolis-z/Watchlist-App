@@ -148,7 +148,7 @@ class MainActivity : ComponentActivity() {
                                 navArgument("titleType") {type = NavType.StringType}
                             )
                         ) { backStackEntry ->
-                            val titleId = backStackEntry.arguments?.getInt("titleId")
+                            val titleId = backStackEntry.arguments?.getLong("titleId")
                             val titleType = backStackEntry.arguments?.getString("titleType")
                             if (titleId != null && titleType != null) {
                                 DetailsScreen(titleId = titleId, titleType = titleType)
