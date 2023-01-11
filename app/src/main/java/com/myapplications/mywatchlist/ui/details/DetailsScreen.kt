@@ -18,9 +18,11 @@ fun DetailsScreen(
 ){
 
     val viewModel = hiltViewModel<DetailsViewModel>()
-    viewModel.getMovie(titleId)
-    val uiState = viewModel.uiState.collectAsState()
-    val movie = uiState.value
+    viewModel.getTitle(titleId, titleType)
+    val uiMovieState = viewModel.movieUiState.collectAsState()
+    val uiTvState = viewModel.tvUiState.collectAsState()
+    val movie = uiMovieState.value
+    val tv = uiTvState.value
 
     Column(modifier = Modifier
         .fillMaxSize()
@@ -30,7 +32,10 @@ fun DetailsScreen(
             Text(text = "Name : ${movie.name}")
             Text(text = "Genres : ${movie.genres}")
             AsyncImage(model = movie.posterLink, contentDescription = null, error = null)
-
+        } else if (tv != null) {
+            Text(text = "Name : ${tv.name}")
+            Text(text = "Genres : ${tv.genres}")
+            AsyncImage(model = tv.posterLink, contentDescription = null, error = null)
         }
     }
 }

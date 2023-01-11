@@ -24,4 +24,7 @@ interface TmdbApi {
 
     @GET("movie/{titleId}?api_key=$apiKey&append_to_response=credits,videos")
     suspend fun getMovie(@Path("titleId") titleId: Long): Response<ApiResponse>
+
+    @GET("tv/{titleId}?api_key=$apiKey&append_to_response=credits,videos")
+    suspend fun getTv(@Path("titleId") titleId: Long): Response<ApiResponse>
 }

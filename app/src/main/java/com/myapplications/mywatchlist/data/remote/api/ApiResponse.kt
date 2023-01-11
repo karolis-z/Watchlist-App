@@ -2,6 +2,7 @@ package com.myapplications.mywatchlist.data.remote.api
 
 import com.myapplications.mywatchlist.data.entities.MovieApiModel
 import com.myapplications.mywatchlist.data.entities.TitleItemApiModel
+import com.myapplications.mywatchlist.data.entities.TvApiModel
 import com.myapplications.mywatchlist.domain.entities.Genre
 
 sealed class ApiResponse {
@@ -28,9 +29,9 @@ sealed class ApiResponse {
         val movie: MovieApiModel?
     ) : ApiResponse()
 
-//    data class TvResponse(
-//        val tv: TvApiModel
-//    ) : ApiResponse()
+    data class TvResponse(
+        val tv: TvApiModel?
+    ) : ApiResponse()
 }
 
 

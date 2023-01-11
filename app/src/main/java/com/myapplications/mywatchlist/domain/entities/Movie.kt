@@ -13,7 +13,7 @@ data class Movie(
     val genres: List<Genre>,
     val cast: List<CastMember>?,
     val videos: List<String>?,  // A Title can possibly not have videos associated with it
-    val status: Status,
+    val status: MovieStatus,
     val releaseDate: LocalDate?,// A Title can possibly not have a release date associated with it
     val revenue: Long?,         // A Title can possibly not have revenue associates with it
     val voteCount: Long,
@@ -21,7 +21,7 @@ data class Movie(
     val isWatchlisted: Boolean
 )
 
-enum class Status{
+enum class MovieStatus{
     Released,
     Rumored,
     Planned,
