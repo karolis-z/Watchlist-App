@@ -21,6 +21,9 @@
     <string name="search_searchfield_label">Search for titles…</string>
 
     <!-- TRENDING SCREEN -->
+    
+    <!-- DETAILS SCREEN -->
+    <string name="details_summary">Summary</string>
 
     <!-- GENERAL ERRORS -->
     <string name="error_no_internet_connection">Please check if you are connected to the internet</string>

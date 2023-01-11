@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -27,6 +28,7 @@ import androidx.navigation.navArgument
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.myapplications.mywatchlist.R
 import com.myapplications.mywatchlist.ui.details.DetailsScreen
 import com.myapplications.mywatchlist.ui.search.SearchScreen
@@ -46,6 +48,9 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MyWatchlistTheme {
+
+                val systemUiController = rememberSystemUiController()
+
                 val navController = rememberAnimatedNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
@@ -58,9 +63,25 @@ class MainActivity : ComponentActivity() {
                     painterResource(id = R.drawable.placeholder_poster_light)
                 }
 
+                // TODO: Figure out how to make the status bar transparent appropriately
+                //systemUiController.setStatusBarColor(color = Color.Transparent)
+
+
+//                val topAppBarColors = if (currentDestination?.route?.contains(OtherScreens.Details.route) == true){
+//                    TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+//                } else {
+//                    TopAppBarDefaults.topAppBarColors()
+//                }
+
                 Scaffold(
                     topBar = {
                         TopAppBar(
+                            // TODO: Change colors in a better way because it's lagging now
+                            colors = if (currentDestination?.route?.contains(OtherScreens.Details.route) == true){
+                                TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+                            } else {
+                                TopAppBarDefaults.topAppBarColors()
+                            },
                             title = {
                                 Text(
                                     text = if (currentScreenTitleResId == null) {

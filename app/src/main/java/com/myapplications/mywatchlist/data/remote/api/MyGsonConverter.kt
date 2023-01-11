@@ -84,6 +84,7 @@ object MyGsonConverter {
                         status = getMovieStatus(mJson.get("status").asString),
                         releaseDate = getReleaseDate(mJson),
                         revenue = mJson.get("revenue").asLong,
+                        runtime = getNullableIntProperty(mJson, "runtime"),
                         voteCount = mJson.get("vote_count").asLong,
                         voteAverage = mJson.get("vote_average").asDouble
                     )
@@ -285,7 +286,7 @@ object MyGsonConverter {
         }
 
         /**
-         * Returns a [String]value from provided [resultJsonObject]'s [propertyName]
+         * Returns a [String] value from provided [resultJsonObject]'s [propertyName]
          * or null if not found.
          */
         private fun getNullableStringProperty(
@@ -299,6 +300,24 @@ object MyGsonConverter {
                 null
             } else {
                 jsonObject.asString
+            }
+        }
+
+        /**
+         * Returns an [Int] value from provided [resultJsonObject]'s [propertyName]
+         * or null if not found.
+         */
+        private fun getNullableIntProperty(
+            resultJsonObject: JsonObject,
+            propertyName: String
+        ): Int? {
+            val jsonObject = resultJsonObject.get(propertyName)
+            Log.d(TAG, "getNullableIntProperty. JsonObject: $resultJsonObject " +
+                    "did not have a property $propertyName and returned null.")
+            return if (jsonObject.isJsonNull) {
+                null
+            } else {
+                jsonObject.asInt
             }
         }
 

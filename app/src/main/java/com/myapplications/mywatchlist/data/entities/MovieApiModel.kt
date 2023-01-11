@@ -17,7 +17,8 @@ data class MovieApiModel(
     val videos: List<String>?,  // A Title can possibly not have videos associated with it
     val status: MovieStatus,
     val releaseDate: LocalDate?,// A Title can possibly not have a release date associated with it
-    val revenue: Long?,         // A Title can possibly not have revenue associates with it
+    val revenue: Long?,         // A Title can possibly not have revenue associated with it
+    val runtime: Int?,          // A Title can possibly not have runtime associated with it
     val voteCount: Long,
     val voteAverage: Double
 )

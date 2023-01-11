@@ -24,6 +24,7 @@ fun MovieApiModel.toMovie(allGenres: List<Genre>): Movie {
         status =this.status,
         releaseDate = this.releaseDate,
         revenue = this.revenue,
+        runtime = this.runtime,
         voteCount = this.voteCount,
         voteAverage = this.voteAverage,
         isWatchlisted = false // Api model does not have this information and assumes False

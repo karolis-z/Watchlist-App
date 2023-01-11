@@ -2,6 +2,9 @@ package com.myapplications.mywatchlist.domain.entities
 
 import java.time.LocalDate
 
+/**
+ * Model representing a Title in a list.
+ */
 data class TitleItem(
     val id: Long,
     val name: String,
