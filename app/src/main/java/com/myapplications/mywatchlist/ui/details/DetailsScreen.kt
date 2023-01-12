@@ -1,5 +1,6 @@
 package com.myapplications.mywatchlist.ui.details
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -11,32 +12,35 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Today
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.myapplications.mywatchlist.R
 import com.myapplications.mywatchlist.core.util.DateFormatter
-import com.myapplications.mywatchlist.domain.entities.CastMember
-import com.myapplications.mywatchlist.domain.entities.Genre
-import com.myapplications.mywatchlist.domain.entities.Movie
-import com.myapplications.mywatchlist.domain.entities.MovieStatus
+import com.myapplications.mywatchlist.domain.entities.*
 import com.myapplications.mywatchlist.ui.components.AnimatedWatchlistButton
 import com.myapplications.mywatchlist.ui.components.GenreChip
+import com.myapplications.mywatchlist.ui.components.LoadingCircle
 import com.myapplications.mywatchlist.ui.theme.IMDBOrange
 import java.time.LocalDate
 
@@ -44,65 +48,90 @@ import java.time.LocalDate
 fun DetailsScreen(
     titleId: Long,
     titleType: String,
+    placeHolderBackdrop: Painter,
+    placeHolderPortrait: Painter
 ) {
 
     val viewModel = hiltViewModel<DetailsViewModel>()
+    val uiState = viewModel.uiState.collectAsState()
     viewModel.getTitle(titleId, titleType)
-    val uiMovieState = viewModel.movieUiState.collectAsState()
-    val uiTvState = viewModel.tvUiState.collectAsState()
 
-    val movie = uiMovieState.value
-    val tv = uiTvState.value
-
-    if (movie == null) {
-        return
-    }
-
-    val placeholderImage = if (isSystemInDarkTheme()) {
-        painterResource(id = R.drawable.placeholder_backdrop_dark)
+    if (uiState.value.isLoading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            LoadingCircle()
+        }
+    } else if (uiState.value.isError) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(15.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = stringResource(id = R.string.details_error),
+                style = MaterialTheme.typography.headlineMedium,
+                textAlign = TextAlign.Center
+            )
+        }
     } else {
-        painterResource(id = R.drawable.placeholder_backdrop_light)
-    }
-    val placeHolderPortrait = if (isSystemInDarkTheme()) {
-        painterResource(id = R.drawable.placeholder_portrait_dark)
-    } else {
-        painterResource(id = R.drawable.placeholder_portrait_light)
-    }
+        val title = uiState.value.title
+        val type = uiState.value.type
+        // Setting to data unavailable string, but will be replaced below if actually available
+        var runtimeOrSeasonsString = stringResource(id = R.string.details_data_notavailable)
+        if (title != null && type != null) {
+            when(uiState.value.type) {
+                TitleType.TV -> {
+                    runtimeOrSeasonsString = pluralStringResource(
+                        id = R.plurals.details_seasons,
+                        count = (title as TV).numberOfSeasons,
+                        (title as TV).numberOfSeasons
+                    )
+                }
+                TitleType.MOVIE -> {
+                    val runtime = (uiState.value.title as Movie).runtime
+                    if (runtime != null) {
+                        val hoursAndMinutesPair = viewModel.convertRuntimeToHourAndMinutesPair(runtime)
+                        runtimeOrSeasonsString = stringResource(
+                            id = R.string.details_runtime,
+                            hoursAndMinutesPair.first,
+                            hoursAndMinutesPair.second
+                        )
+                    }
+                }
+                else -> Unit // At this stage type should never be null
+            }
+            DetailsScreenContent(
+                title = title,
+                titleType = type,
+                placeHolderBackdrop = placeHolderBackdrop,
+                runtimeOrSeasonsString = runtimeOrSeasonsString,
+                placeHolderPortrait = placeHolderPortrait,
+                onWatchlistClicked = { viewModel.onWatchlistClicked(it) }
+            )
+        }
 
-    var runtimeString: String? = null
-    if (movie.runtime != null) {
-        val hoursAndMinutesPair = viewModel.convertRuntimeToHourAndMinutesPair(movie.runtime)
-        runtimeString = stringResource(
-            id = R.string.details_runtime,
-            hoursAndMinutesPair.first,
-            hoursAndMinutesPair.second
-        )
     }
-
-    DetailsScreenContent(
-        movie = movie,
-        placeHolderBackdrop = placeholderImage,
-        runtimeString = runtimeString,
-        placeHolderPortrait = placeHolderPortrait
-    )
-
 }
 
 @Composable
 fun DetailsScreenContent(
-    movie: Movie,
-    runtimeString: String?,
+    title: Title,
+    titleType: TitleType,
+    runtimeOrSeasonsString: String,
     placeHolderBackdrop: Painter,
     placeHolderPortrait: Painter,
+    onWatchlistClicked: (Title) -> Unit,
     modifier: Modifier = Modifier
 ) {
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
         DetailsBackdrop(
-            movie = movie,
+            title = title,
             placeholderImage = placeHolderBackdrop,
             modifier = Modifier.height(300.dp)
         )
@@ -112,14 +141,19 @@ fun DetailsScreenContent(
                 .padding(horizontal = 16.dp)
         ) {
             Spacer(modifier = Modifier.height(12.dp))
+
+            // MAIN DETAILS
             DetailsInfoRow(
-                movie = movie,
+                title = title,
+                titleType = titleType,
                 modifier = Modifier.fillMaxWidth(),
-                runtimeString = runtimeString
+                runtimeOrSeasonsString = runtimeOrSeasonsString
             )
             Spacer(modifier = Modifier.height(15.dp))
+
+            // GENRES
             LazyRow(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                items(key = { genre -> genre.id }, items = movie.genres) { genre: Genre ->
+                items(key = { genre -> genre.id }, items = title.genres) { genre: Genre ->
                     GenreChip(
                         genreName = genre.name,
                         textStyle = MaterialTheme.typography.labelLarge
@@ -127,26 +161,29 @@ fun DetailsScreenContent(
                 }
             }
             Spacer(modifier = Modifier.height(7.dp))
-            // TODO: Change to Animated Visibility? Some titles might not have an overview.
-            if (movie.overview != null) {
+
+            // OVERVIEW
+            val titleOverview = title.overview
+            if (titleOverview != null) {
                 SectionHeadline(label = stringResource(id = R.string.details_summary_label))
                 Text(
-                    text = movie.overview,
+                    text = titleOverview,
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
-
             Spacer(modifier = Modifier.height(12.dp))
-            // Cast
-            if (movie.cast != null) {
+
+            // CAST
+            val cast = title.cast
+            if (cast != null) {
                 SectionHeadline(label = stringResource(id = R.string.details_cast_label))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                     items(
                         /* Combining a key out of cast member name and character name to make sure
                         we have a unique value */
                         key = { castMember -> "${castMember.name}-${castMember.character}" },
-                        items = movie.cast
+                        items = cast
                     ) { castMember: CastMember ->
                         CastMemberCard(
                             castMember = castMember,
@@ -156,7 +193,7 @@ fun DetailsScreenContent(
                 }
             }
 
-            // Watchlist Button
+            // WATCHLIST BUTTON
             Row(
                 horizontalArrangement = Arrangement.End,
                 modifier = Modifier
@@ -164,8 +201,8 @@ fun DetailsScreenContent(
                     .padding(bottom = 10.dp)
             ) {
                 AnimatedWatchlistButton(
-                    onWatchlistClicked = { /*TODO*/ },
-                    isTitleWatchlisted = movie.isWatchlisted,
+                    onWatchlistClicked = { onWatchlistClicked(title) },
+                    isTitleWatchlisted = title.isWatchlisted,
                     contentPadding = ButtonDefaults.ContentPadding,
                     textStyle = MaterialTheme.typography.titleMedium
                 )
@@ -176,26 +213,49 @@ fun DetailsScreenContent(
 
 @Composable
 fun DetailsInfoRow(
-    movie: Movie,
-    runtimeString: String?,
+    title: Title,
+    titleType: TitleType,
+    runtimeOrSeasonsString: String,
     modifier: Modifier = Modifier,
     horizontalArrangement: Arrangement.Horizontal = Arrangement.SpaceBetween
 ) {
+    val releaseDate = title.releaseDate
+    val releaseDateString = if (releaseDate == null) {
+        stringResource(id = R.string.details_data_notavailable)
+    } else {
+        when(titleType){
+            TitleType.MOVIE -> {
+                DateFormatter.getLocalizedShortDateString(releaseDate)
+            }
+            TitleType.TV -> {
+                val tv = title as TV
+                if (tv.status == TvStatus.Ended || tv.status == TvStatus.Cancelled) {
+                    val lastAirDate = tv.lastAirDate
+                    if (lastAirDate != null) {
+                        "${releaseDate.year} - ${lastAirDate.year}"
+                    } else {
+                        "${releaseDate.year}"
+                    }
+                } else {
+                    "${releaseDate.year} -"
+                }
+            }
+        }
+    }
+
     Row(modifier = modifier, horizontalArrangement = horizontalArrangement) {
         Row(modifier = Modifier.wrapContentWidth()) {
             Icon(imageVector = Icons.Outlined.Today, contentDescription = null)
             Spacer(modifier = Modifier.width(5.dp))
-            // TODO: Implement proper handling of possibly null release date
             Text(
-                text = DateFormatter.getLocalizedShortDateString(movie.releaseDate!!),
+                text = releaseDateString,
                 style = MaterialTheme.typography.bodyLarge
             )
         }
         Row(modifier = Modifier.wrapContentWidth()) {
             Icon(imageVector = Icons.Outlined.Schedule, contentDescription = null)
             Spacer(modifier = Modifier.width(5.dp))
-            // TODO: Implement proper handling of possibly null runtime
-            Text(text = runtimeString ?: "", style = MaterialTheme.typography.bodyLarge)
+            Text(text = runtimeOrSeasonsString, style = MaterialTheme.typography.bodyLarge)
         }
         Row(modifier = Modifier.wrapContentWidth()) {
             Icon(imageVector = Icons.Filled.Star, contentDescription = null, tint = IMDBOrange)
@@ -203,7 +263,7 @@ fun DetailsInfoRow(
             Text(
                 text = stringResource(
                     id = R.string.title_item_vote_score,
-                    "%.1f".format(movie.voteAverage)
+                    "%.1f".format(title.voteAverage)
                 ),
                 style = MaterialTheme.typography.bodyLarge
             )
@@ -213,11 +273,18 @@ fun DetailsInfoRow(
 
 @Composable
 fun DetailsBackdrop(
-    movie: Movie,
+    title: Title,
     placeholderImage: Painter,
     modifier: Modifier = Modifier,
     height: Dp = 250.dp
 ) {
+    var sizeImage by remember { mutableStateOf(IntSize.Zero) }
+    val gradient = Brush.verticalGradient(
+        colors = listOf(Color.Transparent, MaterialTheme.colorScheme.background),
+        startY = sizeImage.height.toFloat()/3,  // 1/3
+        endY = sizeImage.height.toFloat()
+    )
+
     Box(
         modifier = modifier
             .height(height)
@@ -225,7 +292,7 @@ fun DetailsBackdrop(
     ) {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
-                .data(movie.backdropLink)
+                .data(title.backdropLink)
                 .crossfade(true)
                 .build(),
             placeholder = placeholderImage,
@@ -233,18 +300,23 @@ fun DetailsBackdrop(
             contentDescription = null, //Decorative
             contentScale = ContentScale.Crop,
             alignment = Alignment.Center,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .onGloballyPositioned {
+                    sizeImage = it.size
+                }
         )
+        Box(modifier = Modifier.matchParentSize().background(gradient))
         Text(
-            text = movie.name,
+            text = title.name,
             style = MaterialTheme.typography.displaySmall.copy(
                 shadow = Shadow(
-                    color = MaterialTheme.colorScheme.background,
+                    color = MaterialTheme.colorScheme.onBackground,
                     offset = Offset.Zero,
                     blurRadius = 1f
                 )
             ),
-            color = MaterialTheme.colorScheme.background,
+            color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier
                 .align(Alignment.BottomStart)
                 .padding(start = 10.dp, bottom = 10.dp)
@@ -307,7 +379,7 @@ fun SectionHeadline(label: String, modifier: Modifier = Modifier, bottomPadding:
     )
 }
 
-@Preview()
+@Preview
 @Composable
 fun CastMemberCardPreview(){
     val castMember = CastMember(name = "Carrie-Anne Moss", character = "Trinity", pictureLink = null)
@@ -345,7 +417,7 @@ fun DetailsScreenPreview(){
 
 
     DetailsScreenContent(
-        movie = Movie(
+        title = Movie(
             id = 603,
             name = "The Matrix",
             imdbId = "tt0133093",
@@ -365,7 +437,9 @@ fun DetailsScreenPreview(){
             isWatchlisted = false
         ),
         placeHolderBackdrop = placeholderImage,
-        runtimeString = "2h 16 min",
-        placeHolderPortrait = placeHolderPortrait
+        runtimeOrSeasonsString = "2h 16 min",
+        placeHolderPortrait = placeHolderPortrait,
+        onWatchlistClicked = {},
+        titleType = TitleType.MOVIE
     )
 }

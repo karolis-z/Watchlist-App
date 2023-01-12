@@ -68,10 +68,20 @@ class MainActivity : ComponentActivity() {
                     else -> Unit
                 }
 
-                val placeholderImage = if (isSystemInDarkTheme()) {
+                val placeholderPoster = if (isSystemInDarkTheme()) {
                     painterResource(id = R.drawable.placeholder_poster_dark)
                 } else {
                     painterResource(id = R.drawable.placeholder_poster_light)
+                }
+                val placeHolderBackdrop = if (isSystemInDarkTheme()) {
+                    painterResource(id = R.drawable.placeholder_backdrop_dark)
+                } else {
+                    painterResource(id = R.drawable.placeholder_backdrop_light)
+                }
+                val placeHolderPortrait = if (isSystemInDarkTheme()) {
+                    painterResource(id = R.drawable.placeholder_portrait_dark)
+                } else {
+                    painterResource(id = R.drawable.placeholder_portrait_light)
                 }
 
                 Scaffold(
@@ -123,7 +133,7 @@ class MainActivity : ComponentActivity() {
                             exitTransition = { ExitTransition.None }
                         ) {
                             WatchlistScreen(
-                                placeholderImage = placeholderImage,
+                                placeholderImage = placeholderPoster,
                                 onTitleClicked = { title ->
                                     navController.navigate(route = OtherScreens.Details.route + "/${title.mediaId}&${title.type.name}")
                                 })
@@ -134,7 +144,7 @@ class MainActivity : ComponentActivity() {
                             exitTransition = { ExitTransition.None }
                         ) {
                             SearchScreen(
-                                placeholderImage = placeholderImage,
+                                placeholderImage = placeholderPoster,
                                 onTitleClicked = { title ->
                                     navController.navigate(route = OtherScreens.Details.route + "/${title.mediaId}&${title.type.name}")
                                 })
@@ -145,7 +155,7 @@ class MainActivity : ComponentActivity() {
                             exitTransition = { ExitTransition.None }
                         ) {
                             TrendingScreen(
-                                placeholderImage = placeholderImage,
+                                placeholderImage = placeholderPoster,
                                 onTitleClicked = { title ->
                                     navController.navigate(route = OtherScreens.Details.route + "/${title.mediaId}&${title.type.name}")
                                 })
@@ -163,7 +173,12 @@ class MainActivity : ComponentActivity() {
                             val titleId = backStackEntry.arguments?.getLong("titleId")
                             val titleType = backStackEntry.arguments?.getString("titleType")
                             if (titleId != null && titleType != null) {
-                                DetailsScreen(titleId = titleId, titleType = titleType)
+                                DetailsScreen(
+                                    titleId = titleId,
+                                    titleType = titleType,
+                                    placeHolderPortrait = placeHolderPortrait,
+                                    placeHolderBackdrop = placeHolderBackdrop
+                                )
                             }
                         }
                     }

@@ -4,7 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.myapplications.mywatchlist.domain.entities.Movie
-import com.myapplications.mywatchlist.domain.entities.TV
+import com.myapplications.mywatchlist.domain.entities.Title
 import com.myapplications.mywatchlist.domain.entities.TitleType
 import com.myapplications.mywatchlist.domain.repositories.DetailsRepository
 import com.myapplications.mywatchlist.domain.result.ResultOf
@@ -21,32 +21,74 @@ class DetailsViewModel @Inject constructor(
     private val detailsRepository: DetailsRepository
 ) : ViewModel() {
 
-    // TODO: TEMP IMPLEMENTATION FOR TESTING
-    val movieUiState =  MutableStateFlow<Movie?>(null)
-    val tvUiState =  MutableStateFlow<TV?>(null)
+    val uiState = MutableStateFlow(DetailsUiState())
 
-    // TODO: TEMP IMPLEMENTATION FOR TESTING
     fun getTitle(id: Long, titleTypeString: String) {
         val titleType = getTitleTypeFromString(titleTypeString)
         viewModelScope.launch {
             when(titleType){
                 TitleType.MOVIE -> {
-                    val movieResult = detailsRepository.getMovie(id)
-                    if (movieResult is ResultOf.Success) {
-                        movieUiState.update { movieResult.data }
+                    when(val movieResult = detailsRepository.getMovie(id)) {
+                        is ResultOf.Success -> {
+                            uiState.update {
+                                it.copy(
+                                    title = movieResult.data,
+                                    type = TitleType.MOVIE,
+                                    isLoading = false,
+                                    isError = false
+                                )
+                            }
+                        }
+                        is ResultOf.Failure -> {
+                            uiState.update {
+                                it.copy(type = TitleType.MOVIE, isLoading = false, isError = true)
+                            }
+                        }
                     }
                 }
                 TitleType.TV -> {
-                    val tvResult = detailsRepository.getTv(id)
-                    if (tvResult is ResultOf.Success) {
-                        tvUiState.update { tvResult.data }
+                    when(val tvResult = detailsRepository.getTv(id)) {
+                        is ResultOf.Success -> {
+                            uiState.update {
+                                it.copy(
+                                    title = tvResult.data,
+                                    type = TitleType.TV,
+                                    isLoading = false,
+                                    isError = false
+                                )
+                            }
+                        }
+                        is ResultOf.Failure -> {
+                            uiState.update {
+                                it.copy(type = TitleType.TV, isLoading = false, isError = true)
+                            }
+                        }
                     }
                 }
-                null -> Unit //TODO: need to implement proper error handling and showing on screen
+                null -> {
+                    uiState.update {
+                        it.copy(isLoading = false, isError = true)
+                    }
+                }
             }
         }
     }
 
+    fun onWatchlistClicked(title: Title) {
+        //TODO
+//        viewModelScope.launch {
+//            if (title.isWatchlisted){
+//                titlesRepository.unBookmarkTitle(title)
+//            } else {
+//                titlesRepository.bookmarkTitle(title)
+//            }
+//        }
+    }
+
+    /**
+     * Gets the [TitleType] from the passed in String navigation argument.
+     * @return [TitleType] if successful or null if not.
+     */
     private fun getTitleTypeFromString(titleTypeString: String): TitleType? {
         return try {
             TitleType.valueOf(titleTypeString)
