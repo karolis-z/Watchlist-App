@@ -26,6 +26,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -137,7 +138,9 @@ fun TitleItemCard(
 fun AnimatedWatchlistButton(
     onWatchlistClicked: () -> Unit,
     isTitleWatchlisted: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(vertical = 0.dp, horizontal = 10.dp),
+    textStyle: TextStyle = MaterialTheme.typography.titleSmall
 ) {
     val buttonPrimaryColor = if (isSystemInDarkTheme()) dark_IMDBOrange else light_IMDBOrange
     val textColorWatchlisted = MaterialTheme.colorScheme.onBackground
@@ -162,7 +165,7 @@ fun AnimatedWatchlistButton(
             onWatchlistClicked()
             isWatchListed = !isWatchListed
         },
-        contentPadding = PaddingValues(vertical = 0.dp, horizontal = 10.dp),
+        contentPadding = contentPadding,
         modifier = modifier.animateContentSize(),
         border = BorderStroke(
             width = ButtonDefaults.outlinedButtonBorder.width,
@@ -176,7 +179,7 @@ fun AnimatedWatchlistButton(
             } else {
                 stringResource(id = R.string.title_item_bookmark)
             },
-            style = MaterialTheme.typography.titleSmall,
+            style = textStyle,
             color = textColor,
             modifier = Modifier.padding(bottom = 2.dp)
         )

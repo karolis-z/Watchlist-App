@@ -5,6 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.StringRes
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -15,7 +18,6 @@ import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -28,7 +30,6 @@ import androidx.navigation.navArgument
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.myapplications.mywatchlist.R
 import com.myapplications.mywatchlist.ui.details.DetailsScreen
 import com.myapplications.mywatchlist.ui.search.SearchScreen
@@ -36,6 +37,8 @@ import com.myapplications.mywatchlist.ui.theme.MyWatchlistTheme
 import com.myapplications.mywatchlist.ui.trending.TrendingScreen
 import com.myapplications.mywatchlist.ui.watchlist.WatchlistScreen
 import dagger.hilt.android.AndroidEntryPoint
+
+private const val TAG = "MAIN_ACTIVITY"
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @AndroidEntryPoint
@@ -47,15 +50,14 @@ class MainActivity : ComponentActivity() {
         val allTopLevelScreens = listOf(TopLevelScreens.Watchlist, TopLevelScreens.Search, TopLevelScreens.Trending)
 
         setContent {
+
+            val navController = rememberAnimatedNavController()
+            val navBackStackEntry by navController.currentBackStackEntryAsState()
+            val currentDestination = navBackStackEntry?.destination
+            val currentScreenTitleResId =
+                allTopLevelScreens.find { it.route == currentDestination?.route }?.titleResId
+
             MyWatchlistTheme {
-
-                val systemUiController = rememberSystemUiController()
-
-                val navController = rememberAnimatedNavController()
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentDestination = navBackStackEntry?.destination
-                val currentScreenTitleResId =
-                    allTopLevelScreens.find { it.route == currentDestination?.route }?.titleResId
 
                 val placeholderImage = if (isSystemInDarkTheme()) {
                     painterResource(id = R.drawable.placeholder_poster_dark)
@@ -63,25 +65,9 @@ class MainActivity : ComponentActivity() {
                     painterResource(id = R.drawable.placeholder_poster_light)
                 }
 
-                // TODO: Figure out how to make the status bar transparent appropriately
-                //systemUiController.setStatusBarColor(color = Color.Transparent)
-
-
-//                val topAppBarColors = if (currentDestination?.route?.contains(OtherScreens.Details.route) == true){
-//                    TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-//                } else {
-//                    TopAppBarDefaults.topAppBarColors()
-//                }
-
                 Scaffold(
                     topBar = {
                         TopAppBar(
-                            // TODO: Change colors in a better way because it's lagging now
-                            colors = if (currentDestination?.route?.contains(OtherScreens.Details.route) == true){
-                                TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-                            } else {
-                                TopAppBarDefaults.topAppBarColors()
-                            },
                             title = {
                                 Text(
                                     text = if (currentScreenTitleResId == null) {
@@ -106,7 +92,7 @@ class MainActivity : ComponentActivity() {
                         )
                     },
                     bottomBar = {
-                        NavigationBar() {
+                        NavigationBar {
                             for (screen in topLevelScreens) {
                                 NavigationBarItem(
                                     icon = {
@@ -167,7 +153,10 @@ class MainActivity : ComponentActivity() {
                             arguments = listOf(
                                 navArgument("titleId") {type = NavType.LongType},
                                 navArgument("titleType") {type = NavType.StringType}
-                            )
+                            ),
+                            // TODO: Research and use more appropriate transitions
+                            enterTransition = { fadeIn(animationSpec = tween(300)) },
+                            exitTransition = { fadeOut(animationSpec = tween(300)) }
                         ) { backStackEntry ->
                             val titleId = backStackEntry.arguments?.getLong("titleId")
                             val titleType = backStackEntry.arguments?.getString("titleType")

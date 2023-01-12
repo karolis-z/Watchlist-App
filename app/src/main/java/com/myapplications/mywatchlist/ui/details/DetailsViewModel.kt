@@ -55,4 +55,11 @@ class DetailsViewModel @Inject constructor(
             null
         }
     }
+
+    /** Converts the [Movie.runtime] minutes to hours and minutes for visual representation in ui */
+    fun convertRuntimeToHourAndMinutesPair(runtime: Int): Pair<Int,Int> {
+        val hours = runtime / 60
+        val minutes = runtime - (hours * 60)
+        return Pair(hours, minutes)
+    }
 }
