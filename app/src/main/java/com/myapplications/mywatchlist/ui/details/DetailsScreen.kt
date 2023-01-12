@@ -93,10 +93,11 @@ fun DetailsScreenContent(
     movie: Movie,
     runtimeString: String?,
     placeHolderBackdrop: Painter,
-    placeHolderPortrait: Painter
+    placeHolderPortrait: Painter,
+    modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {

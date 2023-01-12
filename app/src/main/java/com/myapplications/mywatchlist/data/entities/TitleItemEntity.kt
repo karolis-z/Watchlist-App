@@ -1,7 +1,7 @@
 package com.myapplications.mywatchlist.data.entities
 
 import androidx.room.*
-import androidx.room.ForeignKey.CASCADE
+import androidx.room.ForeignKey.Companion.CASCADE
 import com.myapplications.mywatchlist.domain.entities.Genre
 import com.myapplications.mywatchlist.domain.entities.TitleType
 import java.time.LocalDate
