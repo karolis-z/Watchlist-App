@@ -37,36 +37,6 @@ class TitleItemsRepositoryImpl @Inject constructor(
         localDataSource.unBookmarkTitleItem(titleItem = titleItem)
     }
 
-//    override suspend fun bookmarkTitle(title: Title) = withContext(dispatcher) {
-//        val titleItem = when (title){
-//            is Movie -> title.toTitleItem()
-//            is TV -> title.toTitleItem()
-//            else -> null
-//        }
-//        if (titleItem == null) {
-//            Log.e(TAG, "bookmarkTitle: the provided title was neither Movie nor TV type. " +
-//                    "Unable to bookmark this title: $title")
-//        } else {
-//            bookmarkTitleItem(titleItem = titleItem)
-//            return@withContext
-//        }
-//    }
-//
-//    override suspend fun unBookmarkTitle(title: Title) = withContext(dispatcher) {
-//        val titleItem = when (title){
-//            is Movie -> title.toTitleItem()
-//            is TV -> title.toTitleItem()
-//            else -> null
-//        }
-//        if (titleItem == null) {
-//            Log.e(TAG, "unBookmarkTitle: the provided title was neither Movie nor TV type. " +
-//                    "Unable to unbookmark this title: $title")
-//        } else {
-//            unBookmarkTitleItem(titleItem = titleItem)
-//            return@withContext
-//        }
-//    }
-
     override suspend fun getWatchlistedTitles(): List<TitleItem>? = withContext(dispatcher) {
         localDataSource.getAllBookmarkedTitles()
     }

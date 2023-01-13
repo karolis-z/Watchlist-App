@@ -18,7 +18,6 @@ class DetailsRepositoryImpl @Inject constructor(
     private val remoteDataSource: RemoteDetailsDataSource,
     private val localDataSource: LocalDetailsDataSource,
     private val genresRepository: GenresRepository,
-//    private val titleItemsRepository: TitleItemsRepository,
     @IoDispatcher private val dispatcher: CoroutineDispatcher
 ) : DetailsRepository {
 
