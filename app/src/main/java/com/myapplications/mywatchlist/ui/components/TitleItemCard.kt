@@ -70,6 +70,7 @@ fun TitleItemCard(
                         .build(),
                     placeholder = placeholderImage,
                     fallback = placeholderImage,
+                    error = placeholderImage,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     alignment = Alignment.Center,

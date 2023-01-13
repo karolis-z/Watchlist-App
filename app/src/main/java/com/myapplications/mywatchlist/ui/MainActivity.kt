@@ -170,16 +170,10 @@ class MainActivity : ComponentActivity() {
                             enterTransition = { fadeIn (animationSpec = tween(500)) },
                             exitTransition = { fadeOut (animationSpec = tween(500)) }
                         ) { backStackEntry ->
-                            val titleId = backStackEntry.arguments?.getLong("titleId")
-                            val titleType = backStackEntry.arguments?.getString("titleType")
-                            if (titleId != null && titleType != null) {
-                                DetailsScreen(
-                                    titleId = titleId,
-                                    titleType = titleType,
-                                    placeHolderPortrait = placeHolderPortrait,
-                                    placeHolderBackdrop = placeHolderBackdrop
-                                )
-                            }
+                            DetailsScreen(
+                                placeHolderBackdrop = placeHolderPortrait,
+                                placeHolderPortrait = placeHolderBackdrop
+                            )
                         }
                     }
                 }

@@ -49,8 +49,6 @@ private const val TAG = "DETAILS_SCREEN"
 
 @Composable
 fun DetailsScreen(
-    titleId: Long,
-    titleType: String,
     placeHolderBackdrop: Painter,
     placeHolderPortrait: Painter
 ) {
@@ -183,9 +181,7 @@ fun DetailsScreenContent(
                 SectionHeadline(label = stringResource(id = R.string.details_cast_label))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                     items(
-                        /* Combining a key out of cast member name and character name to make sure
-                        we have a unique value */
-                        key = { castMember -> "${castMember.name}-${castMember.character}" },
+                        key = { castMember -> castMember.id },
                         items = cast
                     ) { castMember: CastMember ->
                         CastMemberCard(
