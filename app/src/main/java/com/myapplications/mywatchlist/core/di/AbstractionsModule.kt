@@ -9,10 +9,12 @@ import com.myapplications.mywatchlist.data.local.titles.TitlesLocalDataSourceImp
 import com.myapplications.mywatchlist.data.remote.*
 import com.myapplications.mywatchlist.data.repositories.DetailsRepositoryImpl
 import com.myapplications.mywatchlist.data.repositories.GenresRepositoryImpl
-import com.myapplications.mywatchlist.data.repositories.TitlesRepositoryImpl
+import com.myapplications.mywatchlist.data.repositories.TitleItemsRepositoryImpl
+import com.myapplications.mywatchlist.data.repositories.TitlesManagerImpl
 import com.myapplications.mywatchlist.domain.repositories.DetailsRepository
 import com.myapplications.mywatchlist.domain.repositories.GenresRepository
-import com.myapplications.mywatchlist.domain.repositories.TitlesRepository
+import com.myapplications.mywatchlist.domain.repositories.TitleItemsRepository
+import com.myapplications.mywatchlist.domain.repositories.TitlesManager
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -23,7 +25,7 @@ import dagger.hilt.components.SingletonComponent
 abstract class AbstractionsModule {
 
     @Binds
-    abstract fun bindTitlesRepository(titlesRepositoryImpl: TitlesRepositoryImpl): TitlesRepository
+    abstract fun bindTitlesRepository(titlesRepositoryImpl: TitleItemsRepositoryImpl): TitleItemsRepository
 
     @Binds
     abstract fun bindTitlesLocalDataSource(titlesLocalDataSourceImpl: TitlesLocalDataSourceImpl): TitlesLocalDataSource
@@ -49,5 +51,7 @@ abstract class AbstractionsModule {
     @Binds
     abstract fun bindDetailsLocalDataSource(detailsDataSourceImpl: LocalDetailsDataSourceImpl): LocalDetailsDataSource
 
+    @Binds
+    abstract fun bindTitlesManager(titlesManagerImpl: TitlesManagerImpl): TitlesManager
 
 }

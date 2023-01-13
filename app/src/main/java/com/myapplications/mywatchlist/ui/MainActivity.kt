@@ -171,8 +171,8 @@ class MainActivity : ComponentActivity() {
                             exitTransition = { fadeOut (animationSpec = tween(500)) }
                         ) { backStackEntry ->
                             DetailsScreen(
-                                placeHolderBackdrop = placeHolderPortrait,
-                                placeHolderPortrait = placeHolderBackdrop
+                                placeHolderBackdrop = placeHolderBackdrop,
+                                placeHolderPortrait = placeHolderPortrait
                             )
                         }
                     }

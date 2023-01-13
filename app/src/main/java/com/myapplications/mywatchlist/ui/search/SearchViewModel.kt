@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.myapplications.mywatchlist.data.ApiGetTitleItemsExceptions
 import com.myapplications.mywatchlist.domain.entities.TitleItem
-import com.myapplications.mywatchlist.domain.repositories.TitlesRepository
+import com.myapplications.mywatchlist.domain.repositories.TitlesManager
 import com.myapplications.mywatchlist.domain.result.ResultOf
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +17,7 @@ private const val TAG = "SEARCH_VIEWMODEL"
 
 @HiltViewModel
 class SearchViewModel @Inject constructor(
-    private val titlesRepository: TitlesRepository
+    private val titlesManager: TitlesManager
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<SearchUiState> = MutableStateFlow(SearchUiState())
@@ -33,7 +33,7 @@ class SearchViewModel @Inject constructor(
                     error = null
                 )
             }
-            val response = titlesRepository.searchTitles(query)
+            val response = titlesManager.searchTitles(query)
             when (response) {
                 is ResultOf.Success -> {
                     _uiState.update {
@@ -76,9 +76,9 @@ class SearchViewModel @Inject constructor(
     fun onWatchlistClicked(title: TitleItem) {
         viewModelScope.launch {
             if (title.isWatchlisted) {
-                titlesRepository.unBookmarkTitleItem(title)
+                titlesManager.unBookmarkTitleItem(title)
             } else {
-                titlesRepository.bookmarkTitleItem(title)
+                titlesManager.bookmarkTitleItem(title)
             }
         }
     }

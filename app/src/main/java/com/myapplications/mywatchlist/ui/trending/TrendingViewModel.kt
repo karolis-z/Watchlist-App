@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.myapplications.mywatchlist.data.ApiGetTitleItemsExceptions
 import com.myapplications.mywatchlist.domain.entities.TitleItem
-import com.myapplications.mywatchlist.domain.repositories.TitlesRepository
+import com.myapplications.mywatchlist.domain.repositories.TitlesManager
 import com.myapplications.mywatchlist.domain.result.ResultOf
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +18,7 @@ private const val TAG = "TRENDING_VIEWMODEL"
 
 @HiltViewModel
 class TrendingViewModel @Inject constructor(
-    private val titlesRepository: TitlesRepository
+    private val titlesManager: TitlesManager
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<TrendingUiState> = MutableStateFlow(TrendingUiState())
@@ -33,7 +33,7 @@ class TrendingViewModel @Inject constructor(
             _uiState.update {
                 it.copy(titleItems = null, isLoading = true, error = null)
             }
-            val response = titlesRepository.getTrendingTitles()
+            val response = titlesManager.getTrendingTitles()
             when (response) {
                 is ResultOf.Success -> {
                     _uiState.update {
@@ -66,10 +66,10 @@ class TrendingViewModel @Inject constructor(
         viewModelScope.launch {
             if (title.isWatchlisted) {
                 Log.d(TAG, "onWatchlistClicked: title IS watchlisted, unbookmarking")
-                titlesRepository.unBookmarkTitleItem(title)
+                titlesManager.unBookmarkTitleItem(title)
             } else {
                 Log.d(TAG, "onWatchlistClicked: title IS NOT watchlisted, bookmarking")
-                titlesRepository.bookmarkTitleItem(title)
+                titlesManager.bookmarkTitleItem(title)
             }
         }
     }

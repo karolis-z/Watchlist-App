@@ -7,7 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.myapplications.mywatchlist.domain.entities.Movie
 import com.myapplications.mywatchlist.domain.entities.TV
 import com.myapplications.mywatchlist.domain.entities.TitleType
-import com.myapplications.mywatchlist.domain.repositories.DetailsRepository
+import com.myapplications.mywatchlist.domain.repositories.TitlesManager
 import com.myapplications.mywatchlist.domain.result.ResultOf
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +19,7 @@ private const val TAG = "DETAILS_VIEWMODEL"
 
 @HiltViewModel
 class DetailsViewModel @Inject constructor(
-    private val detailsRepository: DetailsRepository,
+    private val titlesManager: TitlesManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -49,7 +49,7 @@ class DetailsViewModel @Inject constructor(
         viewModelScope.launch {
             when(titleType){
                 TitleType.MOVIE -> {
-                    when(val movieResult = detailsRepository.getMovie(id)) {
+                    when(val movieResult = titlesManager.getMovie(id)) {
                         is ResultOf.Success -> {
                             uiState.update {
                                 it.copy(
@@ -68,7 +68,7 @@ class DetailsViewModel @Inject constructor(
                     }
                 }
                 TitleType.TV -> {
-                    when(val tvResult = detailsRepository.getTv(id)) {
+                    when(val tvResult = titlesManager.getTv(id)) {
                         is ResultOf.Success -> {
                             uiState.update {
                                 it.copy(
@@ -101,10 +101,10 @@ class DetailsViewModel @Inject constructor(
             if (title != null) {
                 if (title.isWatchlisted) {
                     Log.d(TAG, "onWatchlistClicked: title IS watclisted. Unbookmarking")
-                    detailsRepository.unBookmarkTitle(title)
+                    titlesManager.unBookmarkTitle(title)
                 } else {
                     Log.d(TAG, "onWatchlistClicked: title IS NOT watclisted. Bookmarking")
-                    detailsRepository.bookmarkTitle(title)
+                    titlesManager.bookmarkTitle(title)
                 }
                 /* Updating the uiState to hold a changed value of the Title so that the correct
                 state of watchlist button is shown */

@@ -1,16 +1,11 @@
 package com.myapplications.mywatchlist.data.repositories
 
-import android.util.Log
 import com.myapplications.mywatchlist.core.di.IoDispatcher
 import com.myapplications.mywatchlist.data.local.titles.TitlesLocalDataSource
-import com.myapplications.mywatchlist.data.mappers.toTitleItem
 import com.myapplications.mywatchlist.data.remote.TitlesRemoteDataSource
-import com.myapplications.mywatchlist.domain.entities.Movie
-import com.myapplications.mywatchlist.domain.entities.TV
-import com.myapplications.mywatchlist.domain.entities.Title
 import com.myapplications.mywatchlist.domain.entities.TitleItem
 import com.myapplications.mywatchlist.domain.repositories.GenresRepository
-import com.myapplications.mywatchlist.domain.repositories.TitlesRepository
+import com.myapplications.mywatchlist.domain.repositories.TitleItemsRepository
 import com.myapplications.mywatchlist.domain.result.ResultOf
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -19,12 +14,12 @@ import javax.inject.Inject
 
 private const val TAG = "TITLES_REPOSITORY"
 
-class TitlesRepositoryImpl @Inject constructor(
+class TitleItemsRepositoryImpl @Inject constructor(
     private val localDataSource: TitlesLocalDataSource,
     private val remoteDataSource: TitlesRemoteDataSource,
     private val genresRepository: GenresRepository,
     @IoDispatcher private val dispatcher: CoroutineDispatcher
-) : TitlesRepository {
+) : TitleItemsRepository {
 
     // TODO: Add check for internet connection available and return appropriate result
     override suspend fun searchTitles(query: String): ResultOf<List<TitleItem>> =
@@ -42,35 +37,35 @@ class TitlesRepositoryImpl @Inject constructor(
         localDataSource.unBookmarkTitleItem(titleItem = titleItem)
     }
 
-    override suspend fun bookmarkTitle(title: Title) = withContext(dispatcher) {
-        val titleItem = when (title){
-            is Movie -> title.toTitleItem()
-            is TV -> title.toTitleItem()
-            else -> null
-        }
-        if (titleItem == null) {
-            Log.e(TAG, "bookmarkTitle: the provided title was neither Movie nor TV type. " +
-                    "Unable to bookmark this title: $title")
-        } else {
-            bookmarkTitleItem(titleItem = titleItem)
-            return@withContext
-        }
-    }
-
-    override suspend fun unBookmarkTitle(title: Title) = withContext(dispatcher) {
-        val titleItem = when (title){
-            is Movie -> title.toTitleItem()
-            is TV -> title.toTitleItem()
-            else -> null
-        }
-        if (titleItem == null) {
-            Log.e(TAG, "unBookmarkTitle: the provided title was neither Movie nor TV type. " +
-                    "Unable to unbookmark this title: $title")
-        } else {
-            unBookmarkTitleItem(titleItem = titleItem)
-            return@withContext
-        }
-    }
+//    override suspend fun bookmarkTitle(title: Title) = withContext(dispatcher) {
+//        val titleItem = when (title){
+//            is Movie -> title.toTitleItem()
+//            is TV -> title.toTitleItem()
+//            else -> null
+//        }
+//        if (titleItem == null) {
+//            Log.e(TAG, "bookmarkTitle: the provided title was neither Movie nor TV type. " +
+//                    "Unable to bookmark this title: $title")
+//        } else {
+//            bookmarkTitleItem(titleItem = titleItem)
+//            return@withContext
+//        }
+//    }
+//
+//    override suspend fun unBookmarkTitle(title: Title) = withContext(dispatcher) {
+//        val titleItem = when (title){
+//            is Movie -> title.toTitleItem()
+//            is TV -> title.toTitleItem()
+//            else -> null
+//        }
+//        if (titleItem == null) {
+//            Log.e(TAG, "unBookmarkTitle: the provided title was neither Movie nor TV type. " +
+//                    "Unable to unbookmark this title: $title")
+//        } else {
+//            unBookmarkTitleItem(titleItem = titleItem)
+//            return@withContext
+//        }
+//    }
 
     override suspend fun getWatchlistedTitles(): List<TitleItem>? = withContext(dispatcher) {
         localDataSource.getAllBookmarkedTitles()

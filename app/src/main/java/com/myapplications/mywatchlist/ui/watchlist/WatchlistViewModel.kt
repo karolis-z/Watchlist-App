@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.myapplications.mywatchlist.domain.entities.TitleItem
 import com.myapplications.mywatchlist.domain.repositories.GenresRepository
-import com.myapplications.mywatchlist.domain.repositories.TitlesRepository
+import com.myapplications.mywatchlist.domain.repositories.TitlesManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -17,13 +17,13 @@ private const val TAG = "WATCHLIST_VIEWMODEL"
 
 @HiltViewModel
 class WatchlistViewModel @Inject constructor(
-    private val titlesRepository: TitlesRepository,
+    private val titlesManager: TitlesManager,
     private val genresRepository: GenresRepository
 ): ViewModel() {
 
     private val isLoading = MutableStateFlow(true)
     private val isNoData = MutableStateFlow(false)
-    private val titleItemsFlow = titlesRepository.allWatchlistedTitleItems()
+    private val titleItemsFlow = titlesManager.allWatchlistedTitleItems()
     val uiState = combine(titleItemsFlow, isLoading, isNoData) { titleItems, isLoading, isNoData ->
         if (titleItems.isNotEmpty()) {
             WatchlistUiState(titleItems = titleItems, isLoading = false, isNoData = false)
@@ -47,9 +47,9 @@ class WatchlistViewModel @Inject constructor(
     fun onWatchlistClicked(title: TitleItem) {
         viewModelScope.launch {
             if (title.isWatchlisted){
-                titlesRepository.unBookmarkTitleItem(title)
+                titlesManager.unBookmarkTitleItem(title)
             } else {
-                titlesRepository.bookmarkTitleItem(title)
+                titlesManager.bookmarkTitleItem(title)
             }
         }
     }

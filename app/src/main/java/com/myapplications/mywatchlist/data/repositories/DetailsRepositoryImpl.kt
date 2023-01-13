@@ -9,7 +9,6 @@ import com.myapplications.mywatchlist.domain.entities.Title
 import com.myapplications.mywatchlist.domain.entities.TitleType
 import com.myapplications.mywatchlist.domain.repositories.DetailsRepository
 import com.myapplications.mywatchlist.domain.repositories.GenresRepository
-import com.myapplications.mywatchlist.domain.repositories.TitlesRepository
 import com.myapplications.mywatchlist.domain.result.ResultOf
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
@@ -19,7 +18,7 @@ class DetailsRepositoryImpl @Inject constructor(
     private val remoteDataSource: RemoteDetailsDataSource,
     private val localDataSource: LocalDetailsDataSource,
     private val genresRepository: GenresRepository,
-    private val titlesRepository: TitlesRepository,
+//    private val titleItemsRepository: TitleItemsRepository,
     @IoDispatcher private val dispatcher: CoroutineDispatcher
 ) : DetailsRepository {
 
@@ -80,18 +79,10 @@ class DetailsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun bookmarkTitle(title: Title) = withContext(dispatcher) {
-        // Watchlist TitleItem
-        titlesRepository.bookmarkTitle(title)
-
-        // Watchlist Title
         localDataSource.bookmarkTitle(title)
     }
 
     override suspend fun unBookmarkTitle(title: Title) = withContext(dispatcher) {
-        // Unbookmark the associates TitleItem
-        titlesRepository.unBookmarkTitle(title)
-
-        // Unbookmark the Title
         localDataSource.unBookmarkTitle(title)
     }
 }
