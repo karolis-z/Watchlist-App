@@ -1,5 +1,6 @@
 package com.myapplications.mywatchlist.ui.trending
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.myapplications.mywatchlist.data.ApiGetTitleItemsExceptions
@@ -12,6 +13,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+private const val TAG = "TRENDING_VIEWMODEL"
 
 @HiltViewModel
 class TrendingViewModel @Inject constructor(
@@ -62,9 +65,11 @@ class TrendingViewModel @Inject constructor(
     fun onWatchlistClicked(title: TitleItem) {
         viewModelScope.launch {
             if (title.isWatchlisted) {
-                titlesRepository.unBookmarkTitle(title)
+                Log.d(TAG, "onWatchlistClicked: title IS watchlisted, unbookmarking")
+                titlesRepository.unBookmarkTitleItem(title)
             } else {
-                titlesRepository.bookmarkTitle(title)
+                Log.d(TAG, "onWatchlistClicked: title IS NOT watchlisted, bookmarking")
+                titlesRepository.bookmarkTitleItem(title)
             }
         }
     }

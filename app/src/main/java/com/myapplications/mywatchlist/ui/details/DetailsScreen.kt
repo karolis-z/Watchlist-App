@@ -1,5 +1,6 @@
 package com.myapplications.mywatchlist.ui.details
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -44,6 +45,8 @@ import com.myapplications.mywatchlist.ui.components.LoadingCircle
 import com.myapplications.mywatchlist.ui.theme.IMDBOrange
 import java.time.LocalDate
 
+private const val TAG = "DETAILS_SCREEN"
+
 @Composable
 fun DetailsScreen(
     titleId: Long,
@@ -54,7 +57,6 @@ fun DetailsScreen(
 
     val viewModel = hiltViewModel<DetailsViewModel>()
     val uiState = viewModel.uiState.collectAsState()
-    viewModel.getTitle(titleId, titleType)
 
     if (uiState.value.isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -76,6 +78,7 @@ fun DetailsScreen(
         }
     } else {
         val title = uiState.value.title
+        Log.d(TAG, "DetailsScreen: title is watchlisted = ${title?.isWatchlisted}")
         val type = uiState.value.type
         // Setting to data unavailable string, but will be replaced below if actually available
         var runtimeOrSeasonsString = stringResource(id = R.string.details_data_notavailable)
@@ -107,7 +110,7 @@ fun DetailsScreen(
                 placeHolderBackdrop = placeHolderBackdrop,
                 runtimeOrSeasonsString = runtimeOrSeasonsString,
                 placeHolderPortrait = placeHolderPortrait,
-                onWatchlistClicked = { viewModel.onWatchlistClicked(it) }
+                onWatchlistClicked = { viewModel.onWatchlistClicked() }
             )
         }
 
@@ -121,7 +124,7 @@ fun DetailsScreenContent(
     runtimeOrSeasonsString: String,
     placeHolderBackdrop: Painter,
     placeHolderPortrait: Painter,
-    onWatchlistClicked: (Title) -> Unit,
+    onWatchlistClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
 
@@ -201,7 +204,7 @@ fun DetailsScreenContent(
                     .padding(bottom = 10.dp)
             ) {
                 AnimatedWatchlistButton(
-                    onWatchlistClicked = { onWatchlistClicked(title) },
+                    onWatchlistClicked = { onWatchlistClicked() },
                     isTitleWatchlisted = title.isWatchlisted,
                     contentPadding = ButtonDefaults.ContentPadding,
                     textStyle = MaterialTheme.typography.titleMedium
@@ -297,6 +300,7 @@ fun DetailsBackdrop(
                 .build(),
             placeholder = placeholderImage,
             fallback = placeholderImage,
+            error = placeholderImage,
             contentDescription = null, //Decorative
             contentScale = ContentScale.Crop,
             alignment = Alignment.Center,
@@ -306,7 +310,9 @@ fun DetailsBackdrop(
                     sizeImage = it.size
                 }
         )
-        Box(modifier = Modifier.matchParentSize().background(gradient))
+        Box(modifier = Modifier
+            .matchParentSize()
+            .background(gradient))
         Text(
             text = title.name,
             style = MaterialTheme.typography.displaySmall.copy(
@@ -343,6 +349,7 @@ fun CastMemberCard(
                 .build(),
             placeholder = placeHolderPortrait,
             fallback = placeHolderPortrait,
+            error = placeHolderPortrait,
             contentDescription = null, //Decorative
             contentScale = ContentScale.Crop,
             alignment = Alignment.Center,
@@ -382,7 +389,7 @@ fun SectionHeadline(label: String, modifier: Modifier = Modifier, bottomPadding:
 @Preview
 @Composable
 fun CastMemberCardPreview(){
-    val castMember = CastMember(name = "Carrie-Anne Moss", character = "Trinity", pictureLink = null)
+    val castMember = CastMember(id = 1, name = "Carrie-Anne Moss", character = "Trinity", pictureLink = null)
     val placeHolderPortrait = painterResource(id = R.drawable.placeholder_portrait_light)
     CastMemberCard(castMember = castMember, placeHolderPortrait = placeHolderPortrait)
 }
@@ -392,11 +399,11 @@ fun CastMemberCardPreview(){
 fun DetailsScreenPreview(){
     val genres = listOf(Genre(0, "Action"), Genre(1, "Science Fiction"), Genre(2, "Adventure"))
     val cast = listOf(
-        CastMember("Keanu Reaves", "Neo", null),
-        CastMember("Laurence Fishburne", "Morpheus", null),
-        CastMember("Carrie-Anne Moss", "Trinity", null),
-        CastMember("Hugo Weaving", "Agent Smith", null),
-        CastMember("Joe Pantoliano", "Cypher", null),
+        CastMember(0,"Keanu Reaves", "Neo", null),
+        CastMember(1,"Laurence Fishburne", "Morpheus", null),
+        CastMember(2,"Carrie-Anne Moss", "Trinity", null),
+        CastMember(3,"Hugo Weaving", "Agent Smith", null),
+        CastMember(4,"Joe Pantoliano", "Cypher", null),
     )
     val videos = listOf(
         "https://www.youtube.com/watch?v=nUEQNVV3Gfs",

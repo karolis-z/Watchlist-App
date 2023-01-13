@@ -1,10 +1,11 @@
 package com.myapplications.mywatchlist.ui.details
 
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.myapplications.mywatchlist.domain.entities.Movie
-import com.myapplications.mywatchlist.domain.entities.Title
+import com.myapplications.mywatchlist.domain.entities.TV
 import com.myapplications.mywatchlist.domain.entities.TitleType
 import com.myapplications.mywatchlist.domain.repositories.DetailsRepository
 import com.myapplications.mywatchlist.domain.result.ResultOf
@@ -18,12 +19,32 @@ private const val TAG = "DETAILS_VIEWMODEL"
 
 @HiltViewModel
 class DetailsViewModel @Inject constructor(
-    private val detailsRepository: DetailsRepository
+    private val detailsRepository: DetailsRepository,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     val uiState = MutableStateFlow(DetailsUiState())
 
-    fun getTitle(id: Long, titleTypeString: String) {
+    init {
+        try {
+            val titleId = savedStateHandle.get<Long>("titleId")
+            val titleType = savedStateHandle.get<String>("titleType")
+            if (titleId == null || titleType == null) {
+                uiState.update {
+                    it.copy(isLoading = false, isError = true)
+                }
+            } else {
+                getTitle(id = titleId, titleTypeString = titleType)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to get title id and titletype from savedStateHandle. Reason: $e", e)
+            uiState.update {
+                it.copy(isLoading = false, isError = true)
+            }
+        }
+    }
+
+    private fun getTitle(id: Long, titleTypeString: String) {
         val titleType = getTitleTypeFromString(titleTypeString)
         viewModelScope.launch {
             when(titleType){
@@ -74,15 +95,34 @@ class DetailsViewModel @Inject constructor(
         }
     }
 
-    fun onWatchlistClicked(title: Title) {
-        //TODO
-//        viewModelScope.launch {
-//            if (title.isWatchlisted){
-//                titlesRepository.unBookmarkTitle(title)
-//            } else {
-//                titlesRepository.bookmarkTitle(title)
-//            }
-//        }
+    fun onWatchlistClicked() {
+        viewModelScope.launch {
+            val title = uiState.value.title
+            if (title != null) {
+                if (title.isWatchlisted) {
+                    Log.d(TAG, "onWatchlistClicked: title IS watclisted. Unbookmarking")
+                    detailsRepository.unBookmarkTitle(title)
+                } else {
+                    Log.d(TAG, "onWatchlistClicked: title IS NOT watclisted. Bookmarking")
+                    detailsRepository.bookmarkTitle(title)
+                }
+                /* Updating the uiState to hold a changed value of the Title so that the correct
+                state of watchlist button is shown */
+                uiState.update {
+                    when (uiState.value.type) {
+                        TitleType.MOVIE -> {
+                            it.copy(title = (title as Movie).copy(isWatchlisted = !title.isWatchlisted))
+                        }
+                        TitleType.TV -> {
+                            it.copy(title = (title as TV).copy(isWatchlisted = !title.isWatchlisted))
+                        }
+                        /* Should never happen, but if it does, then don't do anything as we can't determine
+                        * what to add to watchlist */
+                        null -> return@launch
+                    }
+                }
+            }
+        }
     }
 
     /**

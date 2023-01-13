@@ -47,9 +47,9 @@ class WatchlistViewModel @Inject constructor(
     fun onWatchlistClicked(title: TitleItem) {
         viewModelScope.launch {
             if (title.isWatchlisted){
-                titlesRepository.unBookmarkTitle(title)
+                titlesRepository.unBookmarkTitleItem(title)
             } else {
-                titlesRepository.bookmarkTitle(title)
+                titlesRepository.bookmarkTitleItem(title)
             }
         }
     }

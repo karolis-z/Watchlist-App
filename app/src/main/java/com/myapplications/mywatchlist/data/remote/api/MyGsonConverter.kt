@@ -266,6 +266,7 @@ object MyGsonConverter {
             castJsonArray.forEachIndexed { index, jsonElement ->
                 val castMember = try {
                     CastMember(
+                        id = jsonElement.asJsonObject.get("id").asLong,
                         name = jsonElement.asJsonObject.get("name").asString,
                         character = jsonElement.asJsonObject.get("character").asString,
                         pictureLink = getImageLink(jsonElement.asJsonObject, "profile_path")
