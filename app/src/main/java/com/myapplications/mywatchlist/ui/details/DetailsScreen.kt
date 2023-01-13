@@ -1,6 +1,5 @@
 package com.myapplications.mywatchlist.ui.details
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -76,12 +75,12 @@ fun DetailsScreen(
         }
     } else {
         val title = uiState.value.title
-        Log.d(TAG, "DetailsScreen: title is watchlisted = ${title?.isWatchlisted}")
         val type = uiState.value.type
+
         // Setting to data unavailable string, but will be replaced below if actually available
         var runtimeOrSeasonsString = stringResource(id = R.string.details_data_notavailable)
         if (title != null && type != null) {
-            when(uiState.value.type) {
+            when (uiState.value.type) {
                 TitleType.TV -> {
                     runtimeOrSeasonsString = pluralStringResource(
                         id = R.plurals.details_seasons,
@@ -92,7 +91,8 @@ fun DetailsScreen(
                 TitleType.MOVIE -> {
                     val runtime = (uiState.value.title as Movie).runtime
                     if (runtime != null) {
-                        val hoursAndMinutesPair = viewModel.convertRuntimeToHourAndMinutesPair(runtime)
+                        val hoursAndMinutesPair =
+                            viewModel.convertRuntimeToHourAndMinutesPair(runtime)
                         runtimeOrSeasonsString = stringResource(
                             id = R.string.details_runtime,
                             hoursAndMinutesPair.first,
@@ -175,6 +175,10 @@ fun DetailsScreenContent(
             }
             Spacer(modifier = Modifier.height(12.dp))
 
+            SectionHeadline(label = stringResource(id = R.string.details_details_label))
+            ExtraDetailsSection(title = title)
+            Spacer(modifier = Modifier.height(12.dp))
+
             // CAST
             val cast = title.cast
             if (cast != null) {
@@ -222,7 +226,7 @@ fun DetailsInfoRow(
     val releaseDateString = if (releaseDate == null) {
         stringResource(id = R.string.details_data_notavailable)
     } else {
-        when(titleType){
+        when (titleType) {
             TitleType.MOVIE -> {
                 DateFormatter.getLocalizedShortDateString(releaseDate)
             }
@@ -280,7 +284,7 @@ fun DetailsBackdrop(
     var sizeImage by remember { mutableStateOf(IntSize.Zero) }
     val gradient = Brush.verticalGradient(
         colors = listOf(Color.Transparent, MaterialTheme.colorScheme.background),
-        startY = sizeImage.height.toFloat()/3,  // 1/3
+        startY = sizeImage.height.toFloat() / 3,  // 1/3
         endY = sizeImage.height.toFloat()
     )
 
@@ -306,9 +310,11 @@ fun DetailsBackdrop(
                     sizeImage = it.size
                 }
         )
-        Box(modifier = Modifier
-            .matchParentSize()
-            .background(gradient))
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(gradient)
+        )
         Text(
             text = title.name,
             style = MaterialTheme.typography.displaySmall.copy(
@@ -321,7 +327,7 @@ fun DetailsBackdrop(
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(start = 10.dp, bottom = 10.dp)
+                .padding(start = 16.dp, bottom = 10.dp)
         )
     }
 }
@@ -331,7 +337,7 @@ fun CastMemberCard(
     castMember: CastMember,
     placeHolderPortrait: Painter,
     modifier: Modifier = Modifier
-){ 
+) {
     Card(
         modifier = modifier
             .size(width = 150.dp, height = 290.dp)
@@ -382,31 +388,21 @@ fun SectionHeadline(label: String, modifier: Modifier = Modifier, bottomPadding:
     )
 }
 
+
+
 @Preview
 @Composable
-fun CastMemberCardPreview(){
-    val castMember = CastMember(id = 1, name = "Carrie-Anne Moss", character = "Trinity", pictureLink = null)
+fun CastMemberCardPreview() {
+    val castMember =
+        CastMember(id = 1, name = "Carrie-Anne Moss", character = "Trinity", pictureLink = null)
     val placeHolderPortrait = painterResource(id = R.drawable.placeholder_portrait_light)
     CastMemberCard(castMember = castMember, placeHolderPortrait = placeHolderPortrait)
 }
 
 @Preview(showSystemUi = true, showBackground = true)
 @Composable
-fun DetailsScreenPreview(){
-    val genres = listOf(Genre(0, "Action"), Genre(1, "Science Fiction"), Genre(2, "Adventure"))
-    val cast = listOf(
-        CastMember(0,"Keanu Reaves", "Neo", null),
-        CastMember(1,"Laurence Fishburne", "Morpheus", null),
-        CastMember(2,"Carrie-Anne Moss", "Trinity", null),
-        CastMember(3,"Hugo Weaving", "Agent Smith", null),
-        CastMember(4,"Joe Pantoliano", "Cypher", null),
-    )
-    val videos = listOf(
-        "https://www.youtube.com/watch?v=nUEQNVV3Gfs",
-        "https://www.youtube.com/watch?v=RZ-MXBjvA38",
-        "https://www.youtube.com/watch?v=L0fw0WzFaBM",
-        "https://www.youtube.com/watch?v=m8e-FF8MsqU"
-    )
+fun DetailsScreenPreview() {
+
     val placeholderImage = if (isSystemInDarkTheme()) {
         painterResource(id = R.drawable.placeholder_backdrop_dark)
     } else {
@@ -418,31 +414,110 @@ fun DetailsScreenPreview(){
         painterResource(id = R.drawable.placeholder_portrait_light)
     }
 
-
     DetailsScreenContent(
-        title = Movie(
-            id = 603,
-            name = "The Matrix",
-            imdbId = "tt0133093",
-            overview = "Set in the 22nd century, The Matrix tells the story of a computer hacker who joins a group of underground insurgents fighting the vast and powerful computers who now rule the earth.",
-            tagline = "Welcome to the Real World.",
-            posterLink = "https://image.tmdb.org/t/p/w500/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg",
-            backdropLink = "https://image.tmdb.org/t/p/w500/l4QHerTSbMI7qgvasqxP36pqjN6.jpg",
-            genres = genres,
-            cast = cast,
-            videos = videos,
-            status = MovieStatus.Released,
-            releaseDate = LocalDate.parse("1999-03-30"),
-            revenue = 463517383,
-            runtime = 136,
-            voteCount = 22622,
-            voteAverage = 8.195,
-            isWatchlisted = false
-        ),
+        title = getMovieForTesting(),
         placeHolderBackdrop = placeholderImage,
         runtimeOrSeasonsString = "2h 16 min",
         placeHolderPortrait = placeHolderPortrait,
         onWatchlistClicked = {},
         titleType = TitleType.MOVIE
+    )
+}
+
+//TODO: Remove once not needed anymore
+private fun getMovieForTesting(): Movie {
+    val genres = listOf(Genre(0, "Action"), Genre(1, "Science Fiction"), Genre(2, "Adventure"))
+    val cast = listOf(
+        CastMember(0, "Keanu Reaves", "Neo", null),
+        CastMember(1, "Laurence Fishburne", "Morpheus", null),
+        CastMember(2, "Carrie-Anne Moss", "Trinity", null),
+        CastMember(3, "Hugo Weaving", "Agent Smith", null),
+        CastMember(4, "Joe Pantoliano", "Cypher", null),
+    )
+    val videos = listOf(
+        "https://www.youtube.com/watch?v=nUEQNVV3Gfs",
+        "https://www.youtube.com/watch?v=RZ-MXBjvA38",
+        "https://www.youtube.com/watch?v=L0fw0WzFaBM",
+        "https://www.youtube.com/watch?v=m8e-FF8MsqU"
+    )
+    return Movie(
+        id = 603,
+        name = "The Matrix",
+        imdbId = "tt0133093",
+        overview = "Set in the 22nd century, The Matrix tells the story of a computer hacker who joins a group of underground insurgents fighting the vast and powerful computers who now rule the earth.",
+        tagline = "Welcome to the Real World.",
+        posterLink = "https://image.tmdb.org/t/p/w500/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg",
+        backdropLink = "https://image.tmdb.org/t/p/w500/l4QHerTSbMI7qgvasqxP36pqjN6.jpg",
+        genres = genres,
+        cast = cast,
+        videos = videos,
+        status = MovieStatus.Released,
+        releaseDate = LocalDate.parse("1999-03-30"),
+        revenue = 463517383,
+        runtime = 136,
+        voteCount = 22622,
+        voteAverage = 8.195,
+        isWatchlisted = false
+    )
+}
+
+//TODO: Remove once not needed anymore
+private fun getTvForTesting(): TV {
+    val genres = listOf(Genre(0, "Crime"), Genre(1, "Drama"))
+    val cast = listOf(
+        CastMember(
+            0,
+            "Giancarlo Esposito",
+            "Leo Pap",
+            "https://image.tmdb.org/t/p/w500/lBvDQZjxhIGMbH61iHnqerpbqHc.jpg"
+        ),
+        CastMember(
+            1,
+            "Paz Vega",
+            "Ava Mercer",
+            "https://image.tmdb.org/t/p/w500/fNLlJysFd5f0Q8Lj20EZpU8BiRN.jpg"
+        ),
+        CastMember(
+            2,
+            "Rufus Sewell",
+            "Roger Salas",
+            "https://image.tmdb.org/t/p/w500/yc2EWyg45GO03YqDttaEhjvegiE.jpg"
+        ),
+        CastMember(
+            3,
+            "Tati Gabrielle",
+            "Hannah Kim",
+            "https://image.tmdb.org/t/p/w500/zDtHNX7vXfhRmN2U5Ffmd9mLlo0.jpg"
+        ),
+        CastMember(
+            4,
+            "Peter Mark Kendall",
+            "Stan Loomis",
+            "https://image.tmdb.org/t/p/w500/9Cj5ySZ6znkNcASB5CZeibuDGsd.jpg"
+        ),
+    )
+    val videos = listOf(
+        "https://www.youtube.com/watch?v=T92iINbl0t4",
+        "https://www.youtube.com/watch?v=YbArSoOP8XQ",
+        "https://www.youtube.com/watch?v=nHGk3sRxjYM"
+    )
+    return TV(
+        id = 156902,
+        name = "Kaleidoscope",
+        overview = "A master criminal and his crew hatch an elaborate scheme to break into a secure vault, but are forced to pivot when things don't go according to plan.",
+        tagline = "There are 7 billion ways to solve a crime.",
+        posterLink = "https://image.tmdb.org/t/p/w500/2nXJoSB5Y6R9ne7pjqL7Cs3zqY1.jpg",
+        backdropLink = "https://image.tmdb.org/t/p/w500/kSqEenES71d1ApF2rRWxp5X0en5.jpg",
+        genres = genres,
+        cast = cast,
+        videos = videos,
+        status = TvStatus.Ended,
+        releaseDate = LocalDate.parse("2023-01-01"),
+        lastAirDate = LocalDate.parse("2023-01-01"),
+        numberOfSeasons = 1,
+        numberOfEpisodes = 9,
+        voteCount = 97,
+        voteAverage = 7.397,
+        isWatchlisted = true
     )
 }

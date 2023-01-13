@@ -11,4 +11,6 @@ object Constants {
 
     const val YOUTUBE_WATCH_URL = "https://www.youtube.com/watch?v="
 
+    // IMDB LINK BASE URL
+    const val IMDB_BASE_URL = "https://www.imdb.com/title/"
 }
