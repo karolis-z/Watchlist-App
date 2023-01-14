@@ -1,5 +1,7 @@
 package com.myapplications.mywatchlist.ui.details
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -8,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Today
@@ -15,6 +18,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -45,6 +49,7 @@ import com.myapplications.mywatchlist.ui.theme.IMDBOrange
 import java.time.LocalDate
 
 private const val TAG = "DETAILS_SCREEN"
+private const val MAX_SUMMARY_LINES = 5
 
 @Composable
 fun DetailsScreen(
@@ -126,6 +131,10 @@ fun DetailsScreenContent(
     modifier: Modifier = Modifier
 ) {
 
+    var expandedSummaryState by remember { mutableStateOf(false)}
+    var showExpandSummaryArrow by remember { mutableStateOf(false) }
+    val rotationState by animateFloatAsState(targetValue = if (expandedSummaryState) 180f else 0f)
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -166,16 +175,38 @@ fun DetailsScreenContent(
             // OVERVIEW
             val titleOverview = title.overview
             if (titleOverview != null) {
-                SectionHeadline(label = stringResource(id = R.string.details_summary_label))
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    SectionHeadline(label = stringResource(id = R.string.details_summary_label), modifier = Modifier.weight(1f))
+                    if (showExpandSummaryArrow){
+                        IconButton(
+                            onClick = { expandedSummaryState = !expandedSummaryState },
+                            modifier = Modifier.rotate(rotationState)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.ExpandMore,
+                                contentDescription = stringResource(id = R.string.cd_expand_more)
+                            )
+                        }
+                    }
+                }
                 Text(
                     text = titleOverview,
                     style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .animateContentSize(),
+                    maxLines = if (expandedSummaryState) Int.MAX_VALUE else MAX_SUMMARY_LINES,
+                    overflow = TextOverflow.Ellipsis,
+                    onTextLayout = {
+                        if (it.hasVisualOverflow && showExpandSummaryArrow == false) {
+                            showExpandSummaryArrow = true
+                        }
+                    },
                 )
             }
             Spacer(modifier = Modifier.height(12.dp))
 
-            SectionHeadline(label = stringResource(id = R.string.details_details_label))
+            // EXTRA DETAILS - the headline label is within the ExtraDetailsSection composable
             ExtraDetailsSection(title = title)
             Spacer(modifier = Modifier.height(12.dp))
 

@@ -34,7 +34,7 @@
     </plurals>
     <string name="details_details_label">Details</string>
     <string name="details_data_notavailable">Unknown</string>
-    <string name="details_status">Details</string>
+    <string name="details_status">Status</string>
     <string name="details_tagline">Tagline</string>
     <string name="details_vote_count">Vote count</string>
     <plurals name="details_votes">
@@ -74,5 +74,6 @@
     <string name="cd_watchlist_button_watchlisted">Remove title from watchlist</string>
     <string name="cd_back_arrow">Navigate back</string>
     <string name="cd_imdb_link">Link to IMDb</string>
+    <string name="cd_expand_more">Expand for more information</string>
 
 </resources>

@@ -1,16 +1,23 @@
 package com.myapplications.mywatchlist.ui.details
 
 import android.util.Log
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -36,119 +43,159 @@ fun ExtraDetailsSection(
 
     val status = getStatusString(title = title)
 
-    Column(modifier = modifier.fillMaxWidth()) {
-        if (status.isNotEmpty()) {
-            Row(modifier = modifier.fillMaxWidth()) {
-                Text(
-                    text = stringResource(id = R.string.details_status),
-                    modifier = Modifier.weight(0.4f),
-                    style = categoryStyle
-                )
-                Text(text = status, modifier = Modifier.weight(0.6f), style = infoStyle)
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-        val tagline = title.tagline
-        if (tagline != null) {
-            Row(modifier = modifier.fillMaxWidth()) {
-                Text(
-                    text = stringResource(id = R.string.details_tagline),
-                    modifier = Modifier.weight(0.4f),
-                    style = categoryStyle
-                )
-                Text(text = tagline, modifier = Modifier.weight(0.6f), style = infoStyle)
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-        Row(modifier = modifier.fillMaxWidth()) {
-            Text(
-                text = stringResource(id = R.string.details_vote_count),
-                modifier = Modifier.weight(0.4f),
-                style = categoryStyle
-            )
-            Text(
-                text = pluralStringResource(
-                    id = R.plurals.details_votes,
-                    count = title.voteCount.toInt(),
-                    title.voteCount
-                ),
-                modifier = Modifier.weight(0.6f),
-                style = infoStyle
-            )
-        }
-        Spacer(modifier = Modifier.height(8.dp))
+    var expandedState by remember { mutableStateOf(false)}
+    val rotationState by animateFloatAsState(targetValue = if (expandedState) 180f else 0f)
 
-        when (title) {
-            is Movie -> {
-                val revenue = title.revenue
-                if (revenue != null) {
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            SectionHeadline(
+                label = stringResource(id = R.string.details_details_label),
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(
+                onClick = { expandedState = !expandedState },
+                modifier = Modifier.rotate(rotationState)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.ExpandMore,
+                    contentDescription = stringResource(id = R.string.cd_expand_more)
+                )
+            }
+        }
+
+        // The details list
+        AnimatedVisibility(
+            visible = expandedState,
+            enter = expandVertically(
+                expandFrom = Alignment.Top,
+                animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing)
+            ),
+            exit = shrinkVertically(
+                shrinkTowards = Alignment.Top,
+                animationSpec = tween(durationMillis = 300, easing = LinearOutSlowInEasing)
+            )
+        ) {
+            Column(modifier = modifier.fillMaxWidth()) {
+
+                if (status.isNotEmpty()) {
                     Row(modifier = modifier.fillMaxWidth()) {
                         Text(
-                            text = stringResource(id = R.string.details_revenue),
+                            text = stringResource(id = R.string.details_status),
                             modifier = Modifier.weight(0.4f),
                             style = categoryStyle
                         )
-                        Text(
-                            text = CurrencyFormatter.getUsdAmountInLocalCurrencyFormat(revenue),
-                            modifier = Modifier.weight(0.6f),
-                            style = infoStyle
-                        )
+                        Text(text = status, modifier = Modifier.weight(0.6f), style = infoStyle)
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                 }
-                val imdbId = title.imdbId
-                if (imdbId != null) {
-                    val imdbLink = Constants.IMDB_BASE_URL + imdbId
-                    Row(
-                        modifier = modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                val tagline = title.tagline
+                if (tagline != null) {
+                    Row(modifier = modifier.fillMaxWidth()) {
                         Text(
-                            text = stringResource(id = R.string.details_imdb_link),
+                            text = stringResource(id = R.string.details_tagline),
                             modifier = Modifier.weight(0.4f),
                             style = categoryStyle
                         )
-                        Box(
-                            modifier = Modifier
-                                .height(25.dp)
-                                .weight(0.6f)
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.imdb_logo),
-                                contentDescription = stringResource(id = R.string.cd_imdb_link),
-                                contentScale = ContentScale.FillHeight,
-                                alignment = Alignment.Center,
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(5.dp))
-                                    .clickable {
-                                        // TODO : Add intent to launch an imdb link. Should open imdb app?
-                                    }
-                            )
-                        }
+                        Text(text = tagline, modifier = Modifier.weight(0.6f), style = infoStyle)
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                 }
-            }
-            is TV -> {
                 Row(modifier = modifier.fillMaxWidth()) {
                     Text(
-                        text = stringResource(id = R.string.details_number_of_episodes),
+                        text = stringResource(id = R.string.details_vote_count),
                         modifier = Modifier.weight(0.4f),
                         style = categoryStyle
                     )
                     Text(
                         text = pluralStringResource(
-                            id = R.plurals.details_episodes,
-                            count = title.numberOfEpisodes,
-                            title.numberOfEpisodes
+                            id = R.plurals.details_votes,
+                            count = title.voteCount.toInt(),
+                            title.voteCount
                         ),
                         modifier = Modifier.weight(0.6f),
                         style = infoStyle
                     )
                 }
+                Spacer(modifier = Modifier.height(8.dp))
+
+                when (title) {
+                    is Movie -> {
+                        val revenue = title.revenue
+                        if (revenue != null) {
+                            Row(modifier = modifier.fillMaxWidth()) {
+                                Text(
+                                    text = stringResource(id = R.string.details_revenue),
+                                    modifier = Modifier.weight(0.4f),
+                                    style = categoryStyle
+                                )
+                                Text(
+                                    text = CurrencyFormatter.getUsdAmountInLocalCurrencyFormat(revenue),
+                                    modifier = Modifier.weight(0.6f),
+                                    style = infoStyle
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                        val imdbId = title.imdbId
+                        if (imdbId != null) {
+                            val imdbLink = Constants.IMDB_BASE_URL + imdbId
+                            Row(
+                                modifier = modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = stringResource(id = R.string.details_imdb_link),
+                                    modifier = Modifier.weight(0.4f),
+                                    style = categoryStyle
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .height(25.dp)
+                                        .weight(0.6f)
+                                ) {
+                                    Image(
+                                        painter = painterResource(id = R.drawable.imdb_logo),
+                                        contentDescription = stringResource(id = R.string.cd_imdb_link),
+                                        contentScale = ContentScale.FillHeight,
+                                        alignment = Alignment.Center,
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(5.dp))
+                                            .clickable {
+                                                // TODO : Add intent to launch an imdb link. Should open imdb app?
+                                            }
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                    }
+                    is TV -> {
+                        Row(modifier = modifier.fillMaxWidth()) {
+                            Text(
+                                text = stringResource(id = R.string.details_number_of_episodes),
+                                modifier = Modifier.weight(0.4f),
+                                style = categoryStyle
+                            )
+                            Text(
+                                text = pluralStringResource(
+                                    id = R.plurals.details_episodes,
+                                    count = title.numberOfEpisodes,
+                                    title.numberOfEpisodes
+                                ),
+                                modifier = Modifier.weight(0.6f),
+                                style = infoStyle
+                            )
+                        }
+                    }
+                }
             }
         }
     }
+
+
 }
 
 @Composable
