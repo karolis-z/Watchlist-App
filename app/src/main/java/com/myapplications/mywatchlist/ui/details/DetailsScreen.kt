@@ -116,7 +116,6 @@ fun DetailsScreen(
                 onWatchlistClicked = { viewModel.onWatchlistClicked() }
             )
         }
-
     }
 }
 
@@ -130,7 +129,6 @@ fun DetailsScreenContent(
     onWatchlistClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-
     var expandedSummaryState by remember { mutableStateOf(false)}
     var showExpandSummaryArrow by remember { mutableStateOf(false) }
     val rotationState by animateFloatAsState(targetValue = if (expandedSummaryState) 180f else 0f)
@@ -169,6 +167,22 @@ fun DetailsScreenContent(
                         textStyle = MaterialTheme.typography.labelLarge
                     )
                 }
+            }
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // WATCHLIST BUTTON
+            Row(
+                horizontalArrangement = Arrangement.End,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                AnimatedWatchlistButton(
+                    onWatchlistClicked = { onWatchlistClicked() },
+                    isTitleWatchlisted = title.isWatchlisted,
+                    contentPadding = ButtonDefaults.ContentPadding,
+                    textStyle = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.fillMaxWidth(),
+                    buttonShape = MaterialTheme.shapes.small
+                )
             }
             Spacer(modifier = Modifier.height(7.dp))
 
@@ -225,21 +239,6 @@ fun DetailsScreenContent(
                         )
                     }
                 }
-            }
-
-            // WATCHLIST BUTTON
-            Row(
-                horizontalArrangement = Arrangement.End,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 10.dp)
-            ) {
-                AnimatedWatchlistButton(
-                    onWatchlistClicked = { onWatchlistClicked() },
-                    isTitleWatchlisted = title.isWatchlisted,
-                    contentPadding = ButtonDefaults.ContentPadding,
-                    textStyle = MaterialTheme.typography.titleMedium
-                )
             }
         }
     }

@@ -21,6 +21,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -141,7 +142,8 @@ fun AnimatedWatchlistButton(
     isTitleWatchlisted: Boolean,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(vertical = 0.dp, horizontal = 10.dp),
-    textStyle: TextStyle = MaterialTheme.typography.titleSmall
+    textStyle: TextStyle = MaterialTheme.typography.titleSmall,
+    buttonShape: Shape = ButtonDefaults.shape
 ) {
     val buttonPrimaryColor = if (isSystemInDarkTheme()) dark_IMDBOrange else light_IMDBOrange
     val textColorWatchlisted = MaterialTheme.colorScheme.onBackground
@@ -172,7 +174,8 @@ fun AnimatedWatchlistButton(
             width = ButtonDefaults.outlinedButtonBorder.width,
             color = borderColor
         ),
-        colors = ButtonDefaults.buttonColors(containerColor = containerColor)
+        colors = ButtonDefaults.buttonColors(containerColor = containerColor),
+        shape = buttonShape
     ) {
         Text(
             text = if (isWatchListed) {
