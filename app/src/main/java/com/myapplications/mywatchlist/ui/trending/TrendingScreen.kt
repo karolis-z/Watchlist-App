@@ -1,8 +1,6 @@
 package com.myapplications.mywatchlist.ui.trending
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -33,6 +31,16 @@ fun TrendingScreen(placeholderImage: Painter, onTitleClicked: (TitleItem) -> Uni
     val isError = uiState.value.error != null
     val isTitlesAvailable = !uiState.value.titleItems.isNullOrEmpty()
 
+    val screenState = if (isLoading) {
+        UiState.Loading
+    } else if (isError) {
+        UiState.Error
+    } else if (isTitlesAvailable) {
+        UiState.DataAvailable
+    } else {
+        UiState.Error
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -45,59 +53,112 @@ fun TrendingScreen(placeholderImage: Painter, onTitleClicked: (TitleItem) -> Uni
                 .padding(vertical = 10.dp)
                 .fillMaxWidth()
         )
-        //TODO: Consider switching to AnimatedContent?
-        AnimatedVisibility(
-            visible = isLoading,
-            enter = fadeIn(),
-            exit = fadeOut()
-        ) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                LoadingCircle()
-            }
-        }
-        AnimatedVisibility(
-            visible = isError,
-            enter = fadeIn(),
-            exit = fadeOut()
-        ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                val errorMessage = when (error) {
-                    TrendingError.NO_INTERNET ->
-                        stringResource(id = R.string.error_no_internet_connection)
-                    TrendingError.FAILED_API_REQUEST ->
-                        stringResource(id = R.string.error_something_went_wrong)
-                    TrendingError.NO_TITLES ->
-                        stringResource(id = R.string.trending_nothing_trending)
-                    null -> "" // This should never happen because isError already controls for this
+        
+        Crossfade(targetState = screenState) { targetState: UiState ->
+            when(targetState) {
+                is UiState.Loading -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        LoadingCircle()
+                    }
                 }
-                Text(
-                    text = errorMessage,
-                    style = MaterialTheme.typography.headlineMedium,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
-        AnimatedVisibility(
-            visible = isTitlesAvailable,
-            enter = fadeIn(),
-            exit = fadeOut()
-        ) {
-            val titleItems = uiState.value.titleItems
-            if (titleItems != null) {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    TitleItemsList(
-                        titleItems = titleItems,
-                        placeholderImage = placeholderImage,
-                        onWatchlistClicked = { viewModel.onWatchlistClicked(it) },
-                        onTitleClicked = { onTitleClicked(it) },
-                        contentPadding = PaddingValues(vertical = 10.dp)
-                    )
+                is UiState.Error -> {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        val errorMessage = when (error) {
+                            TrendingError.NO_INTERNET ->
+                                stringResource(id = R.string.error_no_internet_connection)
+                            TrendingError.FAILED_API_REQUEST ->
+                                stringResource(id = R.string.error_something_went_wrong)
+                            TrendingError.NO_TITLES ->
+                                stringResource(id = R.string.trending_nothing_trending)
+                            null -> "" // This should never happen because isError already controls for this
+                        }
+                        Text(
+                            text = errorMessage,
+                            style = MaterialTheme.typography.headlineMedium,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+                is UiState.DataAvailable -> {
+                    val titleItems = uiState.value.titleItems
+                    if (titleItems != null) {
+                        Column(modifier = Modifier.fillMaxSize()) {
+                            TitleItemsList(
+                                titleItems = titleItems,
+                                placeholderImage = placeholderImage,
+                                onWatchlistClicked = { viewModel.onWatchlistClicked(it) },
+                                onTitleClicked = { onTitleClicked(it) },
+                                contentPadding = PaddingValues(vertical = 10.dp)
+                            )
+                        }
+                    }
                 }
             }
         }
+        
+//        //TODO: Consider switching to AnimatedContent?
+//        AnimatedVisibility(
+//            visible = isLoading,
+//            enter = fadeIn(),
+//            exit = fadeOut()
+//        ) {
+//            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+//                LoadingCircle()
+//            }
+//        }
+//        AnimatedVisibility(
+//            visible = isError,
+//            enter = fadeIn(),
+//            exit = fadeOut()
+//        ) {
+//            Column(
+//                modifier = Modifier.fillMaxSize(),
+//                horizontalAlignment = Alignment.CenterHorizontally,
+//                verticalArrangement = Arrangement.Center
+//            ) {
+//                val errorMessage = when (error) {
+//                    TrendingError.NO_INTERNET ->
+//                        stringResource(id = R.string.error_no_internet_connection)
+//                    TrendingError.FAILED_API_REQUEST ->
+//                        stringResource(id = R.string.error_something_went_wrong)
+//                    TrendingError.NO_TITLES ->
+//                        stringResource(id = R.string.trending_nothing_trending)
+//                    null -> "" // This should never happen because isError already controls for this
+//                }
+//                Text(
+//                    text = errorMessage,
+//                    style = MaterialTheme.typography.headlineMedium,
+//                    textAlign = TextAlign.Center
+//                )
+//            }
+//        }
+//        AnimatedVisibility(
+//            visible = isTitlesAvailable,
+//            enter = fadeIn(),
+//            exit = fadeOut()
+//        ) {
+//            val titleItems = uiState.value.titleItems
+//            if (titleItems != null) {
+//                Column(modifier = Modifier.fillMaxSize()) {
+//                    TitleItemsList(
+//                        titleItems = titleItems,
+//                        placeholderImage = placeholderImage,
+//                        onWatchlistClicked = { viewModel.onWatchlistClicked(it) },
+//                        onTitleClicked = { onTitleClicked(it) },
+//                        contentPadding = PaddingValues(vertical = 10.dp)
+//                    )
+//                }
+//            }
+//        }
     }
+}
+
+sealed class UiState {
+    object Loading : UiState()
+    object Error : UiState()
+    object DataAvailable : UiState()
 }
