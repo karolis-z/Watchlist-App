@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.myapplications.mywatchlist.data.ApiGetTitleItemsExceptions
 import com.myapplications.mywatchlist.domain.entities.TitleItem
 import com.myapplications.mywatchlist.domain.entities.TitleType
-import com.myapplications.mywatchlist.domain.repositories.TitlesRepository
 import com.myapplications.mywatchlist.domain.repositories.TitlesManager
 import com.myapplications.mywatchlist.domain.result.ResultOf
 import com.myapplications.mywatchlist.ui.components.TitleListFilter

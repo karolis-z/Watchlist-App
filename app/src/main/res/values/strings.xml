@@ -5,6 +5,7 @@
     <string name="title_watchlist">Watchlist</string>
     <string name="title_search">Search</string>
     <string name="title_trending">Trending</string>
+    <string name="title_details">Details</string>
 
     <!-- TITLE LIST ITEM -->
     <string name="title_item_vote_score">%s / 10</string>
@@ -59,7 +60,6 @@
         <string name="title_status_released">Released</string>
         <string name="title_status_rumored">Rumored</string>
         <string name="title_status_post_production">Post Production</string>
-    <string name="trending_nothing_trending">Nothing trending in this category…</string>
 
 
     <!-- GENERAL ERRORS -->
