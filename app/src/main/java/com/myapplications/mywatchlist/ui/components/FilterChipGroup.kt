@@ -1,5 +1,6 @@
 package com.myapplications.mywatchlist.ui.components
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
@@ -51,7 +52,8 @@ fun FilterChipGroup(
                             modifier = Modifier.size(FilterChipDefaults.IconSize)
                         )
                     }
-                }
+                },
+                modifier = Modifier.animateContentSize()
             )
         }
     }
