@@ -1,5 +1,8 @@
 package com.myapplications.mywatchlist.ui.watchlist
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -24,42 +27,64 @@ fun WatchlistScreen(placeholderImage: Painter, onTitleClicked: (TitleItem) -> Un
     val viewModel = hiltViewModel<WatchlistViewModel>()
     val uiState = viewModel.uiState.collectAsState()
 
-    if (uiState.value.isLoading) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            LoadingCircle()
-        }
-    } else if (uiState.value.isNoData) {
-        Column(
+    val isLoading = uiState.value.isLoading
+    val isNoData = uiState.value.isNoData
+    val isTitlesAvailable = !uiState.value.titleItems.isNullOrEmpty()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp)
+    ) {
+        FilterChipGroup(
+            onFilterSelected = { viewModel.onTitleFilterChosen(it) },
+            filter = uiState.value.filter,
             modifier = Modifier
-                .fillMaxSize()
-                .padding(15.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .padding(vertical = 10.dp)
+                .fillMaxWidth()
+        )
+        AnimatedVisibility(
+            visible = isLoading,
+            enter = fadeIn(),
+            exit = fadeOut()
         ) {
-            Text(
-                text = stringResource(id = R.string.watchlist_no_data),
-                style = MaterialTheme.typography.headlineMedium,
-                textAlign = TextAlign.Center
-            )
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                LoadingCircle()
+            }
         }
-    } else {
-        val titleItems = uiState.value.titleItems
-        if (titleItems != null) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                FilterChipGroup(
-                    onFilterSelected = { viewModel.onTitleFilterChosen(it) },
-                    filter = uiState.value.filter,
-                    modifier = Modifier
-                        .padding(horizontal = 15.dp, vertical = 10.dp)
-                        .fillMaxWidth()
+        AnimatedVisibility(
+            visible = isNoData,
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = stringResource(id = R.string.watchlist_no_data),
+                    style = MaterialTheme.typography.headlineMedium,
+                    textAlign = TextAlign.Center
                 )
-                TitleItemsList(
-                    titleItems = titleItems,
-                    placeholderImage = placeholderImage,
-                    onWatchlistClicked = { viewModel.onWatchlistClicked(it) },
-                    onTitleClicked = { onTitleClicked(it) },
-                    contentPadding = PaddingValues(vertical = 10.dp, horizontal = 5.dp)
-                )
+            }
+        }
+        AnimatedVisibility(
+            visible = isTitlesAvailable,
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
+            val titleItems = uiState.value.titleItems
+            if (titleItems != null) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    TitleItemsList(
+                        titleItems = titleItems,
+                        placeholderImage = placeholderImage,
+                        onWatchlistClicked = { viewModel.onWatchlistClicked(it) },
+                        onTitleClicked = { onTitleClicked(it) },
+                        contentPadding = PaddingValues(vertical = 10.dp)
+                    )
+                }
             }
         }
     }

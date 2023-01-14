@@ -54,18 +54,27 @@ fun SearchScreen(placeholderImage: Painter, onTitleClicked: (TitleItem) -> Unit)
     val listState = rememberLazyListState()
 
     Box(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.padding(vertical = 10.dp, horizontal = 5.dp)) {
+        Column(modifier = Modifier.padding(vertical = 10.dp, horizontal = 16.dp)) {
+
+            val isLoading = uiState.value.isLoading
+            val isError = uiState.value.error != null
+            val isTitlesAvailable = !uiState.value.titleItems.isNullOrEmpty()
+            val isNewSearch = !uiState.value.isSearchFinished && !uiState.value.isLoading
+
             SearchTextField(
                 onSearchClicked = { viewModel.searchTitleClicked(it) },
                 focusManager = focusManager,
                 focusRequester = focusRequester,
                 keyboardController = keyboardController,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 10.dp)
+                modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(10.dp))
-            if (!uiState.value.isSearchFinished && !uiState.value.isLoading) {
+
+            AnimatedVisibility(
+                visible = isNewSearch,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -79,25 +88,36 @@ fun SearchScreen(placeholderImage: Painter, onTitleClicked: (TitleItem) -> Unit)
                         textAlign = TextAlign.Center
                     )
                 }
-            } else if (uiState.value.isLoading) {
+            }
+
+            AnimatedVisibility(
+                visible = isLoading,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     LoadingCircle()
                 }
-            } else if (error != null) {
+            }
+
+            AnimatedVisibility(
+                visible = isError,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(15.dp),
+                    modifier = Modifier.fillMaxSize(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    val errorMessage = when(error) {
+                    val errorMessage = when (error) {
                         SearchError.NO_INTERNET ->
                             stringResource(id = R.string.error_no_internet_connection)
                         SearchError.FAILED_API_REQUEST ->
                             stringResource(id = R.string.error_something_went_wrong)
                         SearchError.NOTHING_FOUND ->
                             stringResource(id = R.string.search_nothing_found)
+                        null -> "" // Should never happen because isError already controls this
                     }
                     Text(
                         text = errorMessage,
@@ -105,7 +125,12 @@ fun SearchScreen(placeholderImage: Painter, onTitleClicked: (TitleItem) -> Unit)
                         textAlign = TextAlign.Center
                     )
                 }
-            } else {
+            }
+            AnimatedVisibility(
+                visible = isTitlesAvailable,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
                 val titleItems = uiState.value.titleItems
                 if (titleItems != null) {
                     TitleItemsList(
@@ -115,7 +140,7 @@ fun SearchScreen(placeholderImage: Painter, onTitleClicked: (TitleItem) -> Unit)
                         onTitleClicked = { onTitleClicked(it) },
                         state = listState
                     )
-                    LaunchedEffect(titleItems.isNotEmpty()){
+                    LaunchedEffect(titleItems.isNotEmpty()) {
                         coroutineScope.launch {
                             listState.animateScrollToItem(0)
                         }
@@ -125,7 +150,10 @@ fun SearchScreen(placeholderImage: Painter, onTitleClicked: (TitleItem) -> Unit)
         }
         SearchFAB(
             isFabVisible = listState.isScrollingUp(),
-            onFabClicked = { focusRequester.requestFocus() } ,
+            onFabClicked = {
+                focusRequester.requestFocus()
+                keyboardController?.show()
+            },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(bottom = 20.dp, end = 20.dp)
@@ -200,8 +228,8 @@ fun SearchFAB(
     AnimatedVisibility(
         visible = isFabVisible,
         modifier = modifier,
-        enter = fadeIn() + slideInHorizontally(initialOffsetX = {fullWidth -> fullWidth }),
-        exit = fadeOut() + slideOutHorizontally(targetOffsetX = {fullWidth -> fullWidth })
+        enter = fadeIn() + slideInHorizontally(initialOffsetX = { fullWidth -> fullWidth }),
+        exit = fadeOut() + slideOutHorizontally(targetOffsetX = { fullWidth -> fullWidth })
     ) {
         FloatingActionButton(onClick = onFabClicked) {
             Icon(
