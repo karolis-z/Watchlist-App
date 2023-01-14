@@ -1,7 +1,9 @@
 package com.myapplications.mywatchlist.data.mappers
 
 import com.myapplications.mywatchlist.data.entities.GenreEntity
+import com.myapplications.mywatchlist.data.entities.GenreForMovieEntity
 import com.myapplications.mywatchlist.data.entities.GenreForTitleEntity
+import com.myapplications.mywatchlist.data.entities.GenreForTvEntity
 import com.myapplications.mywatchlist.domain.entities.Genre
 
 /**
@@ -51,5 +53,41 @@ fun Genre.toGenreForTitleEntity(titleId: Long): GenreForTitleEntity {
 fun List<Genre>.toListOfGenreForTitleEntity(titleId: Long): List<GenreForTitleEntity> {
     return this.map {
         it.toGenreForTitleEntity(titleId)
+    }
+}
+
+/**
+ * Convert a [Genre] to [GenreForMovieEntity] for using in local database
+ * @param movieId is the id of [MovieEntity] with which [GenreForMovieEntity] has to be associated
+ */
+fun Genre.toGenreForMovieEntity(movieId: Long): GenreForMovieEntity {
+    return GenreForMovieEntity(id = this.id, name = this.name, movieId = movieId)
+}
+
+/**
+ * Convert a list of [Genre] to a list of [GenreForMovieEntity]
+ * @param movieId is the id of [MovieEntity] with which [GenreForMovieEntity] has to be associated
+ */
+fun List<Genre>.toListOfGenreForMovieEntity(movieId: Long): List<GenreForMovieEntity> {
+    return this.map {
+        it.toGenreForMovieEntity(movieId)
+    }
+}
+
+/**
+ * Convert a [Genre] to [GenreForTvEntity] for using in local database
+ * @param tvId is the id of [TvEntity] with which [GenreForTvEntity] has to be associated
+ */
+fun Genre.toGenreForTvEntity(tvId: Long): GenreForTvEntity {
+    return GenreForTvEntity(id = this.id, name = this.name, tvId = tvId)
+}
+
+/**
+ * Convert a list of [Genre] to a list of [GenreForTvEntity]
+ * @param tvId is the id of [TvEntity] with which [GenreForTvEntity] has to be associated
+ */
+fun List<Genre>.toListOfGenreForTvEntity(tvId: Long): List<GenreForTvEntity> {
+    return this.map {
+        it.toGenreForTvEntity(tvId)
     }
 }

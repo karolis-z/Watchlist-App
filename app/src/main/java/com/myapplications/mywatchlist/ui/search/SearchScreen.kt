@@ -30,6 +30,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.myapplications.mywatchlist.R
+import com.myapplications.mywatchlist.domain.entities.TitleItem
 import com.myapplications.mywatchlist.ui.components.LoadingCircle
 import com.myapplications.mywatchlist.ui.components.TitleItemsList
 import kotlinx.coroutines.launch
@@ -38,7 +39,7 @@ private const val TAG = "SEARCH_SCREEN"
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun SearchScreen(placeholderImage: Painter) {
+fun SearchScreen(placeholderImage: Painter, onTitleClicked: (TitleItem) -> Unit) {
     val viewModel = hiltViewModel<SearchViewModel>()
     val uiState = viewModel.uiState.collectAsState()
     val error = uiState.value.error
@@ -111,6 +112,7 @@ fun SearchScreen(placeholderImage: Painter) {
                         titleItems = titleItems,
                         placeholderImage = placeholderImage,
                         onWatchlistClicked = { viewModel.onWatchlistClicked(it) },
+                        onTitleClicked = { onTitleClicked(it) },
                         state = listState
                     )
                     LaunchedEffect(titleItems.isNotEmpty()){

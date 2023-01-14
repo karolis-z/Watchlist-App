@@ -22,6 +22,46 @@
     <!-- TRENDING SCREEN -->
     <string name="trending_nothing_trending">Nothing trending in this category…</string>
 
+    <!-- DETAILS SCREEN -->
+    <string name="details_summary_label">Summary</string>
+    <string name="details_cast_label">Cast</string>
+    <string name="details_runtime">%d h %d min</string>
+    <string name="details_error">Sorry… Could not get the details of this title</string>
+    <string name="details_number_of_seasons">%d seasons</string>
+    <plurals name="details_seasons">
+        <item quantity="one">%d season</item>
+        <item quantity="other">%d seasons</item>
+    </plurals>
+    <string name="details_details_label">Details</string>
+    <string name="details_data_notavailable">Unknown</string>
+    <string name="details_status">Status</string>
+    <string name="details_tagline">Tagline</string>
+    <string name="details_vote_count">Vote count</string>
+    <plurals name="details_votes">
+        <item quantity="one">%d vote</item>
+        <item quantity="other">%d votes</item>
+    </plurals>
+    <string name="details_number_of_episodes">Episode count</string>
+    <plurals name="details_episodes">
+        <item quantity="one">%d episode</item>
+        <item quantity="other">%d episodes</item>
+    </plurals>
+    <string name="details_revenue">Revenue</string>
+    <string name="details_imdb_link">IMDb link</string>
+        <!-- MOVIE AND TV STATUSES -->
+        <string name="title_status_ended">Ended</string>
+        <string name="title_status_returning_series">Returning Series</string>
+        <string name="title_status_pilot">Pilot</string>
+        <string name="title_status_in_production">In Production</string>
+        <string name="title_status_planned">Planned</string>
+        <string name="title_status_cancelled">Cancelled</string>
+        <string name="title_status_unknown">Unknown</string>
+        <string name="title_status_released">Released</string>
+        <string name="title_status_rumored">Rumored</string>
+        <string name="title_status_post_production">Post Production</string>
+    <string name="trending_nothing_trending">Nothing trending in this category…</string>
+
+
     <!-- GENERAL ERRORS -->
     <string name="error_no_internet_connection">Please check if you are connected to the internet</string>
     <string name="error_something_went_wrong">Oops…Something went wrong</string>
@@ -38,6 +78,9 @@
     <string name="cd_clear_field">Clear Field</string>
     <string name="cd_watchlist_button_watchlist">Put title in watchlist</string>
     <string name="cd_watchlist_button_watchlisted">Remove title from watchlist</string>
+    <string name="cd_back_arrow">Navigate back</string>
+    <string name="cd_imdb_link">Link to IMDb</string>
+    <string name="cd_expand_more">Expand for more information</string>
     <string name="cd_selected_filter_chip">Selected filter is %s</string>
 
 </resources>

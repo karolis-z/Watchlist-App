@@ -3,6 +3,7 @@ package com.myapplications.mywatchlist.data.remote.api
 import com.myapplications.mywatchlist.core.util.Constants
 import retrofit2.Response
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 const val apiKey = Constants.API_KEY
@@ -20,4 +21,10 @@ interface TmdbApi {
 
     @GET("trending/all/week?api_key=$apiKey")
     suspend fun getTrendingTitles(): Response<ApiResponse>
+
+    @GET("movie/{titleId}?api_key=$apiKey&append_to_response=credits,videos")
+    suspend fun getMovie(@Path("titleId") titleId: Long): Response<ApiResponse>
+
+    @GET("tv/{titleId}?api_key=$apiKey&append_to_response=credits,videos")
+    suspend fun getTv(@Path("titleId") titleId: Long): Response<ApiResponse>
 }

@@ -3,9 +3,9 @@ package com.myapplications.mywatchlist.data.local
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import com.myapplications.mywatchlist.data.entities.GenreEntity
-import com.myapplications.mywatchlist.data.entities.GenreForTitleEntity
-import com.myapplications.mywatchlist.data.entities.TitleItemEntity
+import com.myapplications.mywatchlist.data.entities.*
+import com.myapplications.mywatchlist.data.local.details.MovieDao
+import com.myapplications.mywatchlist.data.local.details.TvDao
 import com.myapplications.mywatchlist.data.local.genres.GenresDao
 import com.myapplications.mywatchlist.data.local.titles.TitlesDao
 
@@ -14,6 +14,12 @@ import com.myapplications.mywatchlist.data.local.titles.TitlesDao
         TitleItemEntity::class,
         GenreForTitleEntity::class,
         GenreEntity::class,
+        MovieEntity::class,
+        GenreForMovieEntity::class,
+        CastMemberForMovieEntity::class,
+        TvEntity::class,
+        GenreForTvEntity::class,
+        CastMemberForTvEntity::class
     ],
     version = 1
 )
@@ -23,5 +29,9 @@ abstract class WatchlistDatabase : RoomDatabase() {
     abstract fun titlesDao(): TitlesDao
 
     abstract fun genresDao(): GenresDao
+
+    abstract fun movieDao(): MovieDao
+
+    abstract fun tvDao(): TvDao
 
 }

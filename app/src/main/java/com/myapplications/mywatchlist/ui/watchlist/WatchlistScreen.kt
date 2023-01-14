@@ -13,12 +13,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.myapplications.mywatchlist.R
+import com.myapplications.mywatchlist.domain.entities.TitleItem
 import com.myapplications.mywatchlist.ui.components.FilterChipGroup
 import com.myapplications.mywatchlist.ui.components.LoadingCircle
 import com.myapplications.mywatchlist.ui.components.TitleItemsList
 
 @Composable
-fun WatchlistScreen(placeholderImage: Painter) {
+fun WatchlistScreen(placeholderImage: Painter, onTitleClicked: (TitleItem) -> Unit) {
 
     val viewModel = hiltViewModel<WatchlistViewModel>()
     val uiState = viewModel.uiState.collectAsState()
@@ -56,6 +57,7 @@ fun WatchlistScreen(placeholderImage: Painter) {
                     titleItems = titleItems,
                     placeholderImage = placeholderImage,
                     onWatchlistClicked = { viewModel.onWatchlistClicked(it) },
+                    onTitleClicked = { onTitleClicked(it) },
                     contentPadding = PaddingValues(vertical = 10.dp, horizontal = 5.dp)
                 )
             }

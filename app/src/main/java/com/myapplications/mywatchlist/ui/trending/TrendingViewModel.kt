@@ -6,6 +6,7 @@ import com.myapplications.mywatchlist.data.ApiGetTitleItemsExceptions
 import com.myapplications.mywatchlist.domain.entities.TitleItem
 import com.myapplications.mywatchlist.domain.entities.TitleType
 import com.myapplications.mywatchlist.domain.repositories.TitlesRepository
+import com.myapplications.mywatchlist.domain.repositories.TitlesManager
 import com.myapplications.mywatchlist.domain.result.ResultOf
 import com.myapplications.mywatchlist.ui.components.TitleListFilter
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -13,9 +14,11 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+private const val TAG = "TRENDING_VIEWMODEL"
+
 @HiltViewModel
 class TrendingViewModel @Inject constructor(
-    private val titlesRepository: TitlesRepository
+    private val titlesManager: TitlesManager
 ) : ViewModel() {
 
     private val trendingDataState: MutableStateFlow<TrendingUiState> =
@@ -59,7 +62,7 @@ class TrendingViewModel @Inject constructor(
             trendingDataState.update {
                 it.copy(isLoading = true)
             }
-            val response = titlesRepository.getTrendingTitles()
+            val response = titlesManager.getTrendingTitles()
             when (response) {
                 is ResultOf.Success -> {
                     trendingDataState.update {
@@ -95,9 +98,9 @@ class TrendingViewModel @Inject constructor(
     fun onWatchlistClicked(title: TitleItem) {
         viewModelScope.launch {
             if (title.isWatchlisted) {
-                titlesRepository.unBookmarkTitle(title)
+                titlesManager.unBookmarkTitleItem(title)
             } else {
-                titlesRepository.bookmarkTitle(title)
+                titlesManager.bookmarkTitleItem(title)
             }
         }
     }

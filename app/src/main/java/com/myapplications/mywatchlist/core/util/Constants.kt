@@ -7,6 +7,10 @@ object Constants {
     const val API_BASE_URL = "https://api.themoviedb.org/3/"
 
     const val TMDB_IMAGES_BASE_URL = "https://image.tmdb.org/t/p/"
-    const val TMDB_IMAGES_SIZE_W500 = "w300"
+    const val TMDB_IMAGES_SIZE_W500 = "w500"
 
+    const val YOUTUBE_WATCH_URL = "https://www.youtube.com/watch?v="
+
+    // IMDB LINK BASE URL
+    const val IMDB_BASE_URL = "https://www.imdb.com/title/"
 }

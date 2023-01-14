@@ -3,9 +3,14 @@ package com.myapplications.mywatchlist.data.remote.api
 import android.util.Log
 import com.google.gson.*
 import com.myapplications.mywatchlist.core.util.Constants
+import com.myapplications.mywatchlist.data.entities.MovieApiModel
 import com.myapplications.mywatchlist.data.entities.TitleItemApiModel
 import com.myapplications.mywatchlist.data.entities.TitleTypeApiModel
+import com.myapplications.mywatchlist.data.entities.TvApiModel
+import com.myapplications.mywatchlist.domain.entities.CastMember
 import com.myapplications.mywatchlist.domain.entities.Genre
+import com.myapplications.mywatchlist.domain.entities.MovieStatus
+import com.myapplications.mywatchlist.domain.entities.TvStatus
 import java.lang.reflect.Type
 import java.time.LocalDate
 
@@ -39,14 +44,104 @@ object MyGsonConverter {
 
             Log.d(TAG, "deserialize: mJson.get(\"genres\") ${mJson.get("genres")}")
 
-            // Check if this is deserialization of Genres or a Search query
-            return if (mJson.get("genres") != null){
+            // Check if this is deserialization of Genres, Movie, Tv or Search/Trending
+            return if (mJson.get("title") != null){
+                Log.d(TAG, "deserialize: Handling MOVIE response")
+                handleMovieResponse(mJson)
+            } else if (mJson.get("name") != null) {
+                Log.d(TAG, "deserialize: Handling TV response")
+                handleTvResponse(mJson)
+            } else if (mJson.get("genres") != null) {
                 Log.d(TAG, "deserialize: Handling GENRES response")
                 handleGenresResponse(mJson)
             } else {
-                Log.d(TAG, "deserialize: Handling SEARCH response")
-                handleSearchResponse(mJson)
+                Log.d(TAG, "deserialize: Handling SEARCH or TRENDING response")
+                handleSearchOrTrendingResponse(mJson)
             }
+        }
+
+        /**
+         * Handles the Api's response for the getMovie request
+         */
+        private fun handleMovieResponse(mJson: JsonObject): ApiResponse {
+            val response = try {
+                val movie = try {
+                    MovieApiModel(
+                        id = mJson.get("id").asLong,
+                        name = mJson.get("title").asString,
+                        imdbId = getNullableStringProperty(mJson,"imdb_id"),
+                        overview = getNullableStringProperty(mJson, "overview").takeIf {
+                            it?.isNotEmpty() == true
+                        },
+                        tagline = getNullableStringProperty(mJson, "tagline").takeIf {
+                            it?.isNotEmpty() == true
+                        },
+                        posterLink = getImageLink(mJson, "poster_path"),
+                        backdropLink = getImageLink(mJson, "backdrop_path"),
+                        genres = getMovieOrTvGenres(mJson),
+                        cast = getTvOrMovieCastMembers(mJson),
+                        videos = getYoutubeVideoLinks(mJson),
+                        status = getMovieStatus(mJson.get("status").asString),
+                        releaseDate = getReleaseDate(mJson),
+                        revenue = mJson.get("revenue").asLong,
+                        runtime = getNullableIntProperty(mJson, "runtime"),
+                        voteCount = mJson.get("vote_count").asLong,
+                        voteAverage = mJson.get("vote_average").asDouble
+                    )
+                } catch (e: Exception) {
+                    val error = "Could not parse the JsonObject into a MovieApiModel. Json = $mJson"
+                    Log.e(TAG, "handleMovieResponse: $error", e)
+                    null
+                }
+                ApiResponse.MovieResponse(movie)
+            } catch (e: Exception) {
+                val error = "Something went wrong handling the Movie response for this json: $mJson"
+                Log.e(TAG, "handleMovieResponse: $error", e)
+                ApiResponse.MovieResponse(null)
+            }
+            return response
+        }
+
+        /**
+         * Handles the Api's response for the getTv request
+         */
+        private fun handleTvResponse(mJson: JsonObject): ApiResponse {
+            val response = try {
+                val tv = try {
+                    TvApiModel(
+                        id = mJson.get("id").asLong,
+                        name = mJson.get("name").asString,
+                        overview = getNullableStringProperty(mJson, "overview").takeIf {
+                            it?.isNotEmpty() == true
+                        },
+                        tagline = getNullableStringProperty(mJson, "tagline").takeIf {
+                            it?.isNotEmpty() == true
+                        },
+                        posterLink = getImageLink(mJson, "poster_path"),
+                        backdropLink = getImageLink(mJson, "backdrop_path"),
+                        genres = getMovieOrTvGenres(mJson),
+                        cast = getTvOrMovieCastMembers(mJson),
+                        videos = getYoutubeVideoLinks(mJson),
+                        status = getTvStatus(mJson.get("status").asString),
+                        releaseDate = getReleaseDate(mJson),
+                        lastAirDate = getLastAirDate(mJson),
+                        numberOfSeasons = mJson.get("number_of_seasons").asInt,
+                        numberOfEpisodes = mJson.get("number_of_episodes").asInt,
+                        voteCount = mJson.get("vote_count").asLong,
+                        voteAverage = mJson.get("vote_average").asDouble
+                    )
+                } catch (e: Exception) {
+                    val error = "Could not parse the JsonObject into a TvApiModel. Json = $mJson"
+                    Log.e(TAG, "handleMovieResponse: $error", e)
+                    null
+                }
+                ApiResponse.TvResponse(tv)
+            } catch (e: Exception) {
+                val error = "Something went wrong handling the Tv response for this json: $mJson"
+                Log.e(TAG, "handleTvResponse: $error", e)
+                ApiResponse.TvResponse(null)
+            }
+            return response
         }
 
         /**
@@ -92,7 +187,7 @@ object MyGsonConverter {
          * @param mJson the root [JsonObject] received from the request.
          * @return [ApiResponse.TitlesListResponse]
          */
-        private fun handleSearchResponse(mJson: JsonObject): ApiResponse.TitlesListResponse {
+        private fun handleSearchOrTrendingResponse(mJson: JsonObject): ApiResponse.TitlesListResponse {
             val page = mJson.get("page").asInt
             val pageCount = mJson.get("total_pages").asInt
             val resultCount = mJson.get("total_results").asInt
@@ -116,7 +211,10 @@ object MyGsonConverter {
                             type = getMediaType(resultJson),
                             mediaId = resultJson.get("id").asLong,
                             overview = getOverview(resultJson),
-                            posterLink = getPosterLink(resultJson),
+                            posterLink = getImageLink(
+                                resultJsonObject = resultJson,
+                                propertyName = "poster_path"
+                            ),
                             genres = resultJson.get("genre_ids").asJsonArray.map { it.asInt },
                             releaseDate = getReleaseDate(resultJson),
                             voteCount = resultJson.get("vote_count").asLong,
@@ -145,6 +243,86 @@ object MyGsonConverter {
         }
 
         /**
+         * Get list of genres' ids from the Movie or TV JsonObject
+         */
+        private fun getMovieOrTvGenres(resultJsonObject: JsonObject): List<Int> {
+            return try {
+                resultJsonObject.get("genres").asJsonArray.map {
+                    it.asJsonObject.get("id").asInt
+                }
+            } catch (e: Exception) {
+                val error = "Could not parse array of genres. The list of genres will be empty."
+                Log.e(TAG, "getMovieOrTvGenres: $error", e)
+                emptyList()
+            }
+        }
+
+        /**
+         * Get list of [CastMember] or null from a Movie's or TV's JsonObject.
+         */
+        private fun getTvOrMovieCastMembers(resultJsonObject: JsonObject): List<CastMember>? {
+            val castJsonArray = resultJsonObject.get("credits").asJsonObject.get("cast").asJsonArray
+            val castList = mutableListOf<CastMember>()
+            castJsonArray.forEachIndexed { index, jsonElement ->
+                val castMember = try {
+                    CastMember(
+                        id = jsonElement.asJsonObject.get("id").asLong,
+                        name = jsonElement.asJsonObject.get("name").asString,
+                        character = jsonElement.asJsonObject.get("character").asString,
+                        pictureLink = getImageLink(jsonElement.asJsonObject, "profile_path")
+                    )
+                } catch (e: Exception) {
+                    val error = "Could not parse cast member jsonElement #$index. Json = $jsonElement"
+                    Log.e(TAG, "handleMovieResponse: $error", e)
+                }
+                if (castMember is CastMember) {
+                    castList.add(castMember)
+                }
+            }
+            return if (castList.isEmpty()) {
+                null
+            } else {
+                castList
+            }
+        }
+
+        /**
+         * Returns a [String] value from provided [resultJsonObject]'s [propertyName]
+         * or null if not found.
+         */
+        private fun getNullableStringProperty(
+            resultJsonObject: JsonObject,
+            propertyName: String
+        ): String? {
+            val jsonObject = resultJsonObject.get(propertyName)
+            Log.d(TAG, "getNullableStringProperty. JsonObject: $resultJsonObject " +
+                    "did not have a property $propertyName and returned null.")
+            return if (jsonObject.isJsonNull) {
+                null
+            } else {
+                jsonObject.asString
+            }
+        }
+
+        /**
+         * Returns an [Int] value from provided [resultJsonObject]'s [propertyName]
+         * or null if not found.
+         */
+        private fun getNullableIntProperty(
+            resultJsonObject: JsonObject,
+            propertyName: String
+        ): Int? {
+            val jsonObject = resultJsonObject.get(propertyName)
+            Log.d(TAG, "getNullableIntProperty. JsonObject: $resultJsonObject " +
+                    "did not have a property $propertyName and returned null.")
+            return if (jsonObject.isJsonNull) {
+                null
+            } else {
+                jsonObject.asInt
+            }
+        }
+
+        /**
          * @return [String] representing the name of the TV show or Movie
          */
         private fun getName(resultJsonObject: JsonObject): String {
@@ -169,11 +347,13 @@ object MyGsonConverter {
         }
 
         /**
-         * @return [String] or null based on whether the "poster_path" property is set for
+         * Creates a link from provided JsonObject's property named [propertyName]. This works
+         * because all images are stored on the same base url of the api.
+         * @return [String] or null based on whether the [propertyName] is set for the
          * JsonObject provided.
          */
-        private fun getPosterLink(resultJsonObject: JsonObject): String? {
-            val linkEnding = resultJsonObject.get("poster_path")
+        private fun getImageLink(resultJsonObject: JsonObject, propertyName: String): String? {
+            val linkEnding = resultJsonObject.get(propertyName)
             //Log.d(TAG, "getPosterLink: $linkEnding")
             return if (linkEnding.isJsonNull) {
                 null
@@ -185,23 +365,113 @@ object MyGsonConverter {
         }
 
         /**
+         * Creates a list of Youtube links if the provided [resultJsonObject] has a property 
+         * "videos" and it has a property "results" that is not empty JsonArray.
+         * @return list of [String] of Youtube links, or null if no links available. 
+         */
+        private fun getYoutubeVideoLinks(resultJsonObject: JsonObject): List<String>? {
+            val linksArray = resultJsonObject.get("videos").asJsonObject.get("results").asJsonArray
+            val links = mutableListOf<String>()
+            linksArray.forEach { jsonElement ->
+                val youtubeKey = jsonElement.asJsonObject.get("key").asString
+                links.add(Constants.YOUTUBE_WATCH_URL + youtubeKey)
+            }
+            return if (links.isEmpty()){
+                null
+            } else {
+                links
+            }
+        }
+
+        /**
          * @return the "overview" property's value if it's not empty as [String] or null if empty.
          */
         private fun getOverview(resultJsonObject: JsonObject): String? {
             return resultJsonObject.get("overview").asString.ifEmpty {
+                Log.d(TAG, "getOverview: JsonObject $resultJsonObject " +
+                        "did not have a 'overview' property?")
                 null
             }
         }
 
         /**
          * @return [LocalDate] representing the first air date for a tv show or release date for a
-         * movie
+         * movie, or null if it's not available in the [resultJsonObject]
          */
-        private fun getReleaseDate(resultJsonObject: JsonObject): LocalDate {
+        private fun getReleaseDate(resultJsonObject: JsonObject): LocalDate? {
             // if it's a TV show it will "first_air_date" and "release_date) if it's a movie
-            val dateJson =
-                resultJsonObject.get("release_date") ?: resultJsonObject.get("first_air_date")
-            return LocalDate.parse(dateJson.asString)
+            val movieReleaseDate = try {
+                val dateString = resultJsonObject.get("release_date").asString
+                LocalDate.parse(dateString)
+            } catch (e: Exception) {
+                null
+            }
+            val tvReleaseDate = try {
+                val dateString = resultJsonObject.get("first_air_date").asString
+                LocalDate.parse(dateString)
+            } catch (e: Exception) {
+                null
+            }
+            if (tvReleaseDate == null && movieReleaseDate == null){
+                Log.e(TAG, "getReleaseDate: Could not get and parse value from neither " +
+                        "the 'release_date' nor the 'first_air_date' properties")
+            }
+            /* Return movie's release date or tv's release date (which could be null if it's also
+            not available) */
+            return movieReleaseDate ?: tvReleaseDate
+        }
+
+        /**
+         * @return [LocalDate] of last aired tv episode, or null if not available
+         */
+        private fun getLastAirDate(resultJsonObject: JsonObject): LocalDate? {
+            return try {
+                val dateString = resultJsonObject.get("last_air_date").asString
+                LocalDate.parse(dateString)
+            } catch (e: Exception) {
+                Log.e(TAG, "getLastAirDate: Could not parse value from 'last_air_date' property", e)
+                null
+            }
+        }
+
+        /**
+         * @return [MovieStatus] based "status" property in the response json from api.
+         * If any other value than the expected ones - will use [MovieStatus.Unknown]
+         */
+        private fun getMovieStatus(statusString: String): MovieStatus {
+            return when (statusString) {
+                "Rumored" -> MovieStatus.Rumored
+                "Planned" -> MovieStatus.Planned
+                "In Production" -> MovieStatus.InProduction
+                "Post Production" -> MovieStatus.PostProduction
+                "Released" -> MovieStatus.Released
+                "Canceled" -> MovieStatus.Cancelled
+                else -> {
+                    Log.e(TAG, "getMovieStatus: Api returned unexpected status: $statusString. " +
+                            "Defaulting tu MovieStatus.Unknown")
+                    MovieStatus.Unknown
+                }
+            }
+        }
+
+        /**
+         * @return [TvStatus] based "status" property in the response json from api.
+         * If any other value than the expected ones - will use [TvStatus.Unknown]
+         */
+        private fun getTvStatus(statusString: String): TvStatus {
+            return when (statusString) {
+                "Ended" -> TvStatus.Ended
+                "Returning Series" -> TvStatus.ReturningSeries
+                "In Production" -> TvStatus.InProduction
+                "Pilot" -> TvStatus.Pilot
+                "Planned" -> TvStatus.Planned
+                "Canceled" -> TvStatus.Cancelled
+                else -> {
+                    Log.e(TAG, "getTvStatus: Api returned unexpected status: $statusString. " +
+                            "Defaulting tu TvStatus.Unknown")
+                    TvStatus.Unknown
+                }
+            }
         }
 
         /**

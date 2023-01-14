@@ -1,7 +1,7 @@
 package com.myapplications.mywatchlist.data.entities
 
 import androidx.room.*
-import androidx.room.ForeignKey.CASCADE
+import androidx.room.ForeignKey.Companion.CASCADE
 import com.myapplications.mywatchlist.domain.entities.Genre
 import com.myapplications.mywatchlist.domain.entities.TitleType
 import java.time.LocalDate
@@ -15,7 +15,7 @@ data class TitleItemEntity(
     val mediaId: Long,
     val overview: String?,  // A Title can possibly not have an overview text
     val posterLink: String?,// A Title can possibly not have a poster associated with it
-    val releaseDate: LocalDate,
+    val releaseDate: LocalDate?,
     val voteCount: Long,
     val voteAverage: Double,
     val isWatchlisted: Boolean

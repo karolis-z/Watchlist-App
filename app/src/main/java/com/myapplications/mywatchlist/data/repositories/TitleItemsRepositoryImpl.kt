@@ -5,19 +5,21 @@ import com.myapplications.mywatchlist.data.local.titles.TitlesLocalDataSource
 import com.myapplications.mywatchlist.data.remote.TitlesRemoteDataSource
 import com.myapplications.mywatchlist.domain.entities.TitleItem
 import com.myapplications.mywatchlist.domain.repositories.GenresRepository
-import com.myapplications.mywatchlist.domain.repositories.TitlesRepository
+import com.myapplications.mywatchlist.domain.repositories.TitleItemsRepository
 import com.myapplications.mywatchlist.domain.result.ResultOf
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
-class TitlesRepositoryImpl @Inject constructor(
+private const val TAG = "TITLES_REPOSITORY"
+
+class TitleItemsRepositoryImpl @Inject constructor(
     private val localDataSource: TitlesLocalDataSource,
     private val remoteDataSource: TitlesRemoteDataSource,
     private val genresRepository: GenresRepository,
     @IoDispatcher private val dispatcher: CoroutineDispatcher
-) : TitlesRepository {
+) : TitleItemsRepository {
 
     // TODO: Add check for internet connection available and return appropriate result
     override suspend fun searchTitles(query: String): ResultOf<List<TitleItem>> =
@@ -27,11 +29,11 @@ class TitlesRepositoryImpl @Inject constructor(
             return@withContext parseTitlesListResult(result)
         }
 
-    override suspend fun bookmarkTitle(titleItem: TitleItem) = withContext(dispatcher) {
+    override suspend fun bookmarkTitleItem(titleItem: TitleItem) = withContext(dispatcher) {
         localDataSource.bookmarkTitleItem(titleItem = titleItem.copy(isWatchlisted = true))
     }
 
-    override suspend fun unBookmarkTitle(titleItem: TitleItem) = withContext(dispatcher) {
+    override suspend fun unBookmarkTitleItem(titleItem: TitleItem) = withContext(dispatcher) {
         localDataSource.unBookmarkTitleItem(titleItem = titleItem)
     }
 

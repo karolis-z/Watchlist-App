@@ -14,11 +14,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.myapplications.mywatchlist.R
 import com.myapplications.mywatchlist.ui.components.FilterChipGroup
+import com.myapplications.mywatchlist.domain.entities.TitleItem
 import com.myapplications.mywatchlist.ui.components.LoadingCircle
 import com.myapplications.mywatchlist.ui.components.TitleItemsList
 
 @Composable
-fun TrendingScreen(placeholderImage: Painter){
+fun TrendingScreen(placeholderImage: Painter, onTitleClicked: (TitleItem) -> Unit){
     val viewModel = hiltViewModel<TrendingViewModel>()
 
     val uiState = viewModel.uiState.collectAsState()
@@ -66,6 +67,7 @@ fun TrendingScreen(placeholderImage: Painter){
                     titleItems = titleItems,
                     placeholderImage = placeholderImage,
                     onWatchlistClicked = { viewModel.onWatchlistClicked(it) },
+                    onTitleClicked = { onTitleClicked(it) },
                     contentPadding = PaddingValues(vertical = 10.dp, horizontal = 5.dp)
                 )
             }

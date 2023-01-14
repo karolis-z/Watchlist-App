@@ -3,12 +3,13 @@ package com.myapplications.mywatchlist.ui.watchlist
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.myapplications.mywatchlist.domain.entities.TitleItem
-import com.myapplications.mywatchlist.domain.entities.TitleType
 import com.myapplications.mywatchlist.domain.repositories.GenresRepository
 import com.myapplications.mywatchlist.domain.repositories.TitlesRepository
-import com.myapplications.mywatchlist.ui.components.TitleListFilter
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -16,7 +17,7 @@ private const val TAG = "WATCHLIST_VIEWMODEL"
 
 @HiltViewModel
 class WatchlistViewModel @Inject constructor(
-    private val titlesRepository: TitlesRepository,
+    private val titlesManager: TitlesManager,
     private val genresRepository: GenresRepository
 ): ViewModel() {
 
@@ -73,9 +74,9 @@ class WatchlistViewModel @Inject constructor(
     fun onWatchlistClicked(title: TitleItem) {
         viewModelScope.launch {
             if (title.isWatchlisted){
-                titlesRepository.unBookmarkTitle(title)
+                titlesManager.unBookmarkTitleItem(title)
             } else {
-                titlesRepository.bookmarkTitle(title)
+                titlesManager.bookmarkTitleItem(title)
             }
         }
     }
