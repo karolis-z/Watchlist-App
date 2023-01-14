@@ -1,8 +1,15 @@
 package com.myapplications.mywatchlist.ui.details
 
+import android.content.Context
+import android.content.Intent
 import android.util.Log
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -19,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -141,7 +149,7 @@ fun ExtraDetailsSection(
                         }
                         val imdbId = title.imdbId
                         if (imdbId != null) {
-                            val imdbLink = Constants.IMDB_BASE_URL + imdbId
+                            val context = LocalContext.current
                             Row(
                                 modifier = modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically
@@ -163,9 +171,7 @@ fun ExtraDetailsSection(
                                         alignment = Alignment.Center,
                                         modifier = Modifier
                                             .clip(RoundedCornerShape(5.dp))
-                                            .clickable {
-                                                // TODO : Add intent to launch an imdb link. Should open imdb app?
-                                            }
+                                            .clickable { onImdbLinkClicked(context, imdbId) }
                                     )
                                 }
                             }
@@ -194,8 +200,27 @@ fun ExtraDetailsSection(
             }
         }
     }
+}
 
-
+/**
+ * Launches an IMDb link given then [imdbId]
+ */
+private fun onImdbLinkClicked(context: Context, imdbId: String) {
+    val packageManager = context.packageManager
+    val isImdbInstalled = try {
+        val imdbIntent = packageManager.getLaunchIntentForPackage("com.imdb.mobile")
+        imdbIntent != null
+    } catch (e: Exception) {
+        false
+    }
+    val intent = Intent()
+    intent.action = Intent.ACTION_VIEW
+    if (isImdbInstalled) {
+        intent.data = android.net.Uri.parse("imdb:///title/$imdbId")
+    } else {
+        intent.data = android.net.Uri.parse(Constants.IMDB_BASE_URL + imdbId)
+    }
+    context.startActivity(intent)
 }
 
 @Composable
