@@ -1,5 +1,6 @@
 package com.myapplications.mywatchlist.ui.details
 
+import android.widget.Toast
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
@@ -133,20 +134,33 @@ fun DetailsScreenContent(
     var showExpandSummaryArrow by remember { mutableStateOf(false) }
     val rotationState by animateFloatAsState(targetValue = if (expandedSummaryState) 180f else 0f)
 
+    val scrollState = rememberScrollState()
+
+
+
     Column(
         modifier = modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(scrollState)
     ) {
-        DetailsBackdrop(
-            title = title,
-            placeholderImage = placeHolderBackdrop,
-            modifier = Modifier.height(300.dp)
+        // TODO: Turning off temporarily the backdrop to test Collapsing TopBar
+        DetailsCollapsingTopBar(
+            fullHeight = 250.dp,
+            scrollValue = { scrollState.value },
+            title = title.name,
+            onBackPressed = {  },
+            modifier = Modifier.fillMaxWidth()
         )
+//        DetailsBackdrop(
+//            title = title,
+//            placeholderImage = placeHolderBackdrop,
+//            modifier = Modifier.height(300.dp)
+//        )
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 16.dp)
+//                .verticalScroll(scrollState)
         ) {
             Spacer(modifier = Modifier.height(12.dp))
 
