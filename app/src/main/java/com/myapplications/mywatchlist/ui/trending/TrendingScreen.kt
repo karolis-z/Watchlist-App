@@ -45,7 +45,7 @@ fun TrendingScreen(placeholderImage: Painter, onTitleClicked: (TitleItem) -> Uni
                 .padding(vertical = 10.dp)
                 .fillMaxWidth()
         )
-        //TODO: Consider switching to AnimatedContent?
+        //TODO: Consider switching to Crossfade
         AnimatedVisibility(
             visible = isLoading,
             enter = fadeIn(),

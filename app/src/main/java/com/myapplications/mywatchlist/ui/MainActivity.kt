@@ -92,9 +92,7 @@ class MainActivity : ComponentActivity() {
                             } else {
                                 stringResource(currentScreenTitleResId)
                             },
-                            showLargeTopAppBar = showTopAppBar,
-//                            showUpButton = showUpButton,
-//                            onNavigateUp = { navController.navigateUp() })
+                            showLargeTopAppBar = showTopAppBar
                         )
                     },
                     bottomBar = {
@@ -169,7 +167,7 @@ class MainActivity : ComponentActivity() {
                             // TODO: Research and use more appropriate transitions
                             enterTransition = { fadeIn (animationSpec = tween(500)) },
                             exitTransition = { fadeOut (animationSpec = tween(500)) }
-                        ) { backStackEntry ->
+                        ) {
                             DetailsScreen(
                                 placeHolderBackdrop = placeHolderBackdrop,
                                 placeHolderPortrait = placeHolderPortrait
@@ -187,12 +185,8 @@ class MainActivity : ComponentActivity() {
 fun MyTopAppBar(
     title: String,
     showLargeTopAppBar: MutableState<Boolean>,
-//    showUpButton: MutableState<Boolean>,
-//    onNavigateUp: () -> Unit,
     modifier: Modifier = Modifier
 ){
-    // TODO: TESTING ANOTHER OPTION
-    // Keeping it like this for a while to test a custom toolbar layout
     if (showLargeTopAppBar.value) {
         TopAppBar(
             title = {
@@ -234,12 +228,6 @@ sealed class TopLevelScreens(
     )
 }
 
-sealed class OtherScreens(
-    val route: String,
-    @StringRes val titleResId: Int,
-) {
-    object Details : OtherScreens(
-        route = "details",
-        titleResId = R.string.title_details
-    )
+sealed class OtherScreens(val route: String) {
+    object Details : OtherScreens(route = "details")
 }

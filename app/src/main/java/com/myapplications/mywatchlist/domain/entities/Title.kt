@@ -12,7 +12,6 @@ interface Title {
     val genres: List<Genre>
     val cast: List<CastMember>?
     val videos: List<String>?
-    //TODO: Add status ?
     val releaseDate: LocalDate?
     val voteCount: Long
     val voteAverage: Double

@@ -14,22 +14,30 @@ private const val TAG = "ROOM_CONVERTERS"
 class RoomConverters {
 
     @TypeConverter
-    fun localDateToTimeStamp(date: LocalDate): Long {
-        return date.atStartOfDay(ZoneOffset.UTC).toInstant().epochSecond
+    fun localDateToTimeStamp(date: LocalDate?): Long? {
+        return date?.atStartOfDay(ZoneOffset.UTC)?.toInstant()?.epochSecond
     }
 
     @TypeConverter
-    fun timestampToLocalDate(timeStamp: Long): LocalDate {
-        return Instant.ofEpochSecond(timeStamp).atZone(ZoneId.systemDefault()).toLocalDate()
+    fun timestampToLocalDate(timeStamp: Long?): LocalDate? {
+        return if (timeStamp == null) {
+            return null
+        } else {
+            Instant.ofEpochSecond(timeStamp).atZone(ZoneId.systemDefault()).toLocalDate()
+        }
     }
 
     @TypeConverter
-    fun stringListToString(stringList: List<String>): String {
-        return Gson().toJson(stringList)
+    fun stringListToString(stringList: List<String>?): String? {
+        return if (stringList == null) {
+            null
+        } else {
+            Gson().toJson(stringList)
+        }
     }
 
     @TypeConverter
-    fun stringToListOfString(value: String): List<String>? {
+    fun stringToListOfString(value: String?): List<String>? {
         val type = object : TypeToken<List<String>>() {}.type
         return try {
             Gson().fromJson(value, type)
