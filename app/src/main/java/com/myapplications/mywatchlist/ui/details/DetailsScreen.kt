@@ -1,16 +1,14 @@
 package com.myapplications.mywatchlist.ui.details
 
-import android.widget.Toast
+import android.util.Log
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Schedule
@@ -24,19 +22,20 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.*
+import androidx.compose.ui.layout.lerp
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.*
+import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -46,14 +45,354 @@ import com.myapplications.mywatchlist.domain.entities.*
 import com.myapplications.mywatchlist.ui.components.AnimatedWatchlistButton
 import com.myapplications.mywatchlist.ui.components.GenreChip
 import com.myapplications.mywatchlist.ui.components.LoadingCircle
+import com.myapplications.mywatchlist.ui.details.CollapsingTopBarIds.BACK_ID
+import com.myapplications.mywatchlist.ui.details.CollapsingTopBarIds.GRADIENT_ID
+import com.myapplications.mywatchlist.ui.details.CollapsingTopBarIds.IMAGE_ID
+import com.myapplications.mywatchlist.ui.details.CollapsingTopBarIds.TITLE_ID
 import com.myapplications.mywatchlist.ui.theme.IMDBOrange
 import java.time.LocalDate
+import kotlin.math.roundToInt
 
 private const val TAG = "DETAILS_SCREEN"
 private const val MAX_SUMMARY_LINES = 5
 
 @Composable
 fun DetailsScreen(
+    placeHolderBackdrop: Painter,
+    placeHolderPortrait: Painter
+) {
+
+    var sizeImage by remember { mutableStateOf(IntSize.Zero) }.also {
+        Log.d("IMAGE_SIZE", "DetailsScreen: sizeImage = ${it.value}")
+    }
+    val gradient = Brush.verticalGradient(
+        colors = listOf(Color.Transparent, MaterialTheme.colorScheme.background),
+        startY = sizeImage.height.toFloat() / 3,  // 1/3
+        endY = sizeImage.height.toFloat()
+    )
+    
+
+
+    ConstraintLayout(
+        modifier = Modifier
+            .fillMaxSize()
+//            .verticalScroll(scrollState)
+    ) {
+        val (box, mainContent) = createRefs()
+
+        val scrollState = rememberScrollState()
+        val collapseRange = with(LocalDensity.current) { (370.dp - 64.dp).toPx() }
+        Log.d(TAG, "collapseRange: $collapseRange ")
+//    Log.d("TESTS", "scrollProvider: ${scrollProvider()} ")
+
+        val collapseFractionProvider = {
+            (scrollState.value / collapseRange).coerceIn(0f, 1f)
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+//                .height(250.dp)
+                .heightIn(min = 64.dp, max = 250.dp)
+                .constrainAs(box){
+                    top.linkTo(parent.top)
+                }
+        ) {
+
+
+            CollapsingTopBar(
+                collapseFractionProvider = collapseFractionProvider,
+                modifier = Modifier
+                    .statusBarsPadding()
+//                .height(fullHeight)
+                    .border(0.5.dp, Color.Red)
+            ) {
+                Icon(
+                    modifier = Modifier
+                        .wrapContentSize()
+//                    .wrapContentHeight()
+                        .layoutId(CollapsingTopBarIds.BACK_ID)
+                        .clickable { }
+                        .padding(16.dp),
+//                    .border(0.5.dp, Color.Yellow),
+                    imageVector = Icons.Filled.ArrowBack,
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    contentDescription = stringResource(id = com.myapplications.mywatchlist.R.string.cd_back_arrow)
+                )
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+//                                    MaterialTheme.colorScheme.background
+                                    Color.Transparent
+                                ),
+                                startY = sizeImage.height.toFloat() / 3,  // 1/3
+                            )
+                        )
+                        .layoutId(GRADIENT_ID)
+                )
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data("https://image.tmdb.org/t/p/w780/s16H6tpK2utvwDtzZ8Qy4qm5Emw.jpg")
+                        .crossfade(true)
+                        .build(),
+                    placeholder = placeHolderBackdrop,
+                    fallback = placeHolderBackdrop,
+                    error = placeHolderBackdrop,
+                    contentDescription = null, //Decorative
+                    contentScale = ContentScale.FillWidth,
+                    alignment = Alignment.Center,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .layoutId(IMAGE_ID)
+                        .onGloballyPositioned {
+                            sizeImage = it.size
+                        }
+                        .background(color = MaterialTheme.colorScheme.surface)
+                        .graphicsLayer {
+                            // When fully collapsed, the image will be invisible
+                            alpha = 1 - collapseFractionProvider()
+                        },
+                )
+                Text(
+                    modifier = Modifier
+                        .layoutId(CollapsingTopBarIds.TITLE_ID)
+                        .wrapContentHeight()
+                        .padding(horizontal = 16.dp),
+//                    .border(0.5.dp, Color.Blue),
+                    text = "The Matrix",
+                    style = MaterialTheme.typography.titleLarge,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .constrainAs(mainContent){
+                    top.linkTo(box.bottom)
+                }
+                .verticalScroll(scrollState)
+//                .offset{
+//                    IntOffset(x = 0, y = (collapseRange * collapseFractionProvider()).roundToInt())
+//                }
+        ) {
+            FakeContentForScrolling(scrollState = scrollState)
+        }
+
+    }
+
+//    Column(
+//        modifier = Modifier
+//            .fillMaxSize()
+//            .verticalScroll(scrollState)
+//            .onGloballyPositioned {
+////                Log.d(TAG, "DetailsScreen: size = ${it.size}")
+//            }
+//    ) {
+//        Box(
+//            modifier = Modifier
+//                .fillMaxWidth()
+////                .height(250.dp)
+//                .heightIn(min = 64.dp, max = 250.dp)
+//        ) {
+//            CollapsingTopBar(
+//                collapseFractionProvider = collapseFractionProvider,
+//                modifier = Modifier
+//                    .statusBarsPadding()
+////                .height(fullHeight)
+//                    .border(0.5.dp, Color.Red)
+//            ) {
+//                Icon(
+//                    modifier = Modifier
+//                        .wrapContentSize()
+////                    .wrapContentHeight()
+//                        .layoutId(CollapsingTopBarIds.BACK_ID)
+//                        .clickable { }
+//                        .padding(16.dp),
+////                    .border(0.5.dp, Color.Yellow),
+//                    imageVector = Icons.Filled.ArrowBack,
+//                    tint = MaterialTheme.colorScheme.onSurface,
+//                    contentDescription = stringResource(id = com.myapplications.mywatchlist.R.string.cd_back_arrow)
+//                )
+//                Box(
+//                    Modifier
+//                        .fillMaxSize()
+//                        .background(
+//                            brush = Brush.verticalGradient(
+//                                colors = listOf(
+//                                    Color.Transparent,
+////                                    MaterialTheme.colorScheme.background
+//                                    Color.Transparent
+//                                ),
+//                                startY = sizeImage.height.toFloat() / 3,  // 1/3
+//                            )
+//                        )
+//                        .layoutId(GRADIENT_ID)
+//                )
+//                AsyncImage(
+//                    model = ImageRequest.Builder(LocalContext.current)
+//                        .data("https://image.tmdb.org/t/p/w780/s16H6tpK2utvwDtzZ8Qy4qm5Emw.jpg")
+//                        .crossfade(true)
+//                        .build(),
+//                    placeholder = placeHolderBackdrop,
+//                    fallback = placeHolderBackdrop,
+//                    error = placeHolderBackdrop,
+//                    contentDescription = null, //Decorative
+//                    contentScale = ContentScale.FillWidth,
+//                    alignment = Alignment.Center,
+//                    modifier = Modifier
+//                        .fillMaxSize()
+//                        .layoutId(IMAGE_ID)
+//                        .onGloballyPositioned {
+//                            sizeImage = it.size
+//                        }
+//                        .background(color = MaterialTheme.colorScheme.surface)
+//                        .graphicsLayer {
+//                            // When fully collapsed, the image will be invisible
+//                            alpha = 1 - collapseFractionProvider()
+//                        },
+//                )
+//                Text(
+//                    modifier = Modifier
+//                        .layoutId(CollapsingTopBarIds.TITLE_ID)
+//                        .wrapContentHeight()
+//                        .padding(horizontal = 16.dp),
+////                    .border(0.5.dp, Color.Blue),
+//                    text = "The Matrix",
+//                    style = MaterialTheme.typography.titleLarge,
+//                    overflow = TextOverflow.Ellipsis
+//                )
+//            }
+//        }
+//        Column(
+//            modifier = Modifier
+//                .fillMaxSize()
+//                .verticalScroll(scrollState)
+//        ) {
+//
+//            FakeContentForScrolling()
+//        }
+//    }
+
+
+}
+
+@Composable
+fun CollapsingTopBar(
+    modifier: Modifier = Modifier,
+    collapseFractionProvider: () -> Float, // A value from (0-1) where 0 means fully expanded
+    content: @Composable () -> Unit
+) {
+    val map = mutableMapOf<Placeable, Int>()
+    Layout(
+        modifier = modifier,
+        content = content
+    ) { measurables, constraints ->
+
+        val collapseFraction = collapseFractionProvider()
+        Log.d(TAG, "CollapsingTopBar: collapseFraction = $collapseFraction. MaxHeight = ${constraints.maxHeight}. MinHeight = ${constraints.minHeight}. Total measurables count = ${measurables.count()}")
+//        Log.d(TAG, "CollapsingTopBar: constraints = $constraints.. Layout direction: ${layoutDirection.name}")
+
+        map.clear()
+        val placeables = mutableListOf<Placeable>()
+
+        val layoutHeight = lerp(250.dp, 64.dp, collapseFraction).roundToPx()
+
+        measurables.map { measurable ->
+            when (measurable.layoutId) {
+                BACK_ID -> {
+//                    Log.d(TAG, "CollapsingTopBar: BACK_ID measuring")
+                    measurable.measure(constraints)
+                }
+                IMAGE_ID -> {
+                    val imageHeight = layoutHeight
+                    measurable.measure(Constraints.fixed(width = constraints.maxWidth, height = imageHeight))
+                }
+                GRADIENT_ID -> {
+                    measurable.measure(Constraints.fixed(width = constraints.maxWidth, height = layoutHeight))
+                }
+                TITLE_ID -> {
+                    val w = constraints.maxWidth - (collapseFraction * (placeables.first().width * 2)).toInt()
+//                    Log.d(TAG, "CollapsingTopBar: TITLE_ID constraints width = $w")
+                    measurable.measure(Constraints.fixedWidth(constraints.maxWidth - (collapseFraction * (placeables.first().width * 2)).toInt()))
+                }
+
+                else -> throw IllegalStateException("Id Not found")
+            }.also { placeable ->
+                map[placeable] = measurable.layoutId as Int
+                placeables.add(placeable)
+            }
+        }
+
+//        val layoutHeight = (constraints.maxHeight - constraints.minHeight * collapseFraction).toInt()
+
+        Log.d(TAG, "CollapsingTopBar: CALCULATED HEIGHT = $layoutHeight")
+
+        // Set the size of the layout as big as it can
+        layout(
+            width = constraints.maxWidth,
+//            height = constraints.maxHeight
+            height = layoutHeight
+        ) {
+            placeables.forEach { placeable ->
+                when (map[placeable]) {
+                    BACK_ID -> {
+                        placeable.placeRelative(0, 0, zIndex = 2f)
+                    }
+                    IMAGE_ID -> placeable.placeRelative(0, 0)
+                    GRADIENT_ID -> placeable.placeRelative(0, 0, zIndex = 1f)
+                    TITLE_ID -> placeable.run {
+                        val widthOffset = (placeables[0].width * collapseFraction).roundToInt()
+                        val heightOffset = (placeables.first().height - placeable.height) / 2
+                        Log.d(TAG, "TITLE_ID: First Placeable height ${placeables.first().height}. Title Placeable height = ${placeable.height}")
+                        Log.d(TAG, "TITLE_ID: widthOffset= $widthOffset. Height offset = $heightOffset")
+                        placeRelative(
+                            widthOffset,
+//                            if (collapseFraction == 1f) heightOffset else constraints.maxHeight - height
+                            if (collapseFraction == 1f) heightOffset else layoutHeight - placeable.height
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+object CollapsingTopBarIds {
+    const val BACK_ID = 1001
+    const val SHARE_ID = 1002
+    const val TITLE_ID = 1003
+    const val IMAGE_ID = 1004
+    const val GRADIENT_ID = 1005
+    const val COLLAPSE_FACTOR = 0.6f
+}
+
+@Composable
+fun FakeContentForScrolling(scrollState: ScrollState) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 15.dp)
+//            .verticalScroll(scrollState)
+    ) {
+        repeat(5) {
+            Text(text = "Text #$it", style = MaterialTheme.typography.headlineMedium)
+            Text(text = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.", modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 10.dp), style = MaterialTheme.typography.bodyMedium)
+            Image(painter = painterResource(id = R.drawable.placeholder_backdrop_dark), contentDescription = null, contentScale = ContentScale.Fit)
+        }
+    }
+
+}
+
+
+@Composable
+fun DetailsScreenOLD(
     placeHolderBackdrop: Painter,
     placeHolderPortrait: Painter
 ) {
@@ -130,7 +469,7 @@ fun DetailsScreenContent(
     onWatchlistClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var expandedSummaryState by remember { mutableStateOf(false)}
+    var expandedSummaryState by remember { mutableStateOf(false) }
     var showExpandSummaryArrow by remember { mutableStateOf(false) }
     val rotationState by animateFloatAsState(targetValue = if (expandedSummaryState) 180f else 0f)
 
@@ -148,7 +487,7 @@ fun DetailsScreenContent(
             fullHeight = 250.dp,
             scrollValue = { scrollState.value },
             title = title.name,
-            onBackPressed = {  },
+            onBackPressed = { },
             modifier = Modifier.fillMaxWidth()
         )
 //        DetailsBackdrop(
@@ -203,9 +542,15 @@ fun DetailsScreenContent(
             // OVERVIEW
             val titleOverview = title.overview
             if (titleOverview != null) {
-                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    SectionHeadline(label = stringResource(id = R.string.details_summary_label), modifier = Modifier.weight(1f))
-                    if (showExpandSummaryArrow){
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    SectionHeadline(
+                        label = stringResource(id = R.string.details_summary_label),
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (showExpandSummaryArrow) {
                         IconButton(
                             onClick = { expandedSummaryState = !expandedSummaryState },
                             modifier = Modifier.rotate(rotationState)
@@ -431,7 +776,6 @@ fun SectionHeadline(label: String, modifier: Modifier = Modifier, bottomPadding:
         modifier = modifier.padding(bottom = bottomPadding)
     )
 }
-
 
 
 @Preview

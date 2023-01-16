@@ -94,70 +94,70 @@ fun DetailsCollapsingTopBar(
     }
 }
 
-@Composable
-fun CollapsingTopBar(
-    modifier: Modifier = Modifier,
-    collapseFractionProvider: () -> Float, // A value from (0-1) where 0 means fully expanded
-    content: @Composable () -> Unit
-) {
-    val map = mutableMapOf<Placeable, Int>()
-    Layout(
-        modifier = modifier,
-        content = content
-    ) { measurables, constraints ->
-
-        val collapseFraction = collapseFractionProvider()
-//        Log.d(TAG, "CollapsingTopBar: collapseFraction = $collapseFraction")
-//        Log.d(TAG, "CollapsingTopBar: constraints = $constraints.. Layout direction: ${layoutDirection.name}")
-
-        map.clear()
-        val placeables = mutableListOf<Placeable>()
-        measurables.map { measurable ->
-            when (measurable.layoutId) {
-                BACK_ID -> {
-//                    Log.d(TAG, "CollapsingTopBar: BACK_ID measuring")
-                    measurable.measure(constraints).also {
-
-                    }
-                }
-                TITLE_ID -> {
-                    val w = constraints.maxWidth - (collapseFraction * (placeables.first().width * 2)).toInt()
-//                    Log.d(TAG, "CollapsingTopBar: TITLE_ID constraints width = $w")
-                    measurable.measure(Constraints.fixedWidth(constraints.maxWidth - (collapseFraction * (placeables.first().width * 2)).toInt()))
-                }
-
-                else -> throw IllegalStateException("Id Not found")
-            }.also { placeable ->
-                map[placeable] = measurable.layoutId as Int
-                placeables.add(placeable)
-            }
-        }
-
-        // Set the size of the layout as big as it can
-        layout(constraints.maxWidth, constraints.maxHeight) {
-            placeables.forEach { placeable ->
-                when (map[placeable]) {
-                    BACK_ID -> {
-                        placeable.placeRelative(0, 0)
-                    }
-                    TITLE_ID -> placeable.run {
-                        val widthOffset = (placeables[0].width * collapseFraction).roundToInt()
-                        val heightOffset = (placeables.first().height - placeable.height) / 2
-//                        Log.d(TAG, "TITLE_ID: widthOffset= $widthOffset. Height offset = $heightOffset")
-                        placeRelative(
-                            widthOffset,
-                            if (collapseFraction == 1f) heightOffset else constraints.maxHeight - height
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-object CollapsingTopBarIds {
-    const val BACK_ID = 1001
-    const val SHARE_ID = 1002
-    const val TITLE_ID = 1003
-    const val COLLAPSE_FACTOR = 0.6f
-}
+//@Composable
+//fun CollapsingTopBar(
+//    modifier: Modifier = Modifier,
+//    collapseFractionProvider: () -> Float, // A value from (0-1) where 0 means fully expanded
+//    content: @Composable () -> Unit
+//) {
+//    val map = mutableMapOf<Placeable, Int>()
+//    Layout(
+//        modifier = modifier,
+//        content = content
+//    ) { measurables, constraints ->
+//
+//        val collapseFraction = collapseFractionProvider()
+////        Log.d(TAG, "CollapsingTopBar: collapseFraction = $collapseFraction")
+////        Log.d(TAG, "CollapsingTopBar: constraints = $constraints.. Layout direction: ${layoutDirection.name}")
+//
+//        map.clear()
+//        val placeables = mutableListOf<Placeable>()
+//        measurables.map { measurable ->
+//            when (measurable.layoutId) {
+//                BACK_ID -> {
+////                    Log.d(TAG, "CollapsingTopBar: BACK_ID measuring")
+//                    measurable.measure(constraints).also {
+//
+//                    }
+//                }
+//                TITLE_ID -> {
+//                    val w = constraints.maxWidth - (collapseFraction * (placeables.first().width * 2)).toInt()
+////                    Log.d(TAG, "CollapsingTopBar: TITLE_ID constraints width = $w")
+//                    measurable.measure(Constraints.fixedWidth(constraints.maxWidth - (collapseFraction * (placeables.first().width * 2)).toInt()))
+//                }
+//
+//                else -> throw IllegalStateException("Id Not found")
+//            }.also { placeable ->
+//                map[placeable] = measurable.layoutId as Int
+//                placeables.add(placeable)
+//            }
+//        }
+//
+//        // Set the size of the layout as big as it can
+//        layout(constraints.maxWidth, constraints.maxHeight) {
+//            placeables.forEach { placeable ->
+//                when (map[placeable]) {
+//                    BACK_ID -> {
+//                        placeable.placeRelative(0, 0)
+//                    }
+//                    TITLE_ID -> placeable.run {
+//                        val widthOffset = (placeables[0].width * collapseFraction).roundToInt()
+//                        val heightOffset = (placeables.first().height - placeable.height) / 2
+////                        Log.d(TAG, "TITLE_ID: widthOffset= $widthOffset. Height offset = $heightOffset")
+//                        placeRelative(
+//                            widthOffset,
+//                            if (collapseFraction == 1f) heightOffset else constraints.maxHeight - height
+//                        )
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
+//
+//object CollapsingTopBarIds {
+//    const val BACK_ID = 1001
+//    const val SHARE_ID = 1002
+//    const val TITLE_ID = 1003
+//    const val COLLAPSE_FACTOR = 0.6f
+//}
