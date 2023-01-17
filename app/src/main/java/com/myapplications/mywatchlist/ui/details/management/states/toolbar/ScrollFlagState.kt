@@ -9,7 +9,8 @@ abstract class ScrollFlagState(heightRange: IntRange, scrollValue: Int) : Toolba
 
     init {
         require(heightRange.first >= 0 && heightRange.last >= heightRange.first) {
-            "The lowest height value must be >= 0 and the highest height value must be >= the lowest value."
+            "The lowest height value must be >= 0 and the highest height value " +
+                    "must be >= the lowest value."
         }
     }
 
@@ -23,6 +24,6 @@ abstract class ScrollFlagState(heightRange: IntRange, scrollValue: Int) : Toolba
     )
 
     final override val progress: Float
-        get() = (1 - (maxHeight - minHeight) / rangeDifference).toFloat()
+        get() = 1 - (maxHeight - height) / rangeDifference
 
 }
