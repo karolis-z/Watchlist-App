@@ -55,6 +55,7 @@ import com.myapplications.mywatchlist.ui.details.toolbarstate.ExitUntilCollapsed
 import com.myapplications.mywatchlist.ui.details.toolbarstate.ToolbarState
 import com.myapplications.mywatchlist.ui.theme.IMDBOrange
 import java.time.LocalDate
+import kotlin.math.roundToInt
 
 private const val MAX_SUMMARY_LINES = 5
 private val MinToolbarHeight = 64.dp
@@ -235,7 +236,6 @@ fun DetailsCollapsingToolbar(
                     .fillMaxSize()
             ) {
                 DetailsCollapsingToolbarLayout (progress = progress) {
-                    //#region Navigate Up Button
                     IconButton(
                         onClick = onNavigateUp,
                         modifier = Modifier.layoutId(CollapsingToolbarContent.NavUpButton)
@@ -259,8 +259,6 @@ fun DetailsCollapsingToolbar(
                         }
 
                     }
-                    //#endregion
-                    //#region Title
                     Text(
                         text = titleName,
                         style =  MaterialTheme.typography.displaySmall.copy(
@@ -274,7 +272,6 @@ fun DetailsCollapsingToolbar(
                             .fillMaxWidth()
                             .layoutId(CollapsingToolbarContent.TitleText)
                     )
-                    //#endregion
                 }
             }
         }
@@ -350,25 +347,45 @@ private fun DetailsCollapsingToolbarLayout(
                 throw IllegalStateException("Up Icon or Title were null but were not supposed to be")
             }
 
-            // Calculating Start (collapsed toolbar) and Stop (expanded toolbar) 'y' positions of title
-            val titleStartY = centerOfCollapsedY - title.height / 2
-            val titleStopY = constraints.maxHeight - title.height - expandedTitleBottomOffset
+            /* Calculating Start (collapsed toolbar) and Stop (expanded toolbar) 'y' positions of
+            title. NOT USING AT THIS POINT. But keeping in case there's a need later. */
+            // val titleStartY = centerOfCollapsedY - title.height / 2
+            // val titleStopY = constraints.maxHeight - title.height - expandedTitleBottomOffset
 
             // Placing the placeables
             upIcon.placeRelative(x = navIconX, y = navIconY)
-            /* TODO: Research another type of interpolation to the title takes a different path
-                not overlapping the Up button */
+
+            /* Using a quadratic Bezier curve for 'slower' change of Y coordinate so the title
+            doesn't jump so quickly to the top when starting scrolling */
+            val titleYfirstInterpolatedPoint = lerp(
+                start = (constraints.maxHeight * 0.75f).roundToInt(),
+                stop = constraints.maxHeight - title.height - expandedTitleBottomOffset,
+                fraction = progress
+            )
+            val titleYsecondInterpolatedPoint= lerp(
+                start = centerOfCollapsedY - title.height / 2,
+                stop = (constraints.maxHeight * 0.75f).roundToInt(),
+                fraction = progress
+            )
+            val titleY = lerp(
+                start = titleYsecondInterpolatedPoint,
+                stop = titleYfirstInterpolatedPoint,
+                fraction = progress
+            )
+
             title.placeRelative(
                 x = lerp(
                     start = upIcon.width + navIconX * 2,    // start = collapsed toolbar
                     stop =  expandedTitleStartOffset,       // stop = expanded toolbar
                     fraction = progress
                 ),
-                y = lerp(
-                    start = titleStartY,  // start = collapsed toolbar
-                    stop = titleStopY,    // stop = expanded toolbar
-                    fraction = progress
-                )
+                y = titleY
+                // Left the previous implementation in case of need to go back
+                // y = lerp(
+                //     start = titleStartY,  // start = collapsed toolbar
+                //     stop = titleStopY,    // stop = expanded toolbar
+                //     fraction = progress
+                // )
             )
         }
     }
