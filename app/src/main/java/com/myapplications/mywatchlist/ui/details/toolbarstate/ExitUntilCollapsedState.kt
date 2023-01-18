@@ -1,7 +1,6 @@
-package com.myapplications.mywatchlist.ui.details.management.states.toolbar.scrollflags
+package com.myapplications.mywatchlist.ui.details.toolbarstate
 
 import androidx.compose.runtime.saveable.mapSaver
-import com.myapplications.mywatchlist.ui.details.management.states.toolbar.ScrollFlagState
 
 class ExitUntilCollapsedState(
     heightRange: IntRange,

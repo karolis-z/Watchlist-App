@@ -1,9 +1,14 @@
-package com.myapplications.mywatchlist.ui.details.management.states.toolbar
+package com.myapplications.mywatchlist.ui.details.toolbarstate
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.structuralEqualityPolicy
+import androidx.compose.runtime.*
+
+@Stable
+interface ToolbarState {
+    val offset: Float
+    val height: Float
+    val progress: Float
+    var scrollValue: Int
+}
 
 abstract class ScrollFlagState(heightRange: IntRange, scrollValue: Int) : ToolbarState {
 

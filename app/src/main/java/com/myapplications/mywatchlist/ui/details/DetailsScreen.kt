@@ -1,19 +1,29 @@
 package com.myapplications.mywatchlist.ui.details
 
-import androidx.compose.foundation.*
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Today
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
@@ -24,39 +34,34 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.myapplications.mywatchlist.R
 import com.myapplications.mywatchlist.core.util.Constants
-import com.myapplications.mywatchlist.ui.details.management.states.toolbar.ToolbarState
-import com.myapplications.mywatchlist.ui.details.management.states.toolbar.scrollflags.ExitUntilCollapsedState
+import com.myapplications.mywatchlist.core.util.DateFormatter
+import com.myapplications.mywatchlist.domain.entities.*
+import com.myapplications.mywatchlist.ui.components.AnimatedWatchlistButton
+import com.myapplications.mywatchlist.ui.components.GenreChip
+import com.myapplications.mywatchlist.ui.components.LoadingCircle
+import com.myapplications.mywatchlist.ui.details.toolbarstate.ExitUntilCollapsedState
+import com.myapplications.mywatchlist.ui.details.toolbarstate.ToolbarState
+import com.myapplications.mywatchlist.ui.theme.IMDBOrange
+import java.time.LocalDate
 
-//private val ContentPadding = 8.dp
-//private val Elevation = 4.dp
-//private val ButtonSize = 24.dp
-//private const val Alpha = 0.75f
-//
-//private val ExpandedPadding = 1.dp
-//private val CollapsedPadding = 3.dp
-//
-//private val ExpandedCostaRicaHeight = 20.dp
-//private val CollapsedCostaRicaHeight = 16.dp
-//
-//private val ExpandedWildlifeHeight = 32.dp
-//private val CollapsedWildlifeHeight = 24.dp
-
-//private val MapHeight = CollapsedCostaRicaHeight * 2
-
+private const val MAX_SUMMARY_LINES = 5
 private val MinToolbarHeight = 64.dp
-
 private val NavButtonGradientSize = 40.dp
-
 // This considers top padding for a 48x48dp IconButton. This size is for accessibility
 // start = end = ((standard total width (16pad + 24 icon + 16pad)=56) - 48)/2 = 4.dp
 private val NavigationIconPadding =
@@ -66,12 +71,10 @@ private val NavigationIconPadding =
         end = 4.dp,
         bottom = (MinToolbarHeight - 48.dp) / 2
     )
-
 private val StandardHzPadding = 16.dp
 private val ExpandedStateTitlePadding =
     PaddingValues(start = StandardHzPadding, top = 0.dp, end = 0.dp, bottom = 10.dp)
-
-private const val TAG = "DETAILS_SCREEN_TEST"
+private const val TAG = "DETAILS_SCREEN"
 
 @Composable
 fun DetailsScreen(
@@ -91,25 +94,83 @@ fun DetailsScreen(
     val toolbarState = rememberToolbarState(toolbarHeightRange = toolbarHeightRange)
     toolbarState.scrollValue = scrollState.value
 
+    val viewModel = hiltViewModel<DetailsViewModel>()
+    val uiState = viewModel.uiState.collectAsState()
 
-    Box(modifier = modifier) {
-        FakeContentForScrollingInBox(
+    if (uiState.value.isLoading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            LoadingCircle()
+        }
+    } else if (uiState.value.isError) {
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = StandardHzPadding),
-            scrollState = scrollState,
-            contentPadding = PaddingValues(top = maxToolbarHeight)
-        )
-        MyCollapsingToolbar(
-            progress = toolbarState.progress,
-            onNavigateUp = onNavigateUp,
-            placeHolderBackdrop = placeHolderBackdrop,
-            maxToolbarHeight = maxToolbarHeight,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(with(LocalDensity.current) { toolbarState.height.toDp() })
-                .graphicsLayer { translationY = toolbarState.offset }
-        )
+                .padding(15.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = stringResource(id = R.string.details_error),
+                style = MaterialTheme.typography.headlineMedium,
+                textAlign = TextAlign.Center
+            )
+        }
+    } else {
+        val title = uiState.value.title
+        val type = uiState.value.type
+
+        // Setting to data unavailable string, but will be replaced below if actually available
+        var runtimeOrSeasonsString = stringResource(id = R.string.details_data_notavailable)
+        if (title != null && type != null) {
+            when (uiState.value.type) {
+                TitleType.TV -> {
+                    runtimeOrSeasonsString = pluralStringResource(
+                        id = R.plurals.details_seasons,
+                        count = (title as TV).numberOfSeasons,
+                        (title as TV).numberOfSeasons
+                    )
+                }
+                TitleType.MOVIE -> {
+                    val runtime = (uiState.value.title as Movie).runtime
+                    if (runtime != null) {
+                        val hoursAndMinutesPair =
+                            viewModel.convertRuntimeToHourAndMinutesPair(runtime)
+                        runtimeOrSeasonsString = stringResource(
+                            id = R.string.details_runtime,
+                            hoursAndMinutesPair.first,
+                            hoursAndMinutesPair.second
+                        )
+                    }
+                }
+                else -> Unit // At this stage type should never be null
+            }
+            Box(modifier = modifier) {
+                DetailsScreenContent(
+                    title = title,
+                    titleType = type,
+                    runtimeOrSeasonsString = runtimeOrSeasonsString,
+                    placeHolderPortrait = placeHolderPortrait,
+                    onWatchlistClicked = { viewModel.onWatchlistClicked() },
+                    scrollState = scrollState,
+                    contentPadding = PaddingValues(top = maxToolbarHeight),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = StandardHzPadding)
+                )
+                MyCollapsingToolbar(
+                    progress = toolbarState.progress,
+                    onNavigateUp = onNavigateUp,
+                    titleName = title.name,
+                    backdropLink = title.backdropLink,
+                    placeHolderBackdrop = placeHolderBackdrop,
+                    maxToolbarHeight = maxToolbarHeight,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(with(LocalDensity.current) { toolbarState.height.toDp() })
+                        .graphicsLayer { translationY = toolbarState.offset }
+                )
+            }
+        }
     }
 }
 
@@ -121,69 +182,28 @@ private fun rememberToolbarState(toolbarHeightRange: IntRange): ToolbarState {
 }
 
 @Composable
-fun FakeContentForScrollingInBox(
-    scrollState: ScrollState,
-    contentPadding: PaddingValues,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier.verticalScroll(scrollState)
-    ) {
-        Spacer(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(contentPadding.calculateTopPadding())
-        )
-        repeat(5) {
-            Text(text = "Text #$it", style = MaterialTheme.typography.headlineMedium)
-            Text(text = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.", modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 10.dp), style = MaterialTheme.typography.bodyMedium)
-            Image(painter = painterResource(id = R.drawable.placeholder_backdrop_dark), contentDescription = null, contentScale = ContentScale.Fit)
-        }
-
-        Spacer(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(contentPadding.calculateBottomPadding())
-        )
-    }
-
-}
-
-
-
-
-
-@Composable
 fun MyCollapsingToolbar(
     progress: Float,
     onNavigateUp: () -> Unit,
     maxToolbarHeight: Dp,
+    titleName: String,
+    backdropLink: String?,
     placeHolderBackdrop: Painter,
     modifier: Modifier = Modifier
 ) {
-//    val costaRicaHeight = with(LocalDensity.current) {
-//        lerp(CollapsedCostaRicaHeight.toPx(), ExpandedCostaRicaHeight.toPx(), progress).toDp()
-//    }
-//    val wildlifeHeight = with(LocalDensity.current) {
-//        lerp(CollapsedWildlifeHeight.toPx(), ExpandedWildlifeHeight.toPx(), progress).toDp()
-//    }
-//    val logoPadding = with(LocalDensity.current) {
-//        lerp(CollapsedPadding.toPx(), ExpandedPadding.toPx(), progress).toDp()
-//    }
-    var expandedToolbarHeight = with(LocalDensity.current) { maxToolbarHeight.roundToPx() }
+
+    val expandedToolbarHeight = with(LocalDensity.current) { maxToolbarHeight.roundToPx() }
 
     Surface(
         color = MaterialTheme.colorScheme.background,
-        shadowElevation = 0.dp,
+        shadowElevation = if (progress == 0f) 3.dp else 0.dp,
         modifier = modifier
     ) {
         Box (modifier = Modifier.fillMaxSize()) {
             //#region Background Image
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data("https://image.tmdb.org/t/p/w780/s16H6tpK2utvwDtzZ8Qy4qm5Emw.jpg")
+                    .data(backdropLink)
                     .crossfade(true)
                     .build(),
                 placeholder = placeHolderBackdrop,
@@ -191,12 +211,9 @@ fun MyCollapsingToolbar(
                 error = placeHolderBackdrop,
                 contentDescription = null, //Decorative
                 contentScale = ContentScale.FillWidth,
-                // TODO: Should use BiasAlignment or Center??
-//                alignment = BiasAlignment(0f, 1f - ((1f - progress) * 0.75f)),
                 alignment = Alignment.Center,
                 modifier = Modifier
                     .fillMaxSize()
-                    .layoutId(CollapsingTopBarIds.IMAGE_ID)
                     // When fully collapsed, the image shall be invisible
                     .graphicsLayer { alpha = progress }
             )
@@ -231,7 +248,9 @@ fun MyCollapsingToolbar(
                                 .size(NavButtonGradientSize)
                                 .align(Alignment.Center)
                                 .background(
-                                    color = Color.Black.copy(alpha = 0.15f),
+                                    color = MaterialTheme.colorScheme.background.copy(
+                                        alpha = progress * 0.64f
+                                    ),
                                     shape = CircleShape
                                 )
                         ) {
@@ -244,23 +263,21 @@ fun MyCollapsingToolbar(
 
                     }
                     //#endregion
+                    //#region Title
                     Text(
-                        text = "The Matrix Resurrections The Matrix Resurrections",
+                        text = titleName,
                         style =  MaterialTheme.typography.displaySmall.copy(
-                            shadow = Shadow(
-                                color = MaterialTheme.colorScheme.onBackground,
-                                offset = Offset.Zero,
-                                blurRadius = 1f
-                            )
+                            // TODO: Reconsider? Not very smooth animation
+                            fontSize = lerp(start = 22f, stop = 36f, fraction = progress).sp
                         ),
                         overflow = TextOverflow.Ellipsis,
-                        maxLines = 1,
+                        maxLines = lerp(1, 2, progress),
                         modifier = Modifier
                             .wrapContentHeight()
-                            .wrapContentWidth()
+                            .fillMaxWidth()
                             .layoutId(CollapsingToolbarContent.TitleText)
                     )
-
+                    //#endregion
                 }
             }
         }
@@ -273,7 +290,7 @@ private fun MyCollapsingToolbarLayout(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
-    val placeablesMap = mutableMapOf<Placeable, CollapsingToolbarContent>()
+    val placeablesMap = mutableMapOf<CollapsingToolbarContent, Placeable>()
     Layout(
         modifier = modifier,
         content = content
@@ -282,7 +299,7 @@ private fun MyCollapsingToolbarLayout(
         placeablesMap.clear()
 
         val contentItems = CollapsingToolbarContent.values().toList()
-        check(measurables.size == contentItems.size) // [0]: UpIconButton | [1]: Text
+        check(measurables.size == contentItems.size)
 
         val direction = this.layoutDirection
 
@@ -293,7 +310,6 @@ private fun MyCollapsingToolbarLayout(
         val expandedTitleStartOffset = ExpandedStateTitlePadding.calculateStartPadding(direction).roundToPx()
         val expandedTitleBottomOffset = ExpandedStateTitlePadding.calculateBottomPadding().roundToPx()
 
-//        val placeables = measurables.map { it.measure(constraints) }
         val placeables = mutableListOf<Placeable>()
 
         measurables.forEachIndexed { index, measurable ->
@@ -310,7 +326,7 @@ private fun MyCollapsingToolbarLayout(
                     )
                 }
             }
-            placeablesMap[placeable] = measurable.layoutId as CollapsingToolbarContent
+            placeablesMap[measurable.layoutId as CollapsingToolbarContent] = placeable
             placeables.add(placeable)
         }
 
@@ -319,48 +335,40 @@ private fun MyCollapsingToolbarLayout(
             height = constraints.maxHeight
         ) {
 
-            val upIcon = placeables[0]
-            val title = placeables[1]
-//
-//            upIcon.placeRelative(x = navIconX, y = navIconY)
+            // Just in case check if placeables list is the same size as the placeablesMap
+            check(placeables.size == placeablesMap.size)
 
-            // TODO: MUST FINISH ENSURING SAFETY WITH ENUMS
+            //Creating references to the content elements being placed in the layout
+            var upIcon: Placeable? = null
+            var title: Placeable? = null
 
+            for (key in placeablesMap.keys) {
+                when(key) {
+                    CollapsingToolbarContent.NavUpButton -> upIcon = placeablesMap[key]
+                    CollapsingToolbarContent.TitleText -> title = placeablesMap[key]
+                }
+            }
+            if (upIcon == null || title == null) {
+                throw IllegalStateException("Up Icon or Title were null but were not supposed to be")
+            }
+
+            // Calculating Start (collapsed toolbar) and Stop (expanded toolbar) 'y' positions of title
             val titleStartY = centerOfCollapsedY - title.height / 2
             val titleStopY = constraints.maxHeight - title.height - expandedTitleBottomOffset
 
-            placeables.forEach { placeable ->
-                when(placeablesMap[placeable]){
-                    CollapsingToolbarContent.NavUpButton -> {
-                        placeable.placeRelative(x = navIconX, y = navIconY)
-                    }
-                    CollapsingToolbarContent.TitleText -> {
-                        placeable.placeRelative(
-                            x = lerp(
-                                start = upIcon.width + navIconX * 2,    // start = collapsed toolbar
-                                stop =  expandedTitleStartOffset,       // end = expanded toolbar
-                                fraction = progress
-                            ),
-                            y = lerp(
-                                start = titleStartY,  // start = collapsed toolbar
-                                stop = titleStopY,    // end = expanded toolbar
-                                fraction = progress
-                            )
-                        )
-                    }
-                    null -> TODO()
-                }
-            }
-
+            // Placing the placeables
+            upIcon.placeRelative(x = navIconX, y = navIconY)
+            /* TODO: Research another type of interpolation to the title takes a different path
+                not overlapping the Up button */
             title.placeRelative(
                 x = lerp(
                     start = upIcon.width + navIconX * 2,    // start = collapsed toolbar
-                    stop =  expandedTitleStartOffset,       // end = expanded toolbar
+                    stop =  expandedTitleStartOffset,       // stop = expanded toolbar
                     fraction = progress
                 ),
                 y = lerp(
                     start = titleStartY,  // start = collapsed toolbar
-                    stop = titleStopY,    // end = expanded toolbar
+                    stop = titleStopY,    // stop = expanded toolbar
                     fraction = progress
                 )
             )
@@ -371,5 +379,364 @@ private fun MyCollapsingToolbarLayout(
 enum class CollapsingToolbarContent {
     NavUpButton,
     TitleText
+}
+
+@Composable
+fun DetailsScreenContent(
+    title: Title,
+    titleType: TitleType,
+    runtimeOrSeasonsString: String,
+    placeHolderPortrait: Painter,
+    onWatchlistClicked: () -> Unit,
+    scrollState: ScrollState,
+    contentPadding: PaddingValues,
+    modifier: Modifier = Modifier
+) {
+    var expandedSummaryState by remember { mutableStateOf(false) }
+    var showExpandSummaryArrow by remember { mutableStateOf(false) }
+    val rotationState by animateFloatAsState(targetValue = if (expandedSummaryState) 180f else 0f)
+
+    Column(
+        modifier = modifier.verticalScroll(scrollState)
+    ) {
+        Spacer(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(contentPadding.calculateTopPadding())
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+//                .padding(horizontal = 16.dp)
+        ) {
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // MAIN DETAILS
+            DetailsInfoRow(
+                title = title,
+                titleType = titleType,
+                modifier = Modifier.fillMaxWidth(),
+                runtimeOrSeasonsString = runtimeOrSeasonsString
+            )
+            Spacer(modifier = Modifier.height(15.dp))
+
+            // GENRES
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                items(key = { genre -> genre.id }, items = title.genres) { genre: Genre ->
+                    GenreChip(
+                        genreName = genre.name,
+                        textStyle = MaterialTheme.typography.labelLarge
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // WATCHLIST BUTTON
+            Row(
+                horizontalArrangement = Arrangement.End,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                AnimatedWatchlistButton(
+                    onWatchlistClicked = { onWatchlistClicked() },
+                    isTitleWatchlisted = title.isWatchlisted,
+                    contentPadding = ButtonDefaults.ContentPadding,
+                    textStyle = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.fillMaxWidth(),
+                    buttonShape = MaterialTheme.shapes.small
+                )
+            }
+            Spacer(modifier = Modifier.height(7.dp))
+
+            // OVERVIEW
+            val titleOverview = title.overview
+            if (titleOverview != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    SectionHeadline(
+                        label = stringResource(id = R.string.details_summary_label),
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (showExpandSummaryArrow) {
+                        IconButton(
+                            onClick = { expandedSummaryState = !expandedSummaryState },
+                            modifier = Modifier.rotate(rotationState)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.ExpandMore,
+                                contentDescription = stringResource(id = R.string.cd_expand_more)
+                            )
+                        }
+                    }
+                }
+                Text(
+                    text = titleOverview,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .animateContentSize(),
+                    maxLines = if (expandedSummaryState) Int.MAX_VALUE else MAX_SUMMARY_LINES,
+                    overflow = TextOverflow.Ellipsis,
+                    onTextLayout = {
+                        if (it.hasVisualOverflow && showExpandSummaryArrow == false) {
+                            showExpandSummaryArrow = true
+                        }
+                    },
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // EXTRA DETAILS - the headline label is within the ExtraDetailsSection composable
+            ExtraDetailsSection(title = title)
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // CAST
+            val cast = title.cast
+            if (cast != null) {
+                SectionHeadline(label = stringResource(id = R.string.details_cast_label))
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                    items(
+                        key = { castMember -> castMember.id },
+                        items = cast
+                    ) { castMember: CastMember ->
+                        CastMemberCard(
+                            castMember = castMember,
+                            placeHolderPortrait = placeHolderPortrait
+                        )
+                    }
+                }
+            }
+        }
+        Spacer(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(contentPadding.calculateBottomPadding())
+        )
+    }
+}
+
+@Composable
+fun DetailsInfoRow(
+    title: Title,
+    titleType: TitleType,
+    runtimeOrSeasonsString: String,
+    modifier: Modifier = Modifier,
+    horizontalArrangement: Arrangement.Horizontal = Arrangement.SpaceBetween
+) {
+    val releaseDate = title.releaseDate
+    val releaseDateString = if (releaseDate == null) {
+        stringResource(id = R.string.details_data_notavailable)
+    } else {
+        when (titleType) {
+            TitleType.MOVIE -> {
+                DateFormatter.getLocalizedShortDateString(releaseDate)
+            }
+            TitleType.TV -> {
+                val tv = title as TV
+                if (tv.status == TvStatus.Ended || tv.status == TvStatus.Cancelled) {
+                    val lastAirDate = tv.lastAirDate
+                    if (lastAirDate != null) {
+                        "${releaseDate.year} - ${lastAirDate.year}"
+                    } else {
+                        "${releaseDate.year}"
+                    }
+                } else {
+                    "${releaseDate.year} -"
+                }
+            }
+        }
+    }
+
+    Row(modifier = modifier, horizontalArrangement = horizontalArrangement) {
+        Row(modifier = Modifier.wrapContentWidth()) {
+            Icon(imageVector = Icons.Outlined.Today, contentDescription = null)
+            Spacer(modifier = Modifier.width(5.dp))
+            Text(
+                text = releaseDateString,
+                style = MaterialTheme.typography.bodyLarge
+            )
+        }
+        Row(modifier = Modifier.wrapContentWidth()) {
+            Icon(imageVector = Icons.Outlined.Schedule, contentDescription = null)
+            Spacer(modifier = Modifier.width(5.dp))
+            Text(text = runtimeOrSeasonsString, style = MaterialTheme.typography.bodyLarge)
+        }
+        Row(modifier = Modifier.wrapContentWidth()) {
+            Icon(imageVector = Icons.Filled.Star, contentDescription = null, tint = IMDBOrange)
+            Spacer(modifier = Modifier.width(5.dp))
+            Text(
+                text = stringResource(
+                    id = R.string.title_item_vote_score,
+                    "%.1f".format(title.voteAverage)
+                ),
+                style = MaterialTheme.typography.bodyLarge
+            )
+        }
+    }
+}
+
+@Composable
+fun CastMemberCard(
+    castMember: CastMember,
+    placeHolderPortrait: Painter,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .size(width = 150.dp, height = 290.dp)
+            .padding(bottom = 5.dp),
+        shape = MaterialTheme.shapes.medium
+    ) {
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(castMember.pictureLink)
+                .crossfade(true)
+                .build(),
+            placeholder = placeHolderPortrait,
+            fallback = placeHolderPortrait,
+            error = placeHolderPortrait,
+            contentDescription = null, //Decorative
+            contentScale = ContentScale.Crop,
+            alignment = Alignment.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(225.dp)
+        )
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
+            Text(
+                text = castMember.name,
+                style = MaterialTheme.typography.labelLarge,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(horizontal = 5.dp)
+            )
+            Spacer(modifier = Modifier.height(5.dp))
+            Text(
+                text = castMember.character,
+                style = MaterialTheme.typography.labelMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(horizontal = 5.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun SectionHeadline(label: String, modifier: Modifier = Modifier, bottomPadding: Dp = 5.dp) {
+    Text(
+        text = label,
+        style = MaterialTheme.typography.headlineMedium,
+        modifier = modifier.padding(bottom = bottomPadding)
+    )
+}
+
+
+@Preview
+@Composable
+fun CastMemberCardPreview() {
+    val castMember =
+        CastMember(id = 1, name = "Carrie-Anne Moss", character = "Trinity", pictureLink = null)
+    val placeHolderPortrait = painterResource(id = R.drawable.placeholder_portrait_light)
+    CastMemberCard(castMember = castMember, placeHolderPortrait = placeHolderPortrait)
+}
+
+//TODO: Remove once not needed anymore
+private fun getMovieForTesting(): Movie {
+    val genres = listOf(Genre(0, "Action"), Genre(1, "Science Fiction"), Genre(2, "Adventure"))
+    val cast = listOf(
+        CastMember(0, "Keanu Reaves", "Neo", null),
+        CastMember(1, "Laurence Fishburne", "Morpheus", null),
+        CastMember(2, "Carrie-Anne Moss", "Trinity", null),
+        CastMember(3, "Hugo Weaving", "Agent Smith", null),
+        CastMember(4, "Joe Pantoliano", "Cypher", null),
+    )
+    val videos = listOf(
+        "https://www.youtube.com/watch?v=nUEQNVV3Gfs",
+        "https://www.youtube.com/watch?v=RZ-MXBjvA38",
+        "https://www.youtube.com/watch?v=L0fw0WzFaBM",
+        "https://www.youtube.com/watch?v=m8e-FF8MsqU"
+    )
+    return Movie(
+        id = 603,
+        name = "The Matrix",
+        imdbId = "tt0133093",
+        overview = "Set in the 22nd century, The Matrix tells the story of a computer hacker who joins a group of underground insurgents fighting the vast and powerful computers who now rule the earth.",
+        tagline = "Welcome to the Real World.",
+        posterLink = "https://image.tmdb.org/t/p/w500/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg",
+        backdropLink = "https://image.tmdb.org/t/p/w500/l4QHerTSbMI7qgvasqxP36pqjN6.jpg",
+        genres = genres,
+        cast = cast,
+        videos = videos,
+        status = MovieStatus.Released,
+        releaseDate = LocalDate.parse("1999-03-30"),
+        revenue = 463517383,
+        runtime = 136,
+        voteCount = 22622,
+        voteAverage = 8.195,
+        isWatchlisted = false
+    )
+}
+
+//TODO: Remove once not needed anymore
+private fun getTvForTesting(): TV {
+    val genres = listOf(Genre(0, "Crime"), Genre(1, "Drama"))
+    val cast = listOf(
+        CastMember(
+            0,
+            "Giancarlo Esposito",
+            "Leo Pap",
+            "https://image.tmdb.org/t/p/w500/lBvDQZjxhIGMbH61iHnqerpbqHc.jpg"
+        ),
+        CastMember(
+            1,
+            "Paz Vega",
+            "Ava Mercer",
+            "https://image.tmdb.org/t/p/w500/fNLlJysFd5f0Q8Lj20EZpU8BiRN.jpg"
+        ),
+        CastMember(
+            2,
+            "Rufus Sewell",
+            "Roger Salas",
+            "https://image.tmdb.org/t/p/w500/yc2EWyg45GO03YqDttaEhjvegiE.jpg"
+        ),
+        CastMember(
+            3,
+            "Tati Gabrielle",
+            "Hannah Kim",
+            "https://image.tmdb.org/t/p/w500/zDtHNX7vXfhRmN2U5Ffmd9mLlo0.jpg"
+        ),
+        CastMember(
+            4,
+            "Peter Mark Kendall",
+            "Stan Loomis",
+            "https://image.tmdb.org/t/p/w500/9Cj5ySZ6znkNcASB5CZeibuDGsd.jpg"
+        ),
+    )
+    val videos = listOf(
+        "https://www.youtube.com/watch?v=T92iINbl0t4",
+        "https://www.youtube.com/watch?v=YbArSoOP8XQ",
+        "https://www.youtube.com/watch?v=nHGk3sRxjYM"
+    )
+    return TV(
+        id = 156902,
+        name = "Kaleidoscope",
+        overview = "A master criminal and his crew hatch an elaborate scheme to break into a secure vault, but are forced to pivot when things don't go according to plan.",
+        tagline = "There are 7 billion ways to solve a crime.",
+        posterLink = "https://image.tmdb.org/t/p/w500/2nXJoSB5Y6R9ne7pjqL7Cs3zqY1.jpg",
+        backdropLink = "https://image.tmdb.org/t/p/w500/kSqEenES71d1ApF2rRWxp5X0en5.jpg",
+        genres = genres,
+        cast = cast,
+        videos = videos,
+        status = TvStatus.Ended,
+        releaseDate = LocalDate.parse("2023-01-01"),
+        lastAirDate = LocalDate.parse("2023-01-01"),
+        numberOfSeasons = 1,
+        numberOfEpisodes = 9,
+        voteCount = 97,
+        voteAverage = 7.397,
+        isWatchlisted = true
+    )
 }
 

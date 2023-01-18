@@ -172,7 +172,8 @@ class MainActivity : ComponentActivity() {
                         ) { backStackEntry ->
                             DetailsScreen(
                                 placeHolderBackdrop = placeHolderBackdrop,
-                                placeHolderPortrait = placeHolderPortrait
+                                placeHolderPortrait = placeHolderPortrait,
+                                onNavigateUp = { navController.navigateUp() }
                             )
                         }
                     }
@@ -195,9 +196,7 @@ fun MyTopAppBar(
     // Keeping it like this for a while to test a custom toolbar layout
     if (showLargeTopAppBar.value) {
         TopAppBar(
-            title = {
-                Text(text = title, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            },
+            title = { Text(text = title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
             modifier = modifier
         )
     } else {
