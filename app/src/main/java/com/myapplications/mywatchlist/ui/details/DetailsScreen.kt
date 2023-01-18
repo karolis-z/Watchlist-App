@@ -2,14 +2,11 @@ package com.myapplications.mywatchlist.ui.details
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.background
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ExpandMore
@@ -157,7 +154,7 @@ fun DetailsScreen(
                         .fillMaxSize()
                         .padding(horizontal = StandardHzPadding)
                 )
-                MyCollapsingToolbar(
+                DetailsCollapsingToolbar(
                     progress = toolbarState.progress,
                     onNavigateUp = onNavigateUp,
                     titleName = title.name,
@@ -182,7 +179,7 @@ private fun rememberToolbarState(toolbarHeightRange: IntRange): ToolbarState {
 }
 
 @Composable
-fun MyCollapsingToolbar(
+fun DetailsCollapsingToolbar(
     progress: Float,
     onNavigateUp: () -> Unit,
     maxToolbarHeight: Dp,
@@ -237,7 +234,7 @@ fun MyCollapsingToolbar(
                     .statusBarsPadding()
                     .fillMaxSize()
             ) {
-                MyCollapsingToolbarLayout (progress = progress) {
+                DetailsCollapsingToolbarLayout (progress = progress) {
                     //#region Navigate Up Button
                     IconButton(
                         onClick = onNavigateUp,
@@ -285,7 +282,7 @@ fun MyCollapsingToolbar(
 }
 
 @Composable
-private fun MyCollapsingToolbarLayout(
+private fun DetailsCollapsingToolbarLayout(
     progress: Float,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
@@ -312,18 +309,19 @@ private fun MyCollapsingToolbarLayout(
 
         val placeables = mutableListOf<Placeable>()
 
-        measurables.forEachIndexed { index, measurable ->
+        measurables.forEach { measurable ->
             val placeable = when(measurable.layoutId as CollapsingToolbarContent) {
                 CollapsingToolbarContent.NavUpButton -> {
                     measurable.measure(constraints)
                 }
                 CollapsingToolbarContent.TitleText -> {
-                    measurable.measure(
-                        /* Assuming here that 0 placeable will be the NavUpButton, but this can go
-                        wrong if forgotten and missed in the future when adding other elements */
-                        Constraints.fixedWidth(constraints.maxWidth - placeables[0].width -
-                                navIconX * 2 - StandardHzPadding.roundToPx())
+                    val width = lerp(
+                        start = constraints.maxWidth - placeables[0].width -
+                                navIconX * 2 - StandardHzPadding.roundToPx(),
+                        stop = constraints.maxWidth - StandardHzPadding.roundToPx() * 2,
+                        fraction = progress
                     )
+                    measurable.measure(Constraints.fixedWidth(width))
                 }
             }
             placeablesMap[measurable.layoutId as CollapsingToolbarContent] = placeable
