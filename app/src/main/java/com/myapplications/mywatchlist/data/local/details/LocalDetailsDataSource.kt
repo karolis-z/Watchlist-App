@@ -32,7 +32,7 @@ interface LocalDetailsDataSource {
      * Retrieve a [Title] from the local database and a return as a [ResultOf.Success] if found, and
      * [ResultOf.Failure] if not found
      */
-    suspend fun getTitle(titleId: Long, titleType: TitleType): ResultOf<Title>
+    suspend fun getTitle(mediaId: Long, type: TitleType): ResultOf<Title>
 }
 
 private const val TAG = "LOCAL_DETAILS_DATASRC"
@@ -80,12 +80,12 @@ class LocalDetailsDataSourceImpl @Inject constructor(
         }
     }
 
-    override suspend fun getTitle(titleId: Long, titleType: TitleType): ResultOf<Title> =
+    override suspend fun getTitle(mediaId: Long, type: TitleType): ResultOf<Title> =
         withContext(dispatcher) {
             val title = try {
-                when (titleType) {
-                    TitleType.MOVIE -> movieDao.getMovie(titleId).toMovie()
-                    TitleType.TV -> tvDao.getTv(titleId).toTv()
+                when (type) {
+                    TitleType.MOVIE -> movieDao.getMovie(mediaId).toMovie()
+                    TitleType.TV -> tvDao.getTv(mediaId).toTv()
                 }
             } catch (e: Exception) {
                 val error = "Did not find a title with given id in the local database"
