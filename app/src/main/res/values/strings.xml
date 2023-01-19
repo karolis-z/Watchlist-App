@@ -28,7 +28,6 @@
     <string name="details_cast_label">Cast</string>
     <string name="details_runtime">%d h %d min</string>
     <string name="details_error">Sorry… Could not get the details of this title</string>
-    <string name="details_number_of_seasons">%d seasons</string>
     <plurals name="details_seasons">
         <item quantity="one">%d season</item>
         <item quantity="other">%d seasons</item>

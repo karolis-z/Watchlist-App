@@ -141,7 +141,7 @@ fun DetailsScreen(
                     runtimeOrSeasonsString = pluralStringResource(
                         id = R.plurals.details_seasons,
                         count = (title as TV).numberOfSeasons,
-                        (title as TV).numberOfSeasons
+                        title.numberOfSeasons
                     )
                 }
                 TitleType.MOVIE -> {
@@ -538,6 +538,7 @@ fun DetailsScreenContent(
                     }
                 }
             }
+            Spacer(modifier = Modifier.height(12.dp))
         }
         Spacer(
             modifier = Modifier

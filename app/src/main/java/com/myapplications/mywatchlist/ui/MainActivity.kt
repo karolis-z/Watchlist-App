@@ -23,7 +23,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.core.view.WindowCompat
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
@@ -50,8 +49,6 @@ class MainActivity : ComponentActivity() {
 
         val topLevelScreens = listOf(TopLevelScreens.Watchlist, TopLevelScreens.Search, TopLevelScreens.Trending)
         val allTopLevelScreens = listOf(TopLevelScreens.Watchlist, TopLevelScreens.Search, TopLevelScreens.Trending)
-
-        WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
 
@@ -95,7 +92,7 @@ class MainActivity : ComponentActivity() {
                             } else {
                                 stringResource(currentScreenTitleResId)
                             },
-                            showLargeTopAppBar = showTopAppBar,
+                            showLargeTopAppBar = showTopAppBar
                         )
                     },
                     bottomBar = {
@@ -243,12 +240,6 @@ sealed class TopLevelScreens(
     )
 }
 
-sealed class OtherScreens(
-    val route: String,
-    @StringRes val titleResId: Int,
-) {
-    object Details : OtherScreens(
-        route = "details",
-        titleResId = R.string.title_details
-    )
+sealed class OtherScreens(val route: String) {
+    object Details : OtherScreens(route = "details")
 }

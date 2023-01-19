@@ -110,7 +110,7 @@ class RemoteDetailsDataSourceImpl @Inject constructor(
         }
     }
 
-    // TODO: Considering merging with "parseMovieApiResponse".
+    // TODO: Considering merging with "parseMovieApiResponse" once getTv and getMovie are merged
     // Should create a wrapper class / interface for TV and Movie?
     private fun parseTvApiResponse(
         responseBody: ApiResponse.TvResponse,
