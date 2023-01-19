@@ -27,16 +27,16 @@ class TitlesManagerImpl @Inject constructor(
         }
 
     override suspend fun bookmarkTitleItem(titleItem: TitleItem) = withContext(dispatcher) {
-        val titleResult = when(titleItem.type){
-            TitleType.MOVIE -> detailsRepository.getMovie(titleItem.mediaId)
-            TitleType.TV -> detailsRepository.getTv(titleItem.mediaId)
-        }
-        when(titleResult) {
+        val titleResult =
+            detailsRepository.getTitle(mediaId = titleItem.mediaId, type = titleItem.type)
+        when (titleResult) {
             is ResultOf.Failure -> {
                 // If not successful - not bookmarking either the Title nor the TitleItem
-                Log.e(TAG, "bookmarkTitleItem: did not succeed in fetching a Title " +
-                        "with id:${titleItem.mediaId} of type:${titleItem.type}. " +
-                        "Reason: ${titleResult.message}", titleResult.throwable)
+                Log.e(
+                    TAG, "bookmarkTitleItem: did not succeed in fetching a Title " +
+                            "with id:${titleItem.mediaId} of type:${titleItem.type}. " +
+                            "Reason: ${titleResult.message}", titleResult.throwable
+                )
                 return@withContext
             }
             is ResultOf.Success -> {
@@ -47,18 +47,18 @@ class TitlesManagerImpl @Inject constructor(
     }
 
     override suspend fun unBookmarkTitleItem(titleItem: TitleItem) = withContext(dispatcher) {
-        val titleResult = when(titleItem.type){
-            TitleType.MOVIE -> detailsRepository.getMovie(titleItem.mediaId)
-            TitleType.TV -> detailsRepository.getTv(titleItem.mediaId)
-        }
-        when(titleResult) {
+        val titleResult =
+            detailsRepository.getTitle(mediaId = titleItem.mediaId, type = titleItem.type)
+        when (titleResult) {
             is ResultOf.Failure -> {
                 /* If not successful - not unbookmarking Title, but still unbookmarking TitleItem
                 * because for some reason the Title was not bookmarked. Logging error, because that
                 * should not happen */
-                Log.e(TAG, "unBookmarkTitleItem: did not succeed in fetching a Title " +
-                        "with id:${titleItem.mediaId} of type:${titleItem.type}. " +
-                        "Reason: ${titleResult.message}", titleResult.throwable)
+                Log.e(
+                    TAG, "unBookmarkTitleItem: did not succeed in fetching a Title " +
+                            "with id:${titleItem.mediaId} of type:${titleItem.type}. " +
+                            "Reason: ${titleResult.message}", titleResult.throwable
+                )
                 titleItemsRepository.unBookmarkTitleItem(titleItem)
             }
             is ResultOf.Success -> {
@@ -80,17 +80,14 @@ class TitlesManagerImpl @Inject constructor(
         titleItemsRepository.getTrendingTitles()
     }
 
-    override suspend fun getMovie(id: Long): ResultOf<Movie> = withContext(dispatcher) {
-        detailsRepository.getMovie(id)
-    }
-
-    override suspend fun getTv(id: Long): ResultOf<TV> = withContext(dispatcher) {
-        detailsRepository.getTv(id)
-    }
+    override suspend fun getTitle(mediaId: Long, type: TitleType): ResultOf<Title> =
+        withContext(dispatcher) {
+            detailsRepository.getTitle(mediaId = mediaId, type = type)
+        }
 
     override suspend fun bookmarkTitle(title: Title) = withContext(dispatcher) {
         detailsRepository.bookmarkTitle(title)
-        when(title) {
+        when (title) {
             is Movie -> titleItemsRepository.bookmarkTitleItem(title.toTitleItem())
             is TV -> titleItemsRepository.bookmarkTitleItem(title.toTitleItem())
         }
@@ -98,7 +95,7 @@ class TitlesManagerImpl @Inject constructor(
 
     override suspend fun unBookmarkTitle(title: Title) = withContext(dispatcher) {
         detailsRepository.unBookmarkTitle(title)
-        when(title) {
+        when (title) {
             is Movie -> titleItemsRepository.unBookmarkTitleItem(title.toTitleItem())
             is TV -> titleItemsRepository.unBookmarkTitleItem(title.toTitleItem())
         }

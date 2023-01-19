@@ -1,9 +1,8 @@
 package com.myapplications.mywatchlist.domain.repositories
 
-import com.myapplications.mywatchlist.domain.entities.Movie
-import com.myapplications.mywatchlist.domain.entities.TV
 import com.myapplications.mywatchlist.domain.entities.Title
 import com.myapplications.mywatchlist.domain.entities.TitleItem
+import com.myapplications.mywatchlist.domain.entities.TitleType
 import com.myapplications.mywatchlist.domain.result.ResultOf
 import kotlinx.coroutines.flow.Flow
 
@@ -41,11 +40,10 @@ interface TitlesManager {
      */
     suspend fun getTrendingTitles(): ResultOf<List<TitleItem>>
 
-    /** Retrieves a [Movie] */
-    suspend fun getMovie(id: Long): ResultOf<Movie>
-
-    /** Retrieves a [TV] */
-    suspend fun getTv(id: Long): ResultOf<TV>
+    /**
+     * Retrieves a [Title]
+     */
+    suspend fun getTitle(mediaId: Long, type: TitleType): ResultOf<Title>
 
     /** Adds the [Title] to user's watchlist */
     suspend fun bookmarkTitle(title: Title)

@@ -49,7 +49,7 @@ class DetailsViewModel @Inject constructor(
         viewModelScope.launch {
             when(titleType){
                 TitleType.MOVIE -> {
-                    when(val movieResult = titlesManager.getMovie(id)) {
+                    when(val movieResult = titlesManager.getTitle(mediaId = id, type = titleType)) {
                         is ResultOf.Success -> {
                             uiState.update {
                                 it.copy(
@@ -68,7 +68,7 @@ class DetailsViewModel @Inject constructor(
                     }
                 }
                 TitleType.TV -> {
-                    when(val tvResult = titlesManager.getTv(id)) {
+                    when(val tvResult = titlesManager.getTitle(mediaId = id, type = titleType)) {
                         is ResultOf.Success -> {
                             uiState.update {
                                 it.copy(
