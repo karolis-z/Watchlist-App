@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.core.view.WindowCompat
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
@@ -53,6 +54,8 @@ class MainActivity : ComponentActivity() {
         setContent {
 
             val showTopAppBar = rememberSaveable { (mutableStateOf(false)) }
+
+            WindowCompat.setDecorFitsSystemWindows(window, false)
 
             MyWatchlistTheme {
 
@@ -92,7 +95,7 @@ class MainActivity : ComponentActivity() {
                             } else {
                                 stringResource(currentScreenTitleResId)
                             },
-                            showLargeTopAppBar = showTopAppBar
+                            showTopAppBar = showTopAppBar
                         )
                     },
                     bottomBar = {
@@ -198,10 +201,10 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MyTopAppBar(
     title: String,
-    showLargeTopAppBar: MutableState<Boolean>,
+    showTopAppBar: MutableState<Boolean>,
     modifier: Modifier = Modifier
 ){
-    if (showLargeTopAppBar.value) {
+    if (showTopAppBar.value) {
         TopAppBar(
             title = { Text(text = title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
             modifier = modifier
