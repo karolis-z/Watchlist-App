@@ -7,7 +7,7 @@ import androidx.annotation.StringRes
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmarks
 import androidx.compose.material.icons.filled.Search
@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.core.view.WindowCompat
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
@@ -49,6 +50,8 @@ class MainActivity : ComponentActivity() {
 
         val topLevelScreens = listOf(TopLevelScreens.Watchlist, TopLevelScreens.Search, TopLevelScreens.Trending)
         val allTopLevelScreens = listOf(TopLevelScreens.Watchlist, TopLevelScreens.Search, TopLevelScreens.Trending)
+
+        WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
 
@@ -93,8 +96,6 @@ class MainActivity : ComponentActivity() {
                                 stringResource(currentScreenTitleResId)
                             },
                             showLargeTopAppBar = showTopAppBar,
-//                            showUpButton = showUpButton,
-//                            onNavigateUp = { navController.navigateUp() })
                         )
                     },
                     bottomBar = {
@@ -125,7 +126,11 @@ class MainActivity : ComponentActivity() {
                     AnimatedNavHost(
                         navController = navController,
                         startDestination = TopLevelScreens.Watchlist.route,
-                        modifier = Modifier.padding(paddingValues)
+                        /* NOT adding the Scaffold provided padding values here because we want to
+                        * individually adjust for insets in each screen, because in Details screen
+                        * we show the backdrop image under the status bar. Appropriate padding
+                        * values must be passed on to each screen and used however needed. */
+                        modifier = Modifier
                     ) {
                         composable(
                             route = TopLevelScreens.Watchlist.route,
@@ -136,7 +141,9 @@ class MainActivity : ComponentActivity() {
                                 placeholderImage = placeholderPoster,
                                 onTitleClicked = { title ->
                                     navController.navigate(route = OtherScreens.Details.route + "/${title.mediaId}&${title.type.name}")
-                                })
+                                },
+                                modifier = Modifier.padding(paddingValues)
+                            )
                         }
                         composable(
                             route = TopLevelScreens.Search.route,
@@ -147,7 +154,9 @@ class MainActivity : ComponentActivity() {
                                 placeholderImage = placeholderPoster,
                                 onTitleClicked = { title ->
                                     navController.navigate(route = OtherScreens.Details.route + "/${title.mediaId}&${title.type.name}")
-                                })
+                                },
+                                modifier = Modifier.padding(paddingValues)
+                            )
                         }
                         composable(
                             route = TopLevelScreens.Trending.route,
@@ -158,7 +167,9 @@ class MainActivity : ComponentActivity() {
                                 placeholderImage = placeholderPoster,
                                 onTitleClicked = { title ->
                                     navController.navigate(route = OtherScreens.Details.route + "/${title.mediaId}&${title.type.name}")
-                                })
+                                },
+                                modifier = Modifier.padding(paddingValues)
+                            )
                         }
                         composable(
                             route = OtherScreens.Details.route + "/{titleId}&{titleType}",
@@ -169,11 +180,14 @@ class MainActivity : ComponentActivity() {
                             // TODO: Research and use more appropriate transitions
                             enterTransition = { fadeIn (animationSpec = tween(500)) },
                             exitTransition = { fadeOut (animationSpec = tween(500)) }
-                        ) { backStackEntry ->
+                        ) {
                             DetailsScreen(
                                 placeHolderBackdrop = placeHolderBackdrop,
                                 placeHolderPortrait = placeHolderPortrait,
-                                onNavigateUp = { navController.navigateUp() }
+                                onNavigateUp = { navController.navigateUp() },
+                                modifier = Modifier.padding(
+                                    bottom = paddingValues.calculateBottomPadding()
+                                )
                             )
                         }
                     }
@@ -188,12 +202,8 @@ class MainActivity : ComponentActivity() {
 fun MyTopAppBar(
     title: String,
     showLargeTopAppBar: MutableState<Boolean>,
-//    showUpButton: MutableState<Boolean>,
-//    onNavigateUp: () -> Unit,
     modifier: Modifier = Modifier
 ){
-    // TODO: TESTING ANOTHER OPTION
-    // Keeping it like this for a while to test a custom toolbar layout
     if (showLargeTopAppBar.value) {
         TopAppBar(
             title = { Text(text = title, maxLines = 1, overflow = TextOverflow.Ellipsis) },

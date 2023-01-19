@@ -22,7 +22,11 @@ import com.myapplications.mywatchlist.ui.components.LoadingCircle
 import com.myapplications.mywatchlist.ui.components.TitleItemsList
 
 @Composable
-fun TrendingScreen(placeholderImage: Painter, onTitleClicked: (TitleItem) -> Unit) {
+fun TrendingScreen(
+    placeholderImage: Painter,
+    onTitleClicked: (TitleItem) -> Unit,
+    modifier: Modifier
+) {
     val viewModel = hiltViewModel<TrendingViewModel>()
 
     val uiState = viewModel.uiState.collectAsState()
@@ -34,7 +38,7 @@ fun TrendingScreen(placeholderImage: Painter, onTitleClicked: (TitleItem) -> Uni
     val isTitlesAvailable = !uiState.value.titleItems.isNullOrEmpty()
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp)
     ) {

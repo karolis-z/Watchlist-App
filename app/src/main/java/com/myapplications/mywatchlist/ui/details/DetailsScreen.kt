@@ -44,6 +44,7 @@ import androidx.compose.ui.util.lerp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.myapplications.mywatchlist.R
 import com.myapplications.mywatchlist.core.util.Constants
 import com.myapplications.mywatchlist.core.util.DateFormatter
@@ -58,16 +59,16 @@ import java.time.LocalDate
 import kotlin.math.roundToInt
 
 private const val MAX_SUMMARY_LINES = 5
-private val MinToolbarHeight = 64.dp
+private val StandardToolbarHeight = 64.dp
 private val NavButtonGradientSize = 40.dp
 // This considers top padding for a 48x48dp IconButton. This size is for accessibility
 // start = end = ((standard total width (16pad + 24 icon + 16pad)=56) - 48)/2 = 4.dp
 private val NavigationIconPadding =
     PaddingValues(
         start = 4.dp,
-        top = (MinToolbarHeight - 48.dp) / 2,
+        top = (StandardToolbarHeight - 48.dp) / 2,
         end = 4.dp,
-        bottom = (MinToolbarHeight - 48.dp) / 2
+        bottom = (StandardToolbarHeight - 48.dp) / 2
     )
 private val StandardHzPadding = 16.dp
 private val ExpandedStateTitlePadding =
@@ -81,12 +82,18 @@ fun DetailsScreen(
     onNavigateUp: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Calculating status bar height
+    val statusBarPadding =
+        WindowInsets.statusBars.asPaddingValues(LocalDensity.current).calculateTopPadding()
+
     // Calculating the toolbar height, by the expected image's aspect ratio and the screen width
     val maxToolbarHeight =
         (LocalConfiguration.current.screenWidthDp / Constants.BACKDROP_IMAGE_ASPECT_RATIO).dp
+    val minToolbarHeight = StandardToolbarHeight + statusBarPadding
+
 
     val toolbarHeightRange = with(LocalDensity.current) {
-        MinToolbarHeight.roundToPx()..maxToolbarHeight.roundToPx()
+        minToolbarHeight.roundToPx()..maxToolbarHeight.roundToPx()
     }
     val scrollState = rememberScrollState()
     val toolbarState = rememberToolbarState(toolbarHeightRange = toolbarHeightRange)
@@ -95,13 +102,22 @@ fun DetailsScreen(
     val viewModel = hiltViewModel<DetailsViewModel>()
     val uiState = viewModel.uiState.collectAsState()
 
+    val systemUiController = rememberSystemUiController()
+    val isDarkTheme = isSystemInDarkTheme()
+    SideEffect {
+        systemUiController.setStatusBarColor(
+            color = Color.Transparent,
+            darkIcons = !isDarkTheme,
+        )
+    }
+
     if (uiState.value.isLoading) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             LoadingCircle()
         }
     } else if (uiState.value.isError) {
         Column(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize()
                 .padding(15.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -162,6 +178,7 @@ fun DetailsScreen(
                     backdropLink = title.backdropLink,
                     placeHolderBackdrop = placeHolderBackdrop,
                     maxToolbarHeight = maxToolbarHeight,
+                    statusBarPadding = statusBarPadding,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(with(LocalDensity.current) { toolbarState.height.toDp() })
@@ -183,10 +200,11 @@ private fun rememberToolbarState(toolbarHeightRange: IntRange): ToolbarState {
 fun DetailsCollapsingToolbar(
     progress: Float,
     onNavigateUp: () -> Unit,
-    maxToolbarHeight: Dp,
     titleName: String,
     backdropLink: String?,
     placeHolderBackdrop: Painter,
+    maxToolbarHeight: Dp,
+    statusBarPadding: Dp,
     modifier: Modifier = Modifier
 ) {
 
@@ -232,10 +250,12 @@ fun DetailsCollapsingToolbar(
             //#endregion
             Box(
                 modifier = Modifier
-                    .statusBarsPadding()
                     .fillMaxSize()
             ) {
-                DetailsCollapsingToolbarLayout (progress = progress) {
+                DetailsCollapsingToolbarLayout (
+                    progress = progress,
+                    statusBarPadding = statusBarPadding
+                ) {
                     IconButton(
                         onClick = onNavigateUp,
                         modifier = Modifier.layoutId(CollapsingToolbarContent.NavUpButton)
@@ -262,7 +282,6 @@ fun DetailsCollapsingToolbar(
                     Text(
                         text = titleName,
                         style =  MaterialTheme.typography.displaySmall.copy(
-                            // TODO: Reconsider? Not very smooth animation
                             fontSize = lerp(start = 22f, stop = 36f, fraction = progress).sp
                         ),
                         overflow = TextOverflow.Ellipsis,
@@ -281,6 +300,7 @@ fun DetailsCollapsingToolbar(
 @Composable
 private fun DetailsCollapsingToolbarLayout(
     progress: Float,
+    statusBarPadding: Dp,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
@@ -298,8 +318,10 @@ private fun DetailsCollapsingToolbarLayout(
         val direction = this.layoutDirection
 
         val navIconX = NavigationIconPadding.calculateStartPadding(direction).roundToPx()
-        val navIconY = NavigationIconPadding.calculateTopPadding().roundToPx()
-        val centerOfCollapsedY = MinToolbarHeight.roundToPx() / 2
+        val navIconY =
+            NavigationIconPadding.calculateTopPadding().roundToPx() + statusBarPadding.roundToPx()
+        val centerOfCollapsedY =
+            StandardToolbarHeight.roundToPx() / 2 + statusBarPadding.roundToPx()
 
         val expandedTitleStartOffset = ExpandedStateTitlePadding.calculateStartPadding(direction).roundToPx()
         val expandedTitleBottomOffset = ExpandedStateTitlePadding.calculateBottomPadding().roundToPx()
@@ -411,19 +433,13 @@ fun DetailsScreenContent(
     var showExpandSummaryArrow by remember { mutableStateOf(false) }
     val rotationState by animateFloatAsState(targetValue = if (expandedSummaryState) 180f else 0f)
 
-    Column(
-        modifier = modifier.verticalScroll(scrollState)
-    ) {
+    Column(modifier = modifier.verticalScroll(scrollState)) {
         Spacer(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(contentPadding.calculateTopPadding())
         )
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-//                .padding(horizontal = 16.dp)
-        ) {
+        Column(modifier = Modifier.fillMaxSize()) {
             Spacer(modifier = Modifier.height(12.dp))
 
             // MAIN DETAILS
