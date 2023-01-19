@@ -8,6 +8,7 @@ object Constants {
 
     const val TMDB_IMAGES_BASE_URL = "https://image.tmdb.org/t/p/"
     const val TMDB_IMAGES_SIZE_W500 = "w500"
+    const val BACKDROP_IMAGE_ASPECT_RATIO = 1.776765375854214
 
     const val YOUTUBE_WATCH_URL = "https://www.youtube.com/watch?v="
 

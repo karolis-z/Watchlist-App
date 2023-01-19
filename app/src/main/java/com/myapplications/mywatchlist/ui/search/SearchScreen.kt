@@ -39,7 +39,11 @@ private const val TAG = "SEARCH_SCREEN"
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun SearchScreen(placeholderImage: Painter, onTitleClicked: (TitleItem) -> Unit) {
+fun SearchScreen(
+    placeholderImage: Painter,
+    onTitleClicked: (TitleItem) -> Unit,
+    modifier: Modifier
+) {
     val viewModel = hiltViewModel<SearchViewModel>()
     val uiState = viewModel.uiState.collectAsState()
     val error = uiState.value.error
@@ -53,7 +57,7 @@ fun SearchScreen(placeholderImage: Painter, onTitleClicked: (TitleItem) -> Unit)
 
     val listState = rememberLazyListState()
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.padding(vertical = 10.dp, horizontal = 16.dp)) {
 
             val isLoading = uiState.value.isLoading

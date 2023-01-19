@@ -1,16 +1,10 @@
 # My Watchlist
 This is a demo app that lets you create your own watchlist. You can browse and find all movies and TV shows from [The Movie Database ](https://www.themoviedb.org/ "The Movie Database").
 
-This is a hobby project of mine that I'm using to both show and continue honing my skills as an Android developer. 
+This is a hobby project of mine that I'm using to both show and continue honing my skills as an Android developer.
 
 The app should always be launchable and working in the *main* branch, but this is still a Work-In-Progress project. Features / stuff I'm working on next:
-- Collapsing TopAppBar for the Details screen.
-- Refactoring bits of the Data layer to have a single methods for fetching Title details.
-- Implementing internet connectivity checks.
-- Better and more appropriate transitions between screens
-- Caching of Search and Trending data and getting that data via flows.
-- Possible theme change.
-- Adding much more data that is available in the API (recommended titles, similar titles, details about actors etc. )
+<ul><li style="color:#19CC1C;font-weight:bold;">Collapsing TopAppBar for the Details screen. - COMPLETED</li><li>Refactoring bits of the Data layer to have a single methods for fetching Title details.</li><li>Implementing internet connectivity checks.</li><li>Better and more appropriate transitions between screens</li><li>Caching of Search and Trending data and getting that data via flows.</li><li>Possible theme change.</li><li>Adding much more data that is available in the API (recommended titles, similar titles, details about actors etc. )</li></ul>
 
 ## Light Theme
 

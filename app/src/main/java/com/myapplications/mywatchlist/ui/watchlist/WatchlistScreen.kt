@@ -22,7 +22,11 @@ import com.myapplications.mywatchlist.ui.components.LoadingCircle
 import com.myapplications.mywatchlist.ui.components.TitleItemsList
 
 @Composable
-fun WatchlistScreen(placeholderImage: Painter, onTitleClicked: (TitleItem) -> Unit) {
+fun WatchlistScreen(
+    placeholderImage: Painter,
+    onTitleClicked: (TitleItem) -> Unit,
+    modifier: Modifier
+) {
 
     val viewModel = hiltViewModel<WatchlistViewModel>()
     val uiState = viewModel.uiState.collectAsState()
@@ -32,7 +36,7 @@ fun WatchlistScreen(placeholderImage: Painter, onTitleClicked: (TitleItem) -> Un
     val isTitlesAvailable = !uiState.value.titleItems.isNullOrEmpty()
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp)
     ) {
