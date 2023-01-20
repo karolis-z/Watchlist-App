@@ -10,6 +10,7 @@ import com.myapplications.mywatchlist.domain.entities.TV
 import com.myapplications.mywatchlist.domain.entities.TitleType
 import com.myapplications.mywatchlist.domain.repositories.TitlesManager
 import com.myapplications.mywatchlist.domain.result.ResultOf
+import com.myapplications.mywatchlist.ui.NavigationArgument
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -32,8 +33,8 @@ class DetailsViewModel @Inject constructor(
 
     fun initializeData() {
         try {
-            val titleId = savedStateHandle.get<Long>("titleId")
-            val titleType = savedStateHandle.get<String>("titleType")
+            val titleId = savedStateHandle.get<Long>(NavigationArgument.MEDIA_ID.value)
+            val titleType = savedStateHandle.get<String>(NavigationArgument.TITLE_TYPE.value)
             if (titleId == null || titleType == null) {
                 // Unknown why it failed to parse the provided title, so should show general error
                 uiState.update {
