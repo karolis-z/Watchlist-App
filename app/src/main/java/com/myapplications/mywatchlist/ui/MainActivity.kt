@@ -173,16 +173,23 @@ class MainActivity : ComponentActivity() {
                             TrendingScreen(
                                 placeholderImage = placeholderPoster,
                                 onTitleClicked = { title ->
-                                    navController.navigate(route = OtherScreens.Details.route + "/${title.mediaId}&${title.type.name}")
+                                    navController.navigate(
+                                        route = OtherScreens.Details.route + "/${title.mediaId}&${title.type.name}"
+                                    )
                                 },
                                 modifier = Modifier.padding(paddingValues)
                             )
                         }
                         composable(
-                            route = OtherScreens.Details.route + "/{titleId}&{titleType}",
+                            route = OtherScreens.Details.route +
+                                    "/{${NavigationArgument.MEDIA_ID.value}}&{${NavigationArgument.TITLE_TYPE.value}}",
                             arguments = listOf(
-                                navArgument("titleId") {type = NavType.LongType},
-                                navArgument("titleType") {type = NavType.StringType}
+                                navArgument(NavigationArgument.MEDIA_ID.value) {
+                                    type = NavType.LongType
+                                },
+                                navArgument(NavigationArgument.TITLE_TYPE.value) {
+                                    type = NavType.StringType
+                                }
                             ),
                             // TODO: Research and use more appropriate transitions
                             enterTransition = { fadeIn (animationSpec = tween(500)) },
@@ -252,4 +259,9 @@ sealed class TopLevelScreens(
 
 sealed class OtherScreens(val route: String) {
     object Details : OtherScreens(route = "details")
+}
+
+enum class NavigationArgument(val value: String) {
+    MEDIA_ID("mediaId"),
+    TITLE_TYPE("titleType")
 }
