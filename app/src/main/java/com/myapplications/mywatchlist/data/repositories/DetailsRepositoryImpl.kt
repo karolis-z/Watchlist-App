@@ -27,7 +27,7 @@ class DetailsRepositoryImpl @Inject constructor(
     override suspend fun getTitle(mediaId: Long, type: TitleType): ResultOf<Title> =
         withContext(dispatcher) {
             // Firstly need to check if title already available in local db
-            val localResult = localDataSource.getTitle(mediaId = mediaId, type = TitleType.MOVIE)
+            val localResult = localDataSource.getTitle(mediaId = mediaId, type = type)
             when(localResult){
                 is ResultOf.Failure -> {
                     val genresList = genresRepository.getAvailableGenres()
