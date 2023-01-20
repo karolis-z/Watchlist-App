@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.myapplications.mywatchlist.data.ApiGetDetailsException
 import com.myapplications.mywatchlist.domain.entities.Movie
 import com.myapplications.mywatchlist.domain.entities.TV
 import com.myapplications.mywatchlist.domain.entities.TitleType
@@ -20,81 +21,92 @@ private const val TAG = "DETAILS_VIEWMODEL"
 @HiltViewModel
 class DetailsViewModel @Inject constructor(
     private val titlesManager: TitlesManager,
-    savedStateHandle: SavedStateHandle
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     val uiState = MutableStateFlow(DetailsUiState())
 
     init {
+        initializeData()
+    }
+
+    fun initializeData() {
         try {
             val titleId = savedStateHandle.get<Long>("titleId")
             val titleType = savedStateHandle.get<String>("titleType")
             if (titleId == null || titleType == null) {
+                // Unknown why it failed to parse the provided title, so should show general error
                 uiState.update {
-                    it.copy(isLoading = false, isError = true)
+                    it.copy(isLoading = false, error = DetailsError.Unknown)
                 }
             } else {
                 getTitle(id = titleId, titleTypeString = titleType)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to get title id and titletype from savedStateHandle. Reason: $e", e)
+            // Unknown why it failed to parse the provided title, so should show general error
             uiState.update {
-                it.copy(isLoading = false, isError = true)
+                it.copy(isLoading = false, error = DetailsError.Unknown)
             }
         }
     }
 
+    /**
+     * Retrieves a [Title] from the repository.
+     */
     private fun getTitle(id: Long, titleTypeString: String) {
         val titleType = getTitleTypeFromString(titleTypeString)
         viewModelScope.launch {
-            when(titleType){
-                TitleType.MOVIE -> {
-                    when(val movieResult = titlesManager.getTitle(mediaId = id, type = titleType)) {
-                        is ResultOf.Success -> {
-                            uiState.update {
-                                it.copy(
-                                    title = movieResult.data,
-                                    type = TitleType.MOVIE,
-                                    isLoading = false,
-                                    isError = false
-                                )
-                            }
-                        }
-                        is ResultOf.Failure -> {
-                            uiState.update {
-                                it.copy(type = TitleType.MOVIE, isLoading = false, isError = true)
-                            }
-                        }
-                    }
+            if (titleType == null) {
+                uiState.update {
+                    it.copy(isLoading = false, error = DetailsError.Unknown)
                 }
-                TitleType.TV -> {
-                    when(val tvResult = titlesManager.getTitle(mediaId = id, type = titleType)) {
-                        is ResultOf.Success -> {
-                            uiState.update {
-                                it.copy(
-                                    title = tvResult.data,
-                                    type = TitleType.TV,
-                                    isLoading = false,
-                                    isError = false
-                                )
-                            }
-                        }
-                        is ResultOf.Failure -> {
-                            uiState.update {
-                                it.copy(type = TitleType.TV, isLoading = false, isError = true)
-                            }
-                        }
-                    }
-                }
-                null -> {
+                return@launch
+            }
+            val result = titlesManager.getTitle(mediaId = id, type = titleType)
+            when (result) {
+                is ResultOf.Failure -> {
                     uiState.update {
-                        it.copy(isLoading = false, isError = true)
+                        it.copy(
+                            type = titleType,
+                            isLoading = false,
+                            error = getErrorFromResultThrowable(result.throwable)
+                        )
+                    }
+                }
+                is ResultOf.Success -> {
+                    uiState.update {
+                        it.copy(
+                            title = result.data,
+                            type = titleType,
+                            isLoading = false,
+                            error = null
+                        )
                     }
                 }
             }
         }
     }
 
+    private fun getErrorFromResultThrowable(throwable: Throwable?): DetailsError {
+        return if (throwable is ApiGetDetailsException) {
+            when (throwable) {
+                is ApiGetDetailsException.FailedApiRequestException ->
+                    DetailsError.FailedApiRequest
+                is ApiGetDetailsException.NoConnectionException ->
+                    DetailsError.NoInternet
+                // This shouldn't happen, but if it does - show a general error
+                is ApiGetDetailsException.NothingFoundException ->
+                    DetailsError.Unknown
+            }
+        } else {
+            DetailsError.Unknown
+        }
+    }
+
+    /**
+     * Triggered when Watchlist or In Watchlist button is clicked
+     */
     fun onWatchlistClicked() {
         viewModelScope.launch {
             val title = uiState.value.title
@@ -139,7 +151,7 @@ class DetailsViewModel @Inject constructor(
     }
 
     /** Converts the [Movie.runtime] minutes to hours and minutes for visual representation in ui */
-    fun convertRuntimeToHourAndMinutesPair(runtime: Int): Pair<Int,Int> {
+    fun convertRuntimeToHourAndMinutesPair(runtime: Int): Pair<Int, Int> {
         val hours = runtime / 60
         val minutes = runtime - (hours * 60)
         return Pair(hours, minutes)

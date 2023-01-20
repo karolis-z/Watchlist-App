@@ -1,6 +1,9 @@
 package com.myapplications.mywatchlist.ui.search
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -19,6 +22,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -31,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.myapplications.mywatchlist.R
 import com.myapplications.mywatchlist.domain.entities.TitleItem
+import com.myapplications.mywatchlist.ui.components.ErrorText
 import com.myapplications.mywatchlist.ui.components.LoadingCircle
 import com.myapplications.mywatchlist.ui.components.TitleItemsList
 import kotlinx.coroutines.launch
@@ -114,20 +119,27 @@ fun SearchScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    val errorMessage = when (error) {
-                        SearchError.NO_INTERNET ->
-                            stringResource(id = R.string.error_no_internet_connection)
-                        SearchError.FAILED_API_REQUEST ->
-                            stringResource(id = R.string.error_something_went_wrong)
-                        SearchError.NOTHING_FOUND ->
-                            stringResource(id = R.string.search_nothing_found)
-                        null -> "" // Should never happen because isError already controls this
+                    when (error) {
+                        SearchError.NO_INTERNET -> {
+                            val errorMessage =
+                                stringResource(id = R.string.error_no_internet_connection)
+                            ErrorText(
+                                errorMessage = errorMessage,
+                                onButtonRetryClick = { viewModel.retrySearch() })
+                        }
+                        SearchError.FAILED_API_REQUEST -> {
+                            val errorMessage =
+                                stringResource(id = R.string.error_something_went_wrong)
+                            ErrorText(
+                                errorMessage = errorMessage,
+                                onButtonRetryClick = { viewModel.retrySearch() })
+                        }
+                        SearchError.NOTHING_FOUND -> {
+                            val errorMessage = stringResource(id = R.string.search_nothing_found)
+                            ErrorText(errorMessage = errorMessage)
+                        }
+                        null -> Unit // Should never happen because isError already controls this
                     }
-                    Text(
-                        text = errorMessage,
-                        style = MaterialTheme.typography.headlineMedium,
-                        textAlign = TextAlign.Center
-                    )
                 }
             }
             AnimatedVisibility(
@@ -223,6 +235,7 @@ fun SearchTextField(
     )
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun SearchFAB(
     isFabVisible: Boolean,
@@ -232,8 +245,14 @@ fun SearchFAB(
     AnimatedVisibility(
         visible = isFabVisible,
         modifier = modifier,
-        enter = fadeIn() + slideInHorizontally(initialOffsetX = { fullWidth -> fullWidth }),
-        exit = fadeOut() + slideOutHorizontally(targetOffsetX = { fullWidth -> fullWidth })
+        enter = scaleIn(
+            animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
+            transformOrigin = TransformOrigin(1f, 1f)
+        ),
+        exit = scaleOut(
+            animationSpec = tween(durationMillis = 300, easing = LinearOutSlowInEasing),
+            transformOrigin = TransformOrigin(1f, 1f)
+        )
     ) {
         FloatingActionButton(onClick = onFabClicked) {
             Icon(

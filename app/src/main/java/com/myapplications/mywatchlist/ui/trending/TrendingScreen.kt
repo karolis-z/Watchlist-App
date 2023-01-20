@@ -4,19 +4,17 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.myapplications.mywatchlist.R
 import com.myapplications.mywatchlist.domain.entities.TitleItem
+import com.myapplications.mywatchlist.ui.components.ErrorText
 import com.myapplications.mywatchlist.ui.components.FilterChipGroup
 import com.myapplications.mywatchlist.ui.components.LoadingCircle
 import com.myapplications.mywatchlist.ui.components.TitleItemsList
@@ -69,20 +67,27 @@ fun TrendingScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                val errorMessage = when (error) {
-                    TrendingError.NO_INTERNET ->
-                        stringResource(id = R.string.error_no_internet_connection)
-                    TrendingError.FAILED_API_REQUEST ->
-                        stringResource(id = R.string.error_something_went_wrong)
-                    TrendingError.NO_TITLES ->
-                        stringResource(id = R.string.trending_nothing_trending)
-                    null -> "" // This should never happen because isError already controls for this
+                when (error) {
+                    TrendingError.NO_INTERNET -> {
+                        val errorMessage =
+                            stringResource(id = R.string.error_no_internet_connection)
+                        ErrorText(
+                            errorMessage = errorMessage,
+                            onButtonRetryClick = { viewModel.retryGetTrending() })
+                    }
+                    TrendingError.FAILED_API_REQUEST -> {
+                        val errorMessage =
+                            stringResource(id = R.string.error_something_went_wrong)
+                        ErrorText(
+                            errorMessage = errorMessage,
+                            onButtonRetryClick = { viewModel.retryGetTrending() })
+                    }
+                    TrendingError.NO_TITLES -> {
+                        val errorMessage = stringResource(id = R.string.trending_nothing_trending)
+                        ErrorText(errorMessage = errorMessage)
+                    }
+                    null -> Unit // Should never happen because isError already controls this
                 }
-                Text(
-                    text = errorMessage,
-                    style = MaterialTheme.typography.headlineMedium,
-                    textAlign = TextAlign.Center
-                )
             }
         }
         AnimatedVisibility(

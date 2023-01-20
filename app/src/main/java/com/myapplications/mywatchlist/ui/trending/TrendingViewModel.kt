@@ -111,4 +111,11 @@ class TrendingViewModel @Inject constructor(
         titleFilter.update { titleListFilter }
     }
 
+    /**
+     * Retry getting trending titles
+     */
+    fun retryGetTrending() {
+        getTrendingTitles()
+    }
+
 }

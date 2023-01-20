@@ -7,5 +7,11 @@ data class DetailsUiState(
     val title: Title? = null,
     val type: TitleType? = null,
     val isLoading: Boolean = true,
-    val isError: Boolean = false,
+    val error: DetailsError? = null,
 )
+
+enum class DetailsError {
+    NoInternet,
+    FailedApiRequest,
+    Unknown
+}

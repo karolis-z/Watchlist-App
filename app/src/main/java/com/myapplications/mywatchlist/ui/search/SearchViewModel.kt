@@ -23,7 +23,11 @@ class SearchViewModel @Inject constructor(
     private val _uiState: MutableStateFlow<SearchUiState> = MutableStateFlow(SearchUiState())
     val uiState = _uiState.asStateFlow()
 
+    // Used to store the search string for when 'Retry' button is clicked
+    private var searchString: String = ""
+
     fun searchTitleClicked(query: String) {
+        searchString = query
         viewModelScope.launch {
             _uiState.update {
                 it.copy(
@@ -81,5 +85,9 @@ class SearchViewModel @Inject constructor(
                 titlesManager.bookmarkTitleItem(title)
             }
         }
+    }
+
+    fun retrySearch() {
+        searchTitleClicked(searchString)
     }
 }
