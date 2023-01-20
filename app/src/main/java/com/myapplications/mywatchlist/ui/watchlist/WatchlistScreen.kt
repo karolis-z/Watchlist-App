@@ -25,6 +25,7 @@ import com.myapplications.mywatchlist.ui.components.TitleItemsList
 fun WatchlistScreen(
     placeholderImage: Painter,
     onTitleClicked: (TitleItem) -> Unit,
+    onShowSnackbar: (String) -> Unit,
     modifier: Modifier
 ) {
 
@@ -34,6 +35,16 @@ fun WatchlistScreen(
     val isLoading = uiState.value.isLoading
     val isNoData = uiState.value.isNoData
     val isTitlesAvailable = !uiState.value.titleItems.isNullOrEmpty()
+    val showSnackbar = uiState.value.showSnackbar
+
+    if (showSnackbar != null) {
+        when (showSnackbar) {
+            WatchlistSnackbarType.NO_INTERNET -> {
+                onShowSnackbar(stringResource(id = R.string.watchlist_snackbar_not_connected))
+                viewModel.resetSnackbarType()
+            }
+        }
+    }
 
     Column(
         modifier = modifier
@@ -93,4 +104,3 @@ fun WatchlistScreen(
         }
     }
 }
-

@@ -30,10 +30,10 @@ import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
@@ -50,6 +50,7 @@ import com.myapplications.mywatchlist.core.util.Constants
 import com.myapplications.mywatchlist.core.util.DateFormatter
 import com.myapplications.mywatchlist.domain.entities.*
 import com.myapplications.mywatchlist.ui.components.AnimatedWatchlistButton
+import com.myapplications.mywatchlist.ui.components.ErrorText
 import com.myapplications.mywatchlist.ui.components.GenreChip
 import com.myapplications.mywatchlist.ui.components.LoadingCircle
 import com.myapplications.mywatchlist.ui.details.toolbarstate.ExitUntilCollapsedState
@@ -101,6 +102,7 @@ fun DetailsScreen(
 
     val viewModel = hiltViewModel<DetailsViewModel>()
     val uiState = viewModel.uiState.collectAsState()
+    val error = uiState.value.error
 
     val systemUiController = rememberSystemUiController()
     val isDarkTheme = isSystemInDarkTheme()
@@ -115,19 +117,38 @@ fun DetailsScreen(
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             LoadingCircle()
         }
-    } else if (uiState.value.isError) {
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(15.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = stringResource(id = R.string.details_error),
-                style = MaterialTheme.typography.headlineMedium,
-                textAlign = TextAlign.Center
-            )
+    } else if (error != null) {
+        Box(modifier = modifier.fillMaxSize()) {
+            IconButton(
+                onClick = onNavigateUp,
+                modifier = Modifier.padding(
+                    top = statusBarPadding + NavigationIconPadding.calculateTopPadding(),
+                    start = NavigationIconPadding.calculateStartPadding(LocalLayoutDirection.current)
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = stringResource(id = R.string.cd_back_arrow),
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = StandardHzPadding),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                val errorMessage = when (error) {
+                    DetailsError.NoInternet -> stringResource(id = R.string.error_no_internet_connection)
+                    DetailsError.FailedApiRequest -> stringResource(id = R.string.details_error_failed_api_request)
+                    DetailsError.Unknown -> stringResource(id = R.string.error_something_went_wrong)
+                }
+                ErrorText(
+                    errorMessage = errorMessage,
+                    onButtonRetryClick = { viewModel.initializeData() })
+            }
+
         }
     } else {
         val title = uiState.value.title

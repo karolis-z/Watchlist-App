@@ -1,5 +1,7 @@
 package com.myapplications.mywatchlist.core.di
 
+import com.myapplications.mywatchlist.core.util.NetworkStatusManager
+import com.myapplications.mywatchlist.core.util.NetworkStatusManagerImpl
 import com.myapplications.mywatchlist.data.local.details.LocalDetailsDataSource
 import com.myapplications.mywatchlist.data.local.details.LocalDetailsDataSourceImpl
 import com.myapplications.mywatchlist.data.local.genres.GenresLocalDataSource
@@ -53,5 +55,8 @@ abstract class AbstractionsModule {
 
     @Binds
     abstract fun bindTitlesManager(titlesManagerImpl: TitlesManagerImpl): TitlesManager
+
+    @Binds
+    abstract fun bindNetworkStatusManager(networkStatusManagerImpl: NetworkStatusManagerImpl): NetworkStatusManager
 
 }

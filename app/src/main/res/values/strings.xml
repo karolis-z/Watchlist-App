@@ -14,6 +14,7 @@
 
     <!-- WATCHLIST SCREEN -->
     <string name="watchlist_no_data">No titles watchlisted…</string>
+    <string name="watchlist_snackbar_not_connected">No internet connection available.</string>
 
     <!-- SEARCH SCREEN -->
     <string name="search_not_searched_yet">Let\'s find something to watch!</string>
@@ -27,7 +28,7 @@
     <string name="details_summary_label">Summary</string>
     <string name="details_cast_label">Cast</string>
     <string name="details_runtime">%d h %d min</string>
-    <string name="details_error">Sorry… Could not get the details of this title</string>
+    <string name="details_error_failed_api_request">Sorry… Could not get the details of this title</string>
     <plurals name="details_seasons">
         <item quantity="one">%d season</item>
         <item quantity="other">%d seasons</item>
@@ -64,6 +65,9 @@
     <!-- GENERAL ERRORS -->
     <string name="error_no_internet_connection">Please check if you are connected to the internet</string>
     <string name="error_something_went_wrong">Oops…Something went wrong</string>
+
+    <!-- GENERAL BUTTON LABELS -->
+    <string name="button_retry">Retry</string>
 
     <!-- FILTER LABELS -->
     <string name="filter_all">All</string>
