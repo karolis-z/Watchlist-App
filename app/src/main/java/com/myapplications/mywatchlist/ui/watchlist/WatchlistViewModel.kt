@@ -2,10 +2,12 @@ package com.myapplications.mywatchlist.ui.watchlist
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.myapplications.mywatchlist.data.ApiGetGenresExceptions
 import com.myapplications.mywatchlist.domain.entities.TitleItem
 import com.myapplications.mywatchlist.domain.entities.TitleType
 import com.myapplications.mywatchlist.domain.repositories.GenresRepository
 import com.myapplications.mywatchlist.domain.repositories.TitlesManager
+import com.myapplications.mywatchlist.domain.result.BasicResult
 import com.myapplications.mywatchlist.ui.components.TitleListFilter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -22,8 +24,9 @@ class WatchlistViewModel @Inject constructor(
 
     private val titleFilter = MutableStateFlow(TitleListFilter.All)
     private val titleItemsFlow = titlesManager.allWatchlistedTitleItems()
+    private val showSnackbarType = MutableStateFlow<WatchlistSnackbarType?>(null)
 
-    val uiState = combine(titleItemsFlow, titleFilter) { titleItems, titleFilter ->
+    val uiState = combine(titleItemsFlow, titleFilter, showSnackbarType) { titleItems, titleFilter, showSnackbarType ->
         if (titleItems.isNotEmpty()) {
             val filteredList = when (titleFilter) {
                 TitleListFilter.All -> titleItems
@@ -35,14 +38,16 @@ class WatchlistViewModel @Inject constructor(
                     titleItems = null,
                     isLoading = false,
                     isNoData = true,
-                    filter = titleFilter
+                    filter = titleFilter,
+                    showSnackbar = showSnackbarType
                 )
             } else {
                 WatchlistUiState(
                     titleItems = filteredList,
                     isLoading = false,
                     isNoData = false,
-                    filter = titleFilter
+                    filter = titleFilter,
+                    showSnackbar = showSnackbarType
                 )
             }
         } else {
@@ -50,7 +55,8 @@ class WatchlistViewModel @Inject constructor(
                 titleItems = null,
                 isLoading = false,
                 isNoData = true,
-                filter = titleFilter
+                filter = titleFilter,
+                showSnackbar = showSnackbarType
             )
         }
     }.stateIn(
@@ -63,8 +69,22 @@ class WatchlistViewModel @Inject constructor(
         /* Initializing update of genres from the api on every new initialization of this viewmodel
         in order to make sure we always have the newest list of genres available in the database */
         viewModelScope.launch {
-            genresRepository.updateGenresFromApi()
+            when (val result = genresRepository.updateGenresFromApi()) {
+                is BasicResult.Failure -> {
+                    if (result.exception is ApiGetGenresExceptions.NoConnectionException) {
+                        showSnackbarType.update { WatchlistSnackbarType.NO_INTERNET }
+                    }
+                }
+                is BasicResult.Success -> Unit
+            }
         }
+    }
+
+    /**
+     * Reset the [showSnackbarType] to null once Snackbar has been shown.
+     */
+    fun resetSnackbarType() {
+        showSnackbarType.update { null }
     }
 
     /**

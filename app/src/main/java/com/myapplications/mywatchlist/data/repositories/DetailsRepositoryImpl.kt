@@ -1,6 +1,8 @@
 package com.myapplications.mywatchlist.data.repositories
 
 import com.myapplications.mywatchlist.core.di.IoDispatcher
+import com.myapplications.mywatchlist.core.util.NetworkStatusManager
+import com.myapplications.mywatchlist.data.ApiGetDetailsException
 import com.myapplications.mywatchlist.data.local.details.LocalDetailsDataSource
 import com.myapplications.mywatchlist.data.remote.RemoteDetailsDataSource
 import com.myapplications.mywatchlist.domain.entities.Title
@@ -12,10 +14,13 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
+private const val TAG = "DETAILS_REPOSITORY"
+
 class DetailsRepositoryImpl @Inject constructor(
     private val remoteDataSource: RemoteDetailsDataSource,
     private val localDataSource: LocalDetailsDataSource,
     private val genresRepository: GenresRepository,
+    private val networkStatusManager: NetworkStatusManager,
     @IoDispatcher private val dispatcher: CoroutineDispatcher
 ) : DetailsRepository {
 
@@ -26,20 +31,30 @@ class DetailsRepositoryImpl @Inject constructor(
             when(localResult){
                 is ResultOf.Failure -> {
                     val genresList = genresRepository.getAvailableGenres()
-                    val remoteResult = remoteDataSource.getTitle(
-                        mediaId = mediaId,
-                        type = type,
-                        allGenres = genresList
-                    )
-                    when(remoteResult){
-                        is ResultOf.Failure -> {
-                            return@withContext ResultOf.Failure(
-                                message = remoteResult.message,
-                                throwable = remoteResult.throwable
+                    when (networkStatusManager.isOnline()) {
+                        true -> {
+                            val remoteResult = remoteDataSource.getTitle(
+                                mediaId = mediaId,
+                                type = type,
+                                allGenres = genresList
                             )
+                            when(remoteResult){
+                                is ResultOf.Failure -> {
+                                    return@withContext ResultOf.Failure(
+                                        message = remoteResult.message,
+                                        throwable = remoteResult.throwable
+                                    )
+                                }
+                                is ResultOf.Success -> {
+                                    return@withContext ResultOf.Success(data = remoteResult.data)
+                                }
+                            }
                         }
-                        is ResultOf.Success -> {
-                            return@withContext ResultOf.Success(data = remoteResult.data)
+                        false -> {
+                            return@withContext ResultOf.Failure(
+                                message = null,
+                                throwable = ApiGetDetailsException.NoConnectionException(null, null)
+                            )
                         }
                     }
                 }

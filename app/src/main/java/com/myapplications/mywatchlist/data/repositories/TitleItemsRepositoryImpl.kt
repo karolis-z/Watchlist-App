@@ -1,6 +1,8 @@
 package com.myapplications.mywatchlist.data.repositories
 
 import com.myapplications.mywatchlist.core.di.IoDispatcher
+import com.myapplications.mywatchlist.core.util.NetworkStatusManager
+import com.myapplications.mywatchlist.data.ApiGetTitleItemsExceptions
 import com.myapplications.mywatchlist.data.local.titles.TitlesLocalDataSource
 import com.myapplications.mywatchlist.data.remote.TitlesRemoteDataSource
 import com.myapplications.mywatchlist.domain.entities.TitleItem
@@ -18,12 +20,18 @@ class TitleItemsRepositoryImpl @Inject constructor(
     private val localDataSource: TitlesLocalDataSource,
     private val remoteDataSource: TitlesRemoteDataSource,
     private val genresRepository: GenresRepository,
+    private val networkStatusManager: NetworkStatusManager,
     @IoDispatcher private val dispatcher: CoroutineDispatcher
 ) : TitleItemsRepository {
 
-    // TODO: Add check for internet connection available and return appropriate result
     override suspend fun searchTitles(query: String): ResultOf<List<TitleItem>> =
         withContext(dispatcher) {
+            if (!networkStatusManager.isOnline()){
+                return@withContext ResultOf.Failure(
+                    message = null,
+                    throwable = ApiGetTitleItemsExceptions.NoConnectionException(null, null)
+                )
+            }
             val genresList = genresRepository.getAvailableGenres()
             val result = remoteDataSource.searchTitles(query = query, allGenres = genresList)
             return@withContext parseTitlesListResult(result)
@@ -45,8 +53,13 @@ class TitleItemsRepositoryImpl @Inject constructor(
         return localDataSource.allWatchlistedTitlesFlow()
     }
 
-    // TODO: Add check for internet connection available and return appropriate result
     override suspend fun getTrendingTitles(): ResultOf<List<TitleItem>> = withContext(dispatcher) {
+        if (!networkStatusManager.isOnline()){
+            return@withContext ResultOf.Failure(
+                message = null,
+                throwable = ApiGetTitleItemsExceptions.NoConnectionException(null, null)
+            )
+        }
         val genresList = genresRepository.getAvailableGenres()
         val result = remoteDataSource.getTrendingTitles(allGenres = genresList)
         return@withContext parseTitlesListResult(result)

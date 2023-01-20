@@ -1,6 +1,8 @@
 package com.myapplications.mywatchlist.data.repositories
 
 import com.myapplications.mywatchlist.core.di.IoDispatcher
+import com.myapplications.mywatchlist.core.util.NetworkStatusManager
+import com.myapplications.mywatchlist.data.ApiGetGenresExceptions
 import com.myapplications.mywatchlist.data.local.genres.GenresLocalDataSource
 import com.myapplications.mywatchlist.data.remote.GenresRemoteDataSource
 import com.myapplications.mywatchlist.domain.entities.Genre
@@ -14,12 +16,15 @@ import javax.inject.Inject
 class GenresRepositoryImpl @Inject constructor(
     private val remoteDataSource: GenresRemoteDataSource,
     private val localDataSource: GenresLocalDataSource,
+    private val networkStatusManager: NetworkStatusManager,
     @IoDispatcher private val dispatcher: CoroutineDispatcher
 ) : GenresRepository {
 
-    // TODO: Add check for internet connection available and return appropriate result
     // TODO: Implement functionality to download genres only once per day
     override suspend fun updateGenresFromApi(): BasicResult = withContext(dispatcher) {
+        if (!networkStatusManager.isOnline()) {
+            return@withContext BasicResult.Failure(ApiGetGenresExceptions.NoConnectionException(null, null))
+        }
         when (val remoteResult = remoteDataSource.getAllGenresFromApi()) {
             is ResultOf.Failure -> BasicResult.Failure(
                 exception = remoteResult.throwable

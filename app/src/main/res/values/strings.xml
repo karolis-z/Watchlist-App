@@ -14,6 +14,7 @@
 
     <!-- WATCHLIST SCREEN -->
     <string name="watchlist_no_data">No titles watchlisted…</string>
+    <string name="watchlist_snackbar_not_connected">No internet connection available.</string>
 
     <!-- SEARCH SCREEN -->
     <string name="search_not_searched_yet">Let\'s find something to watch!</string>

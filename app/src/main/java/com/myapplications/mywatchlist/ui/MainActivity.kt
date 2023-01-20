@@ -13,10 +13,7 @@ import androidx.compose.material.icons.filled.Bookmarks
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -39,6 +36,7 @@ import com.myapplications.mywatchlist.ui.theme.MyWatchlistTheme
 import com.myapplications.mywatchlist.ui.trending.TrendingScreen
 import com.myapplications.mywatchlist.ui.watchlist.WatchlistScreen
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 private const val TAG = "MAIN_ACTIVITY"
 
@@ -87,6 +85,9 @@ class MainActivity : ComponentActivity() {
                     painterResource(id = R.drawable.placeholder_portrait_light)
                 }
 
+                val snackbarHostState = remember { SnackbarHostState() }
+                val scope = rememberCoroutineScope()
+
                 Scaffold(
                     topBar = {
                         MyTopAppBar(
@@ -97,6 +98,9 @@ class MainActivity : ComponentActivity() {
                             },
                             showTopAppBar = showTopAppBar
                         )
+                    },
+                    snackbarHost = {
+                        SnackbarHost(snackbarHostState)
                     },
                     bottomBar = {
                         NavigationBar {
@@ -141,6 +145,9 @@ class MainActivity : ComponentActivity() {
                                 placeholderImage = placeholderPoster,
                                 onTitleClicked = { title ->
                                     navController.navigate(route = OtherScreens.Details.route + "/${title.mediaId}&${title.type.name}")
+                                },
+                                onShowSnackbar = {
+                                    scope.launch { snackbarHostState.showSnackbar(it) }
                                 },
                                 modifier = Modifier.padding(paddingValues)
                             )
