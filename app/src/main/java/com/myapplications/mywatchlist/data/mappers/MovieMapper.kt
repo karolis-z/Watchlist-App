@@ -1,5 +1,6 @@
 package com.myapplications.mywatchlist.data.mappers
 
+import com.myapplications.mywatchlist.data.datastore.ApiConfiguration
 import com.myapplications.mywatchlist.data.entities.MovieApiModel
 import com.myapplications.mywatchlist.data.entities.MovieEntity
 import com.myapplications.mywatchlist.data.entities.MovieEntityWithGenresAndCast
@@ -12,7 +13,7 @@ import com.myapplications.mywatchlist.domain.entities.TitleType
  * Converts [MovieApiModel] to [Movie]
  * @param allGenres list of [Genre] from the database to map the genre ids received from api.
  */
-fun MovieApiModel.toMovie(allGenres: List<Genre>): Movie {
+fun MovieApiModel.toMovie(allGenres: List<Genre>, apiConfiguration: ApiConfiguration): Movie {
     val setOfGenreIds = this.genres.map { it.toLong() }.toSet()
     return Movie(
         id = this.id,
@@ -20,8 +21,10 @@ fun MovieApiModel.toMovie(allGenres: List<Genre>): Movie {
         imdbId = this.imdbId,
         overview = this.overview,
         tagline = this.tagline,
-        posterLink = this.posterLink,
-        backdropLink = this.backdropLink,
+        posterLink = apiConfiguration.baseImageUrl +
+                apiConfiguration.posterDefaultSize + this.posterLinkEnding,
+        backdropLink = apiConfiguration.baseImageUrl +
+                apiConfiguration.backdropDefaultSize + this.backdropLinkEnding,
         genres = allGenres.filter { it.id in setOfGenreIds },
         cast = this.cast,
         videos = this.videos,
@@ -39,8 +42,11 @@ fun MovieApiModel.toMovie(allGenres: List<Genre>): Movie {
  * Converts a list of [MovieApiModel] to a list of [Movie]
  * @param allGenres a list of [Genre] from the database to map the genre ids received from api.
  */
-fun List<MovieApiModel>.toMovies(allGenres: List<Genre>): List<Movie> {
-    return this.map { it.toMovie(allGenres) }
+fun List<MovieApiModel>.toMovies(
+    allGenres: List<Genre>,
+    apiConfiguration: ApiConfiguration
+): List<Movie> {
+    return this.map { it.toMovie(allGenres, apiConfiguration) }
 }
 
 /**

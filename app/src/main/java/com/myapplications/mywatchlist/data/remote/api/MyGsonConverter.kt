@@ -40,6 +40,8 @@ object MyGsonConverter {
                 return emptyResponse()
             }
 
+            // TODO: Add check if it's a configuration response
+
             // Check if this is deserialization of Genres, Movie, Tv or Search/Trending
             return if (mJson.get("title") != null){
                 handleMovieResponse(mJson)
@@ -68,8 +70,8 @@ object MyGsonConverter {
                         tagline = getNullableStringProperty(mJson, "tagline").takeIf {
                             it?.isNotEmpty() == true
                         },
-                        posterLink = getImageLink(mJson, "poster_path"),
-                        backdropLink = getImageLink(mJson, "backdrop_path"),
+                        posterLinkEnding = getImageLink(mJson, "poster_path"),
+                        backdropLinkEnding = getImageLink(mJson, "backdrop_path"),
                         genres = getMovieOrTvGenres(mJson),
                         cast = getTvOrMovieCastMembers(mJson),
                         videos = getYoutubeVideoLinks(mJson),
@@ -109,8 +111,8 @@ object MyGsonConverter {
                         tagline = getNullableStringProperty(mJson, "tagline").takeIf {
                             it?.isNotEmpty() == true
                         },
-                        posterLink = getImageLink(mJson, "poster_path"),
-                        backdropLink = getImageLink(mJson, "backdrop_path"),
+                        posterLinkEnding = getImageLink(mJson, "poster_path"),
+                        backdropLinkEnding = getImageLink(mJson, "backdrop_path"),
                         genres = getMovieOrTvGenres(mJson),
                         cast = getTvOrMovieCastMembers(mJson),
                         videos = getYoutubeVideoLinks(mJson),
@@ -203,7 +205,7 @@ object MyGsonConverter {
                             type = getMediaType(resultJson),
                             mediaId = resultJson.get("id").asLong,
                             overview = getOverview(resultJson),
-                            posterLink = getImageLink(
+                            posterLinkEnding = getImageLink(
                                 resultJsonObject = resultJson,
                                 propertyName = "poster_path"
                             ),
@@ -350,9 +352,7 @@ object MyGsonConverter {
             return if (linkEnding.isJsonNull) {
                 null
             } else {
-                val fullImageLink =
-                    Constants.TMDB_IMAGES_BASE_URL + Constants.TMDB_IMAGES_SIZE_W500 + linkEnding.asString
-                fullImageLink
+                linkEnding.asString
             }
         }
 
