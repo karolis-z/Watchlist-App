@@ -40,8 +40,6 @@ object MyGsonConverter {
                 return emptyResponse()
             }
 
-            // TODO: Add check if it's a configuration response
-
             // Check if this is deserialization of Genres, Movie, Tv or Search/Trending
             return if (mJson.get("title") != null){
                 handleMovieResponse(mJson)
@@ -49,9 +47,31 @@ object MyGsonConverter {
                 handleTvResponse(mJson)
             } else if (mJson.get("genres") != null) {
                 handleGenresResponse(mJson)
+            } else if (mJson.get("change_keys") != null) {
+                handleConfigurationResponse(mJson)
             } else {
                 handleSearchOrTrendingResponse(mJson)
             }
+        }
+
+        /**
+         * Handles the Api's response for getConfiguration request
+         */
+        private fun handleConfigurationResponse(mJson: JsonObject): ApiResponse {
+            val response = try {
+                val imgJson = mJson.get("images").asJsonObject
+                ApiResponse.ConfigurationResponse(
+                    baseUrl = getNullableStringProperty(imgJson, "secure_base_url"),
+                    backdropSizes = getNullableStringList(imgJson, "backdrop_sizes"),
+                    posterSizes = getNullableStringList(imgJson, "poster_sizes"),
+                    profileSizes = getNullableStringList(imgJson, "profile_sizes")
+                )
+            } catch (e: Exception) {
+                val error = "Could not parse the JsonObject into a ConfigurationResponse. Json = $mJson"
+                Log.e(TAG, "handleConfigurationResponse: $error", e)
+                ApiResponse.ConfigurationResponse(null, null, null, null)
+            }
+            return response
         }
 
         /**
@@ -289,12 +309,29 @@ object MyGsonConverter {
             propertyName: String
         ): String? {
             val jsonObject = resultJsonObject.get(propertyName)
-            Log.d(TAG, "getNullableStringProperty. JsonObject: $resultJsonObject " +
-                    "did not have a property $propertyName and returned null.")
             return if (jsonObject.isJsonNull) {
+                Log.d(TAG, "getNullableStringProperty. JsonObject: $resultJsonObject " +
+                        "did not have a property $propertyName and returned null.")
                 null
             } else {
                 jsonObject.asString
+            }
+        }
+
+        /**
+         * Returns a list of [String]s from provided resultJsonObject's propertyName or null
+         * if not found.
+         */
+        private fun getNullableStringList(
+            resultJsonObject: JsonObject, propertyName: String
+        ): List<String>? {
+            val jsonObject = resultJsonObject.get(propertyName)
+            return if (jsonObject.isJsonNull) {
+                Log.d(TAG, "getNullableStringList. JsonObject: $resultJsonObject " +
+                        "did not have a property $propertyName and returned null.")
+                null
+            } else {
+                return jsonObject.asJsonArray.map { it.asString }
             }
         }
 

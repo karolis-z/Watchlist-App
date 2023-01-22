@@ -1,6 +1,5 @@
 package com.myapplications.mywatchlist.data.remote.api
 
-import com.myapplications.mywatchlist.data.datastore.ApiConfiguration
 import com.myapplications.mywatchlist.data.entities.MovieApiModel
 import com.myapplications.mywatchlist.data.entities.TitleItemApiModel
 import com.myapplications.mywatchlist.data.entities.TvApiModel
@@ -28,7 +27,12 @@ sealed class ApiResponse {
 
     data class TvResponse(val tv: TvApiModel?) : ApiResponse()
 
-    data class ConfigurationResponse(val apiConfiguration: ApiConfiguration) : ApiResponse()
+    data class ConfigurationResponse(
+        val baseUrl: String?,
+        val backdropSizes: List<String>?,
+        val posterSizes: List<String>?,
+        val profileSizes: List<String>?
+    ) : ApiResponse()
 }
 
 

@@ -3,6 +3,7 @@ package com.myapplications.mywatchlist.data.remote
 import android.util.Log
 import com.myapplications.mywatchlist.core.di.IoDispatcher
 import com.myapplications.mywatchlist.data.ApiGetTitleItemsExceptions
+import com.myapplications.mywatchlist.data.datastore.UserPrefsRepository
 import com.myapplications.mywatchlist.data.mappers.toTitleItems
 import com.myapplications.mywatchlist.data.remote.api.ApiResponse
 import com.myapplications.mywatchlist.data.remote.api.TmdbApi
@@ -35,6 +36,7 @@ private const val TAG = "TITLES_REMOTE_DATASRC"
 
 class TitlesRemoteDataSourceImpl @Inject constructor(
     private val api: TmdbApi,
+    private val userPrefsRepository: UserPrefsRepository,
     @IoDispatcher private val dispatcher: CoroutineDispatcher
 ) : TitlesRemoteDataSource {
 
@@ -71,7 +73,7 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
      * @param allGenres required to map genre ids received from API to to a list of [Genre] used in
      * [TitleItem]
      */
-    private fun parseTitleItemsApiResponse(
+    private suspend fun parseTitleItemsApiResponse(
         responseBody: ApiResponse.TitlesListResponse,
         allGenres: List<Genre>
     ): ResultOf<List<TitleItem>> {
@@ -82,7 +84,11 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
                 throwable = ApiGetTitleItemsExceptions.NothingFoundException(error, null)
             )
         } else {
-            ResultOf.Success(data = responseBody.titleItems.toTitleItems(allGenres))
+            val apiConfiguration = userPrefsRepository.getApiConfiguration()
+            ResultOf.Success(data = responseBody.titleItems.toTitleItems(
+                allGenres = allGenres,
+                apiConfiguration = apiConfiguration
+            ))
         }
     }
 

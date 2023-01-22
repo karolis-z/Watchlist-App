@@ -18,7 +18,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object WorkManagerModule : Initializer<WorkManager> {
+object WorkManagerInitializer : Initializer<WorkManager> {
 
     @Provides
     @Singleton
@@ -26,8 +26,7 @@ object WorkManagerModule : Initializer<WorkManager> {
         /*  Need this custom implementation of entryPoint and configuration otherwise creation
             of workers with custom dependencies doesn't work */
         val entryPoint = EntryPointAccessors.fromApplication(
-            context,
-            WorkManagerInitializerEntryPoint::class.java
+            context, WorkManagerInitializerEntryPoint::class.java
         )
         val configuration = Configuration
             .Builder()
@@ -44,7 +43,8 @@ object WorkManagerModule : Initializer<WorkManager> {
         fun hiltWorkerFactory(): HiltWorkerFactory
     }
 
-    override fun dependencies(): MutableList<Class<out Initializer<*>>> {
-        return mutableListOf()
+    override fun dependencies(): List<Class<out Initializer<*>>> {
+        // No dependencies on other libraries.
+        return emptyList()
     }
 }
