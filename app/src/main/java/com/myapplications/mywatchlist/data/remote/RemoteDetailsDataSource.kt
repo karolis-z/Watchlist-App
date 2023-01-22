@@ -3,6 +3,7 @@ package com.myapplications.mywatchlist.data.remote
 import android.util.Log
 import com.myapplications.mywatchlist.core.di.IoDispatcher
 import com.myapplications.mywatchlist.data.ApiGetDetailsException
+import com.myapplications.mywatchlist.data.datastore.UserPrefsRepository
 import com.myapplications.mywatchlist.data.mappers.toMovie
 import com.myapplications.mywatchlist.data.mappers.toTv
 import com.myapplications.mywatchlist.data.remote.api.ApiResponse
@@ -29,6 +30,7 @@ private const val TAG = "REMOTE_DETAILS_DATASRC"
 
 class RemoteDetailsDataSourceImpl @Inject constructor(
     private val api: TmdbApi,
+    private val userPrefsRepository: UserPrefsRepository,
     @IoDispatcher private val dispatcher: CoroutineDispatcher
 ) : RemoteDetailsDataSource {
 
@@ -72,7 +74,7 @@ class RemoteDetailsDataSourceImpl @Inject constructor(
      * @param allGenres required to map genre ids received from API to to a list of [Genre] used in
      * [Title]
      */
-    private fun parseTitleResponse(responseBody: ApiResponse, type: TitleType, allGenres: List<Genre>): ResultOf<Title> {
+    private suspend fun parseTitleResponse(responseBody: ApiResponse, type: TitleType, allGenres: List<Genre>): ResultOf<Title> {
         return when(type) {
             TitleType.MOVIE -> {
                 val responseMovieBody = responseBody as ApiResponse.MovieResponse
@@ -83,7 +85,11 @@ class RemoteDetailsDataSourceImpl @Inject constructor(
                         throwable = ApiGetDetailsException.NothingFoundException(error, null)
                     )
                 } else {
-                    ResultOf.Success(data = responseMovieBody.movie.toMovie(allGenres))
+                    val apiConfiguration = userPrefsRepository.getApiConfiguration()
+                    ResultOf.Success(data = responseMovieBody.movie.toMovie(
+                        allGenres = allGenres,
+                        apiConfiguration = apiConfiguration
+                    ))
                 }
             }
             TitleType.TV -> {
@@ -95,7 +101,11 @@ class RemoteDetailsDataSourceImpl @Inject constructor(
                         throwable = ApiGetDetailsException.NothingFoundException(error, null)
                     )
                 } else {
-                    ResultOf.Success(data = responseTvBody.tv.toTv(allGenres))
+                    val apiConfiguration = userPrefsRepository.getApiConfiguration()
+                    ResultOf.Success(data = responseTvBody.tv.toTv(
+                        allGenres = allGenres,
+                        apiConfiguration = apiConfiguration
+                    ))
                 }
             }
         }

@@ -47,9 +47,31 @@ object MyGsonConverter {
                 handleTvResponse(mJson)
             } else if (mJson.get("genres") != null) {
                 handleGenresResponse(mJson)
+            } else if (mJson.get("change_keys") != null) {
+                handleConfigurationResponse(mJson)
             } else {
                 handleSearchOrTrendingResponse(mJson)
             }
+        }
+
+        /**
+         * Handles the Api's response for getConfiguration request
+         */
+        private fun handleConfigurationResponse(mJson: JsonObject): ApiResponse {
+            val response = try {
+                val imgJson = mJson.get("images").asJsonObject
+                ApiResponse.ConfigurationResponse(
+                    baseUrl = getNullableStringProperty(imgJson, "secure_base_url"),
+                    backdropSizes = getNullableStringList(imgJson, "backdrop_sizes"),
+                    posterSizes = getNullableStringList(imgJson, "poster_sizes"),
+                    profileSizes = getNullableStringList(imgJson, "profile_sizes")
+                )
+            } catch (e: Exception) {
+                val error = "Could not parse the JsonObject into a ConfigurationResponse. Json = $mJson"
+                Log.e(TAG, "handleConfigurationResponse: $error", e)
+                ApiResponse.ConfigurationResponse(null, null, null, null)
+            }
+            return response
         }
 
         /**
@@ -68,8 +90,8 @@ object MyGsonConverter {
                         tagline = getNullableStringProperty(mJson, "tagline").takeIf {
                             it?.isNotEmpty() == true
                         },
-                        posterLink = getImageLink(mJson, "poster_path"),
-                        backdropLink = getImageLink(mJson, "backdrop_path"),
+                        posterLinkEnding = getImageLink(mJson, "poster_path"),
+                        backdropLinkEnding = getImageLink(mJson, "backdrop_path"),
                         genres = getMovieOrTvGenres(mJson),
                         cast = getTvOrMovieCastMembers(mJson),
                         videos = getYoutubeVideoLinks(mJson),
@@ -109,8 +131,8 @@ object MyGsonConverter {
                         tagline = getNullableStringProperty(mJson, "tagline").takeIf {
                             it?.isNotEmpty() == true
                         },
-                        posterLink = getImageLink(mJson, "poster_path"),
-                        backdropLink = getImageLink(mJson, "backdrop_path"),
+                        posterLinkEnding = getImageLink(mJson, "poster_path"),
+                        backdropLinkEnding = getImageLink(mJson, "backdrop_path"),
                         genres = getMovieOrTvGenres(mJson),
                         cast = getTvOrMovieCastMembers(mJson),
                         videos = getYoutubeVideoLinks(mJson),
@@ -203,7 +225,7 @@ object MyGsonConverter {
                             type = getMediaType(resultJson),
                             mediaId = resultJson.get("id").asLong,
                             overview = getOverview(resultJson),
-                            posterLink = getImageLink(
+                            posterLinkEnding = getImageLink(
                                 resultJsonObject = resultJson,
                                 propertyName = "poster_path"
                             ),
@@ -287,12 +309,29 @@ object MyGsonConverter {
             propertyName: String
         ): String? {
             val jsonObject = resultJsonObject.get(propertyName)
-            Log.d(TAG, "getNullableStringProperty. JsonObject: $resultJsonObject " +
-                    "did not have a property $propertyName and returned null.")
             return if (jsonObject.isJsonNull) {
+                Log.d(TAG, "getNullableStringProperty. JsonObject: $resultJsonObject " +
+                        "did not have a property $propertyName and returned null.")
                 null
             } else {
                 jsonObject.asString
+            }
+        }
+
+        /**
+         * Returns a list of [String]s from provided resultJsonObject's propertyName or null
+         * if not found.
+         */
+        private fun getNullableStringList(
+            resultJsonObject: JsonObject, propertyName: String
+        ): List<String>? {
+            val jsonObject = resultJsonObject.get(propertyName)
+            return if (jsonObject.isJsonNull) {
+                Log.d(TAG, "getNullableStringList. JsonObject: $resultJsonObject " +
+                        "did not have a property $propertyName and returned null.")
+                null
+            } else {
+                return jsonObject.asJsonArray.map { it.asString }
             }
         }
 
@@ -350,9 +389,7 @@ object MyGsonConverter {
             return if (linkEnding.isJsonNull) {
                 null
             } else {
-                val fullImageLink =
-                    Constants.TMDB_IMAGES_BASE_URL + Constants.TMDB_IMAGES_SIZE_W500 + linkEnding.asString
-                fullImageLink
+                linkEnding.asString
             }
         }
 

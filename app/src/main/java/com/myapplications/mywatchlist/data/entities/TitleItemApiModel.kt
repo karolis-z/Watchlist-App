@@ -8,7 +8,7 @@ data class TitleItemApiModel(
     val type: TitleTypeApiModel,
     val mediaId: Long,
     val overview: String?,
-    val posterLink: String?,
+    val posterLinkEnding: String?,
     val genres: List<Int>,
     val releaseDate: LocalDate?,
     val voteCount: Long,

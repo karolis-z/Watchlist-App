@@ -110,9 +110,12 @@ dependencies {
     kapt 'androidx.hilt:hilt-compiler:1.0.0'
     implementation 'androidx.hilt:hilt-navigation-compose:1.0.0'
 
-
     // DATASTORE
     implementation "androidx.datastore:datastore-preferences:1.0.0"
+
+    // WORKMANAGER
+    implementation "androidx.work:work-runtime-ktx:2.7.1"
+    implementation 'androidx.hilt:hilt-work:1.0.0' // Hilt with WorkManager
 
     // COIL
     implementation "io.coil-kt:coil:2.2.2"

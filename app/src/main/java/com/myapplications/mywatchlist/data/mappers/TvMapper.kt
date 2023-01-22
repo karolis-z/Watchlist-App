@@ -1,5 +1,6 @@
 package com.myapplications.mywatchlist.data.mappers
 
+import com.myapplications.mywatchlist.data.datastore.ApiConfiguration
 import com.myapplications.mywatchlist.data.entities.TvApiModel
 import com.myapplications.mywatchlist.data.entities.TvEntity
 import com.myapplications.mywatchlist.data.entities.TvEntityWithGenresAndCast
@@ -12,19 +13,21 @@ import com.myapplications.mywatchlist.domain.entities.TitleType
  * Converts [TvApiModel] to [TV]
  * @param allGenres list of [Genre] from the database to map the genre ids received from api.
  */
-fun TvApiModel.toTv(allGenres: List<Genre>): TV {
+fun TvApiModel.toTv(allGenres: List<Genre>, apiConfiguration: ApiConfiguration): TV {
     val setOfGenreIds = this.genres.map { it.toLong() }.toSet()
     return TV(
         id = this.id,
         name = this.name,
         overview = this.overview,
         tagline = this.tagline,
-        posterLink = this.posterLink,
-        backdropLink = this.backdropLink,
+        posterLink = apiConfiguration.baseImageUrl
+                + apiConfiguration.posterDefaultSize + this.posterLinkEnding,
+        backdropLink = apiConfiguration.baseImageUrl
+                + apiConfiguration.backdropDefaultSize + this.backdropLinkEnding,
         genres = allGenres.filter { it.id in setOfGenreIds },
         cast = this.cast,
         videos = this.videos,
-        status =this.status,
+        status = this.status,
         releaseDate = this.releaseDate,
         lastAirDate = this.lastAirDate,
         numberOfSeasons = this.numberOfSeasons,
@@ -39,8 +42,11 @@ fun TvApiModel.toTv(allGenres: List<Genre>): TV {
  * Converts a list of [TvApiModel] to a list of [TV]
  * @param allGenres a list of [Genre] from the database to map the genre ids received from api.
  */
-fun List<TvApiModel>.toTvList(allGenres: List<Genre>): List<TV> {
-    return this.map { it.toTv(allGenres) }
+fun List<TvApiModel>.toTvList(
+    allGenres: List<Genre>,
+    apiConfiguration: ApiConfiguration
+): List<TV> {
+    return this.map { it.toTv(allGenres, apiConfiguration) }
 }
 
 /**
@@ -74,7 +80,7 @@ fun TV.toTvEntity(): TvEntity {
         posterLink = this.posterLink,
         backdropLink = this.backdropLink,
         videos = this.videos,
-        status =this.status,
+        status = this.status,
         releaseDate = this.releaseDate,
         lastAirDate = this.lastAirDate,
         numberOfSeasons = this.numberOfSeasons,
