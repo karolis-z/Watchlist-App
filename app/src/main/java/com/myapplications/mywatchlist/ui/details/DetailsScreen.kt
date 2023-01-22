@@ -1,5 +1,7 @@
 package com.myapplications.mywatchlist.ui.details
 
+import android.net.Uri
+import android.util.Log
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.*
@@ -27,10 +29,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.layoutId
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -41,7 +40,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.media3.common.Player
+import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
@@ -55,6 +59,7 @@ import com.myapplications.mywatchlist.ui.components.GenreChip
 import com.myapplications.mywatchlist.ui.components.LoadingCircle
 import com.myapplications.mywatchlist.ui.details.toolbarstate.ExitUntilCollapsedState
 import com.myapplications.mywatchlist.ui.details.toolbarstate.ToolbarState
+import com.myapplications.mywatchlist.ui.entities.VideoItem
 import com.myapplications.mywatchlist.ui.theme.IMDBOrange
 import java.time.LocalDate
 import kotlin.math.roundToInt
@@ -183,6 +188,10 @@ fun DetailsScreen(
                 DetailsScreenContent(
                     title = title,
                     titleType = type,
+                    videos = viewModel.videos,
+                    player = viewModel.player,
+                    addVideoUri = { viewModel.addVideoUri(it) } ,
+                    playVideo = { viewModel.playVideo(it) },
                     runtimeOrSeasonsString = runtimeOrSeasonsString,
                     placeHolderPortrait = placeHolderPortrait,
                     onWatchlistClicked = { viewModel.onWatchlistClicked() },
@@ -443,6 +452,10 @@ enum class CollapsingToolbarContent {
 fun DetailsScreenContent(
     title: Title,
     titleType: TitleType,
+    videos: List<VideoItem>,
+    player: Player,
+    addVideoUri: (Uri) -> Unit,
+    playVideo: (Uri) -> Unit,
     runtimeOrSeasonsString: String,
     placeHolderPortrait: Painter,
     onWatchlistClicked: () -> Unit,
@@ -453,6 +466,18 @@ fun DetailsScreenContent(
     var expandedSummaryState by remember { mutableStateOf(false) }
     var showExpandSummaryArrow by remember { mutableStateOf(false) }
     val rotationState by animateFloatAsState(targetValue = if (expandedSummaryState) 180f else 0f)
+
+    var lifecycle by remember { mutableStateOf(Lifecycle.Event.ON_CREATE) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            lifecycle = event
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     Column(modifier = modifier.verticalScroll(scrollState)) {
         Spacer(
@@ -560,6 +585,39 @@ fun DetailsScreenContent(
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))
+
+            // VIDEOS
+            if (videos.isNotEmpty()) {
+                SectionHeadline(label = "VIDEOS") // TODO
+                val context = LocalContext.current
+                AndroidView(
+                    factory = {
+                        PlayerView(context).also {
+                            it.player = player
+                        }
+                    },
+                    update = {
+                        when (lifecycle) {
+                            Lifecycle.Event.ON_PAUSE -> {
+                                it.onPause()
+                                it.player?.pause()
+                            }
+                            Lifecycle.Event.ON_RESUME -> {
+                                it.onResume()
+                            }
+                            else -> Unit
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(16 / 9f)
+                )
+                addVideoUri(videos[0].contentUri)
+                playVideo(videos[0].contentUri)
+                Log.d(TAG, "DetailsScreenContent: videos[0].contentUri = ${videos[0].contentUri}. link = ${videos[0].name}")
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
         }
         Spacer(
             modifier = Modifier

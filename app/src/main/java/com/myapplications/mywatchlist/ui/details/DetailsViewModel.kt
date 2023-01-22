@@ -1,9 +1,12 @@
 package com.myapplications.mywatchlist.ui.details
 
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import com.myapplications.mywatchlist.data.ApiGetDetailsException
 import com.myapplications.mywatchlist.domain.entities.Movie
 import com.myapplications.mywatchlist.domain.entities.TV
@@ -11,6 +14,7 @@ import com.myapplications.mywatchlist.domain.entities.TitleType
 import com.myapplications.mywatchlist.domain.repositories.TitlesManager
 import com.myapplications.mywatchlist.domain.result.ResultOf
 import com.myapplications.mywatchlist.ui.NavigationArgument
+import com.myapplications.mywatchlist.ui.entities.VideoItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -22,10 +26,12 @@ private const val TAG = "DETAILS_VIEWMODEL"
 @HiltViewModel
 class DetailsViewModel @Inject constructor(
     private val titlesManager: TitlesManager,
+    val player: Player,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     val uiState = MutableStateFlow(DetailsUiState())
+    var videos: List<VideoItem> = emptyList()
 
     init {
         initializeData()
@@ -76,6 +82,9 @@ class DetailsViewModel @Inject constructor(
                     }
                 }
                 is ResultOf.Success -> {
+                    result.data.videos?.let {
+                        prepareVideos(it)
+                    }
                     uiState.update {
                         it.copy(
                             title = result.data,
@@ -156,5 +165,33 @@ class DetailsViewModel @Inject constructor(
         val hours = runtime / 60
         val minutes = runtime - (hours * 60)
         return Pair(hours, minutes)
+    }
+
+    /**
+     * Prepares a list of [VideoItem]
+     */
+    private fun prepareVideos(videoLinks: List<String>) {
+        videos = videoLinks.map { link ->
+            val uri = Uri.parse(link)
+            VideoItem(contentUri = uri, mediaItem = MediaItem.fromUri(uri), name = link)
+        }
+    }
+
+    fun addVideoUri(uri: Uri) {
+        player.addMediaItem(MediaItem.fromUri(uri))
+    }
+
+    fun playVideo(uri: Uri) {
+        player.setMediaItem(
+            videos.find { it.contentUri == uri }?.mediaItem ?: return
+        )
+        player.playWhenReady = true
+
+        player.play()
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        player.release()
     }
 }
