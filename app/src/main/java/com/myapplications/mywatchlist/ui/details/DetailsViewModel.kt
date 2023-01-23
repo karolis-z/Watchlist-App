@@ -7,6 +7,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import com.myapplications.mywatchlist.core.util.MyYoutubeLinkExtractor
+import com.myapplications.mywatchlist.core.util.YtLinksState
 import com.myapplications.mywatchlist.data.ApiGetDetailsException
 import com.myapplications.mywatchlist.domain.entities.Movie
 import com.myapplications.mywatchlist.domain.entities.TV
@@ -16,10 +18,10 @@ import com.myapplications.mywatchlist.domain.result.ResultOf
 import com.myapplications.mywatchlist.ui.NavigationArgument
 import com.myapplications.mywatchlist.ui.entities.VideoItem
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
 
 private const val TAG = "DETAILS_VIEWMODEL"
 
@@ -27,14 +29,54 @@ private const val TAG = "DETAILS_VIEWMODEL"
 class DetailsViewModel @Inject constructor(
     private val titlesManager: TitlesManager,
     val player: Player,
+    val ytLinkExtractor: MyYoutubeLinkExtractor,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     val uiState = MutableStateFlow(DetailsUiState())
     var videos: List<VideoItem> = emptyList()
+    var videoUrl = ""
+
+    var ytPlayerLinks: MutableStateFlow<YtLinksState> = ytLinkExtractor.ytLinksState
+
+    val uiStateFinal = combine(uiState, ytLinkExtractor.ytLinksState) { detailsUiState, ytLinksState ->
+        if (ytLinksState.isReady) {
+            DetailsUiState(
+                title = detailsUiState.title,
+                type = detailsUiState.type,
+                isLoading = detailsUiState.isLoading,
+                error = detailsUiState.error,
+                videos = ytLinksState.videos
+            )
+        } else {
+            DetailsUiState(
+                title = detailsUiState.title,
+                type = detailsUiState.type,
+                isLoading = detailsUiState.isLoading,
+                error = detailsUiState.error,
+                videos = null
+            )
+        }
+    }.stateIn(
+        scope = viewModelScope, started = SharingStarted.Lazily, initialValue = DetailsUiState()
+    )
 
     init {
         initializeData()
+    }
+
+    private fun extractYoutubeLinks(ytPublicLinks: List<String>) {
+        viewModelScope.launch {
+            ytLinkExtractor.extractYoutubeLinks(ytPublicLinks)
+        }
+    }
+
+    fun setVideoLink(url: String) {
+        videoUrl = url
+    }
+
+    fun getVideoLink(): String {
+        return videoUrl
     }
 
     fun initializeData() {
@@ -83,7 +125,7 @@ class DetailsViewModel @Inject constructor(
                 }
                 is ResultOf.Success -> {
                     result.data.videos?.let {
-                        prepareVideos(it)
+                        extractYoutubeLinks(it)
                     }
                     uiState.update {
                         it.copy(
@@ -171,6 +213,7 @@ class DetailsViewModel @Inject constructor(
      * Prepares a list of [VideoItem]
      */
     private fun prepareVideos(videoLinks: List<String>) {
+
         videos = videoLinks.map { link ->
             val uri = Uri.parse(link)
             VideoItem(contentUri = uri, mediaItem = MediaItem.fromUri(uri), name = link)
@@ -185,6 +228,7 @@ class DetailsViewModel @Inject constructor(
         player.setMediaItem(
             videos.find { it.contentUri == uri }?.mediaItem ?: return
         )
+        player.prepare()
         player.playWhenReady = true
 
         player.play()

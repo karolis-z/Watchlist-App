@@ -40,12 +40,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.media3.common.Player
-import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
@@ -106,8 +104,11 @@ fun DetailsScreen(
     toolbarState.scrollValue = scrollState.value
 
     val viewModel = hiltViewModel<DetailsViewModel>()
-    val uiState = viewModel.uiState.collectAsState()
+    // TODO: TESTING
+    val uiState = viewModel.uiStateFinal.collectAsState()
     val error = uiState.value.error
+
+    Log.d(TAG, "DetailsScreen: uiState = $uiState")
 
     val systemUiController = rememberSystemUiController()
     val isDarkTheme = isSystemInDarkTheme()
@@ -162,6 +163,7 @@ fun DetailsScreen(
         // Setting to data unavailable string, but will be replaced below if actually available
         var runtimeOrSeasonsString = stringResource(id = R.string.details_data_notavailable)
         if (title != null && type != null) {
+
             when (uiState.value.type) {
                 TitleType.TV -> {
                     runtimeOrSeasonsString = pluralStringResource(
@@ -192,6 +194,8 @@ fun DetailsScreen(
                     player = viewModel.player,
                     addVideoUri = { viewModel.addVideoUri(it) } ,
                     playVideo = { viewModel.playVideo(it) },
+                    setVideoUrl = { viewModel.setVideoLink(it) },
+                    getVideoUrl = { viewModel.getVideoLink() } ,
                     runtimeOrSeasonsString = runtimeOrSeasonsString,
                     placeHolderPortrait = placeHolderPortrait,
                     onWatchlistClicked = { viewModel.onWatchlistClicked() },
@@ -455,6 +459,8 @@ fun DetailsScreenContent(
     videos: List<VideoItem>,
     player: Player,
     addVideoUri: (Uri) -> Unit,
+    setVideoUrl: (String) -> Unit,
+    getVideoUrl: () -> String,
     playVideo: (Uri) -> Unit,
     runtimeOrSeasonsString: String,
     placeHolderPortrait: Painter,
@@ -466,6 +472,8 @@ fun DetailsScreenContent(
     var expandedSummaryState by remember { mutableStateOf(false) }
     var showExpandSummaryArrow by remember { mutableStateOf(false) }
     val rotationState by animateFloatAsState(targetValue = if (expandedSummaryState) 180f else 0f)
+
+    val scope = rememberCoroutineScope()
 
     var lifecycle by remember { mutableStateOf(Lifecycle.Event.ON_CREATE) }
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -586,37 +594,58 @@ fun DetailsScreenContent(
             }
             Spacer(modifier = Modifier.height(12.dp))
 
-            // VIDEOS
-            if (videos.isNotEmpty()) {
-                SectionHeadline(label = "VIDEOS") // TODO
-                val context = LocalContext.current
-                AndroidView(
-                    factory = {
-                        PlayerView(context).also {
-                            it.player = player
-                        }
-                    },
-                    update = {
-                        when (lifecycle) {
-                            Lifecycle.Event.ON_PAUSE -> {
-                                it.onPause()
-                                it.player?.pause()
-                            }
-                            Lifecycle.Event.ON_RESUME -> {
-                                it.onResume()
-                            }
-                            else -> Unit
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(16 / 9f)
-                )
-                addVideoUri(videos[0].contentUri)
-                playVideo(videos[0].contentUri)
-                Log.d(TAG, "DetailsScreenContent: videos[0].contentUri = ${videos[0].contentUri}. link = ${videos[0].name}")
-                Spacer(modifier = Modifier.height(12.dp))
-            }
+//            // VIDEOS
+//            if (videos.isNotEmpty()) {
+//                SectionHeadline(label = "Videos") // TODO
+//                val context = LocalContext.current
+//                AndroidView(
+//                    factory = {
+//                        PlayerView(context).also {
+//                            it.player = player
+//                        }
+//                    },
+//                    update = {
+//                        when (lifecycle) {
+//                            Lifecycle.Event.ON_PAUSE -> {
+//                                it.onPause()
+//                                it.player?.pause()
+//                            }
+//                            Lifecycle.Event.ON_RESUME -> {
+//                                it.onResume()
+//                            }
+//                            else -> Unit
+//                        }
+//                    },
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .aspectRatio(16 / 9f)
+//                        .clip(RoundedCornerShape(10.dp))
+//                )
+//
+//                val videoUrl = extractYoutubeLinks("https://www.youtube.com/watch?v=JX1fwti2LI4", context, setVideoUrl)
+//
+//                Log.d(TAG, "DetailsScreenContent: videoUrl extracted = $videoUrl")
+//                val videoUri = Uri.parse(videoUrl)
+//                LaunchedEffect(key1 = "https://www.youtube.com/watch?v=JX1fwti2LI4" ) {
+//                    scope.launch {
+//                        delay(2000)
+//                        val link = getVideoUrl()
+//                        Log.d(TAG, "DetailsScreenContent: within Scope, got the link = $link")
+//                        player.addMediaItem(MediaItem.fromUri(link))
+//                        player.prepare()
+//                        player.play()
+//                    }
+//                }
+//
+////                val videoSource = player.media
+////                addVideoUri(videoUri)
+//
+//
+//                //playVideo(videoUri)
+//
+//                Log.d(TAG, "DetailsScreenContent: videos[0].contentUri = ${videos[0].contentUri}. link = ${videos[0].name}")
+//                Spacer(modifier = Modifier.height(12.dp))
+//            }
 
         }
         Spacer(
@@ -626,6 +655,21 @@ fun DetailsScreenContent(
         )
     }
 }
+
+//private fun extractYoutubeLinks(youtubeLink: String, context: Context, setVideoUrl: (String) -> Unit): String {
+//    var videoUrl = ""
+//    object : YouTubeExtractor(context) {
+//        override fun onExtractionComplete(ytFiles: SparseArray<YtFile>?, vMeta: VideoMeta?) {
+//            Log.d(TAG, "onExtractionComplete: ytFiles = $ytFiles for link: $youtubeLink")
+//            if (ytFiles != null) {
+//                val itag = 22
+//                videoUrl = ytFiles[itag].url
+//                setVideoUrl(videoUrl)
+//            }
+//        }
+//    }.extract(youtubeLink )
+//    return videoUrl
+//}
 
 @Composable
 fun DetailsInfoRow(
