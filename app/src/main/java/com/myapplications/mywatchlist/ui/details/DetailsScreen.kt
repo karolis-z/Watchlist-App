@@ -50,6 +50,7 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.myapplications.mywatchlist.R
 import com.myapplications.mywatchlist.core.util.Constants
 import com.myapplications.mywatchlist.core.util.DateFormatter
+import com.myapplications.mywatchlist.core.util.YtVideo
 import com.myapplications.mywatchlist.domain.entities.*
 import com.myapplications.mywatchlist.ui.components.AnimatedWatchlistButton
 import com.myapplications.mywatchlist.ui.components.ErrorText
@@ -57,7 +58,6 @@ import com.myapplications.mywatchlist.ui.components.GenreChip
 import com.myapplications.mywatchlist.ui.components.LoadingCircle
 import com.myapplications.mywatchlist.ui.details.toolbarstate.ExitUntilCollapsedState
 import com.myapplications.mywatchlist.ui.details.toolbarstate.ToolbarState
-import com.myapplications.mywatchlist.ui.entities.VideoItem
 import com.myapplications.mywatchlist.ui.theme.IMDBOrange
 import java.time.LocalDate
 import kotlin.math.roundToInt
@@ -105,8 +105,8 @@ fun DetailsScreen(
 
     val viewModel = hiltViewModel<DetailsViewModel>()
     // TODO: TESTING
-    val uiState = viewModel.uiStateFinal.collectAsState()
-    val error = uiState.value.error
+    val uiState by viewModel.uiState.collectAsState()
+    // val error = uiState.error
 
     Log.d(TAG, "DetailsScreen: uiState = $uiState")
 
@@ -119,52 +119,52 @@ fun DetailsScreen(
         )
     }
 
-    if (uiState.value.isLoading) {
-        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            LoadingCircle()
-        }
-    } else if (error != null) {
-        Box(modifier = modifier.fillMaxSize()) {
-            IconButton(
-                onClick = onNavigateUp,
-                modifier = Modifier.padding(
-                    top = statusBarPadding + NavigationIconPadding.calculateTopPadding(),
-                    start = NavigationIconPadding.calculateStartPadding(LocalLayoutDirection.current)
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = stringResource(id = R.string.cd_back_arrow),
-                    modifier = Modifier.align(Alignment.Center)
-                )
+    when (uiState) {
+        DetailsUiState.Loading -> {
+            Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                LoadingCircle()
             }
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = StandardHzPadding),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                val errorMessage = when (error) {
-                    DetailsError.NoInternet -> stringResource(id = R.string.error_no_internet_connection)
-                    DetailsError.FailedApiRequest -> stringResource(id = R.string.details_error_failed_api_request)
-                    DetailsError.Unknown -> stringResource(id = R.string.error_something_went_wrong)
+        }
+        is DetailsUiState.Error -> {
+            Box(modifier = modifier.fillMaxSize()) {
+                IconButton(
+                    onClick = onNavigateUp,
+                    modifier = Modifier.padding(
+                        top = statusBarPadding + NavigationIconPadding.calculateTopPadding(),
+                        start = NavigationIconPadding.calculateStartPadding(LocalLayoutDirection.current)
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = stringResource(id = R.string.cd_back_arrow),
+                        modifier = Modifier.align(Alignment.Center)
+                    )
                 }
-                ErrorText(
-                    errorMessage = errorMessage,
-                    onButtonRetryClick = { viewModel.initializeData() })
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = StandardHzPadding),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    val errorMessage = when ((uiState as DetailsUiState.Error).error) {
+                        DetailsError.NoInternet -> stringResource(id = R.string.error_no_internet_connection)
+                        DetailsError.FailedApiRequest -> stringResource(id = R.string.details_error_failed_api_request)
+                        DetailsError.Unknown -> stringResource(id = R.string.error_something_went_wrong)
+                    }
+                    ErrorText(
+                        errorMessage = errorMessage,
+                        onButtonRetryClick = { viewModel.initializeData() })
+                }
             }
-
         }
-    } else {
-        val title = uiState.value.title
-        val type = uiState.value.type
+        is DetailsUiState.Ready -> {
+            val title = (uiState as DetailsUiState.Ready).title
+            val type = (uiState as DetailsUiState.Ready).type
 
-        // Setting to data unavailable string, but will be replaced below if actually available
-        var runtimeOrSeasonsString = stringResource(id = R.string.details_data_notavailable)
-        if (title != null && type != null) {
-
-            when (uiState.value.type) {
+            // Setting to data unavailable string, but will be replaced below if actually available
+            var runtimeOrSeasonsString = stringResource(id = R.string.details_data_notavailable)
+            when (type) {
                 TitleType.TV -> {
                     runtimeOrSeasonsString = pluralStringResource(
                         id = R.plurals.details_seasons,
@@ -173,7 +173,7 @@ fun DetailsScreen(
                     )
                 }
                 TitleType.MOVIE -> {
-                    val runtime = (uiState.value.title as Movie).runtime
+                    val runtime = (title as Movie).runtime
                     if (runtime != null) {
                         val hoursAndMinutesPair =
                             viewModel.convertRuntimeToHourAndMinutesPair(runtime)
@@ -184,18 +184,17 @@ fun DetailsScreen(
                         )
                     }
                 }
-                else -> Unit // At this stage type should never be null
             }
             Box(modifier = modifier) {
                 DetailsScreenContent(
                     title = title,
                     titleType = type,
-                    videos = viewModel.videos,
+                    videos = (uiState as DetailsUiState.Ready).videos,
                     player = viewModel.player,
-                    addVideoUri = { viewModel.addVideoUri(it) } ,
+                    addVideoUri = { viewModel.addVideoUri(it) },
                     playVideo = { viewModel.playVideo(it) },
                     setVideoUrl = { viewModel.setVideoLink(it) },
-                    getVideoUrl = { viewModel.getVideoLink() } ,
+                    getVideoUrl = { viewModel.getVideoLink() },
                     runtimeOrSeasonsString = runtimeOrSeasonsString,
                     placeHolderPortrait = placeHolderPortrait,
                     onWatchlistClicked = { viewModel.onWatchlistClicked() },
@@ -456,7 +455,7 @@ enum class CollapsingToolbarContent {
 fun DetailsScreenContent(
     title: Title,
     titleType: TitleType,
-    videos: List<VideoItem>,
+    videos: List<YtVideo>?,
     player: Player,
     addVideoUri: (Uri) -> Unit,
     setVideoUrl: (String) -> Unit,
@@ -496,7 +495,7 @@ fun DetailsScreenContent(
         Column(modifier = Modifier.fillMaxSize()) {
             Spacer(modifier = Modifier.height(12.dp))
 
-            // MAIN DETAILS
+            //#region MAIN DETAILS
             DetailsInfoRow(
                 title = title,
                 titleType = titleType,
@@ -504,8 +503,9 @@ fun DetailsScreenContent(
                 runtimeOrSeasonsString = runtimeOrSeasonsString
             )
             Spacer(modifier = Modifier.height(15.dp))
+            //#endregion
 
-            // GENRES
+            //#region GENRES
             LazyRow(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                 items(key = { genre -> genre.id }, items = title.genres) { genre: Genre ->
                     GenreChip(
@@ -515,7 +515,9 @@ fun DetailsScreenContent(
                 }
             }
             Spacer(modifier = Modifier.height(14.dp))
+            //#endregion
 
+            //#region WATCHLIST BUTTON
             // WATCHLIST BUTTON
             Row(
                 horizontalArrangement = Arrangement.End,
@@ -531,8 +533,9 @@ fun DetailsScreenContent(
                 )
             }
             Spacer(modifier = Modifier.height(7.dp))
+            //#endregion
 
-            // OVERVIEW
+            //#region OVERVIEW
             val titleOverview = title.overview
             if (titleOverview != null) {
                 Row(
@@ -571,12 +574,14 @@ fun DetailsScreenContent(
                 )
             }
             Spacer(modifier = Modifier.height(12.dp))
+            //#endregion
 
-            // EXTRA DETAILS - the headline label is within the ExtraDetailsSection composable
+            //#region EXTRA DETAILS - the headline label is within the ExtraDetailsSection composable
             ExtraDetailsSection(title = title)
             Spacer(modifier = Modifier.height(12.dp))
+            //#endregion
 
-            // CAST
+            //#region CAST
             val cast = title.cast
             if (cast != null) {
                 SectionHeadline(label = stringResource(id = R.string.details_cast_label))
@@ -593,6 +598,26 @@ fun DetailsScreenContent(
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))
+            //#endregion
+
+            if (videos != null) {
+                SectionHeadline(label = "Videos") // TODO
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                    items(
+                        key = { video -> video.link },
+                        items = videos
+                    ) { video : YtVideo ->
+                        Text(
+                            text = video.name,
+                            modifier = Modifier
+                                .wrapContentHeight()
+                                .width(100.dp)
+                        )
+                    }
+                }
+            }
+
+
 
 //            // VIDEOS
 //            if (videos.isNotEmpty()) {

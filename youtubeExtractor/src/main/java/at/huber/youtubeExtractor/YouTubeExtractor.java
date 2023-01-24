@@ -159,7 +159,9 @@ public abstract class YouTubeExtractor extends AsyncTask<String, Void, SparseArr
      * @param youtubeLink the youtube page link or video id
      */
     public void extract(String youtubeLink) {
-        this.execute(youtubeLink);
+//        this.execute(youtubeLink);
+        // Added using THREAD_POOL_EXECUTOR to run tasks in parallel
+        this.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, youtubeLink);
     }
 
     protected abstract void onExtractionComplete(@Nullable SparseArray<YtFile> ytFiles, @Nullable VideoMeta videoMeta);

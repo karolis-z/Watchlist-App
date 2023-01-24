@@ -11,6 +11,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ViewModelComponent
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.scopes.ViewModelScoped
+import kotlinx.coroutines.CoroutineDispatcher
 
 @Module
 @InstallIn(ViewModelComponent::class)
@@ -25,7 +26,10 @@ object VideoPlayerModule {
 
     @Provides
     @ViewModelScoped
-    fun provideMyYoutubeLinkExtractor(@ApplicationContext context: Context): MyYoutubeLinkExtractor {
-        return MyYoutubeLinkExtractor(context)
+    fun provideMyYoutubeLinkExtractor(
+        @ApplicationContext context: Context,
+        @DefaultDispatcher dispatcher: CoroutineDispatcher
+    ): MyYoutubeLinkExtractor {
+        return MyYoutubeLinkExtractor(context, dispatcher)
     }
 }

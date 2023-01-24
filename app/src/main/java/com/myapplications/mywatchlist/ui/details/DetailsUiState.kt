@@ -4,13 +4,18 @@ import com.myapplications.mywatchlist.core.util.YtVideo
 import com.myapplications.mywatchlist.domain.entities.Title
 import com.myapplications.mywatchlist.domain.entities.TitleType
 
-data class DetailsUiState(
-    val title: Title? = null,
-    val type: TitleType? = null,
-    val isLoading: Boolean = true,
-    val error: DetailsError? = null,
-    val videos: Map<String, List<YtVideo>>? = null
-)
+sealed class DetailsUiState {
+
+    data class Ready(
+        val title: Title,
+        val type: TitleType,
+        val videos: List<YtVideo>? = null
+    ) : DetailsUiState()
+
+    data class Error(val error: DetailsError) : DetailsUiState()
+
+    object Loading : DetailsUiState()
+}
 
 enum class DetailsError {
     NoInternet,
