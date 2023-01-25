@@ -1,6 +1,5 @@
 package com.myapplications.mywatchlist.ui.details
 
-import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -37,7 +36,6 @@ class DetailsViewModel @Inject constructor(
 
     private val uiStateInternal: MutableStateFlow<DetailsUiState> = MutableStateFlow(DetailsUiState.Loading)
     var videos: List<VideoItem> = emptyList()
-    var videoUrl = ""
 
     val uiState =
         combine(uiStateInternal, ytLinkExtractor.ytLinksState) { detailsUiState, ytLinksState ->
@@ -79,16 +77,17 @@ class DetailsViewModel @Inject constructor(
             initialValue = DetailsUiState.Loading
         )
 
+    val playerState = MutableStateFlow(Player.STATE_IDLE)
+
     init {
         initializeData()
-    }
-
-    fun setVideoLink(url: String) {
-        videoUrl = url
-    }
-
-    fun getVideoLink(): String {
-        return videoUrl
+        // TODO: Must remove the listener in onCleared?
+        player.addListener(object : Player.Listener {
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                super.onPlaybackStateChanged(playbackState)
+                playerState.update { playbackState }
+            }
+        })
     }
 
     fun initializeData() {
@@ -241,29 +240,10 @@ class DetailsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Prepares a list of [VideoItem]
-     */
-    private fun prepareVideos(videoLinks: List<String>) {
-
-        videos = videoLinks.map { link ->
-            val uri = Uri.parse(link)
-            VideoItem(contentUri = uri, mediaItem = MediaItem.fromUri(uri), name = link)
-        }
-    }
-
-    fun addVideoUri(uri: Uri) {
-        player.addMediaItem(MediaItem.fromUri(uri))
-    }
-
-    fun playVideo(uri: Uri) {
-        player.setMediaItem(
-            videos.find { it.contentUri == uri }?.mediaItem ?: return
-        )
+    fun onVideoSelected(video: YtVideo) {
+        player.setMediaItem(MediaItem.fromUri(video.videoTypes[0].downloadUrl))
         player.prepare()
         player.playWhenReady = true
-
-        player.play()
     }
 
     override fun onCleared() {

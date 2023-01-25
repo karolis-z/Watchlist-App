@@ -1,9 +1,11 @@
 package com.myapplications.mywatchlist.ui.details
 
-import android.net.Uri
 import android.util.Log
-import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.*
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -25,10 +27,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.layout.Placeable
-import androidx.compose.ui.layout.layoutId
+import androidx.compose.ui.layout.*
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -41,8 +40,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import androidx.media3.common.Player
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -104,9 +101,8 @@ fun DetailsScreen(
     toolbarState.scrollValue = scrollState.value
 
     val viewModel = hiltViewModel<DetailsViewModel>()
-    // TODO: TESTING
     val uiState by viewModel.uiState.collectAsState()
-    // val error = uiState.error
+    val playerState by viewModel.playerState.collectAsState()
 
     Log.d(TAG, "DetailsScreen: uiState = $uiState")
 
@@ -191,13 +187,12 @@ fun DetailsScreen(
                     titleType = type,
                     videos = (uiState as DetailsUiState.Ready).videos,
                     player = viewModel.player,
-                    addVideoUri = { viewModel.addVideoUri(it) },
-                    playVideo = { viewModel.playVideo(it) },
-                    setVideoUrl = { viewModel.setVideoLink(it) },
-                    getVideoUrl = { viewModel.getVideoLink() },
+                    onVideoSelected = { viewModel.onVideoSelected(it) } ,
                     runtimeOrSeasonsString = runtimeOrSeasonsString,
                     placeHolderPortrait = placeHolderPortrait,
+                    placeHolderBackdrop = placeHolderBackdrop,
                     onWatchlistClicked = { viewModel.onWatchlistClicked() },
+                    playerState = playerState,
                     scrollState = scrollState,
                     contentPadding = PaddingValues(top = maxToolbarHeight),
                     modifier = Modifier
@@ -310,7 +305,6 @@ fun DetailsCollapsingToolbar(
                                 modifier = Modifier.align(Alignment.Center)
                             )
                         }
-
                     }
                     Text(
                         text = titleName,
@@ -457,12 +451,11 @@ fun DetailsScreenContent(
     titleType: TitleType,
     videos: List<YtVideo>?,
     player: Player,
-    addVideoUri: (Uri) -> Unit,
-    setVideoUrl: (String) -> Unit,
-    getVideoUrl: () -> String,
-    playVideo: (Uri) -> Unit,
+    onVideoSelected: (YtVideo) -> Unit,
+    playerState: Int,
     runtimeOrSeasonsString: String,
     placeHolderPortrait: Painter,
+    placeHolderBackdrop: Painter,
     onWatchlistClicked: () -> Unit,
     scrollState: ScrollState,
     contentPadding: PaddingValues,
@@ -471,20 +464,6 @@ fun DetailsScreenContent(
     var expandedSummaryState by remember { mutableStateOf(false) }
     var showExpandSummaryArrow by remember { mutableStateOf(false) }
     val rotationState by animateFloatAsState(targetValue = if (expandedSummaryState) 180f else 0f)
-
-    val scope = rememberCoroutineScope()
-
-    var lifecycle by remember { mutableStateOf(Lifecycle.Event.ON_CREATE) }
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            lifecycle = event
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
 
     Column(modifier = modifier.verticalScroll(scrollState)) {
         Spacer(
@@ -600,78 +579,65 @@ fun DetailsScreenContent(
             Spacer(modifier = Modifier.height(12.dp))
             //#endregion
 
-            if (videos != null) {
-                SectionHeadline(label = "Videos") // TODO
+            //#region VIDEOS
+            AnimatedVisibility(
+                visible = videos != null,
+                enter = expandVertically(
+                    expandFrom = Alignment.Top,
+                    animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing)
+                ),
+                exit = shrinkVertically(
+                    shrinkTowards = Alignment.Top,
+                    animationSpec = tween(durationMillis = 300, easing = LinearOutSlowInEasing)
+                )
+            ) {
+                /* Non-null assertion because AnimatedVisibility already does the null check */
+                VideosSection(
+                    videos = videos!!,
+                    player = player,
+                    onVideoSelected = onVideoSelected,
+                    playerState = playerState,
+                    placeHolderBackdrop = placeHolderBackdrop
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            //#enregion
+
+            //#region CAST
+            if (cast != null) {
+                SectionHeadline(label = stringResource(id = R.string.details_cast_label))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                     items(
-                        key = { video -> video.link },
-                        items = videos
-                    ) { video : YtVideo ->
-                        Text(
-                            text = video.name,
-                            modifier = Modifier
-                                .wrapContentHeight()
-                                .width(100.dp)
+                        key = { castMember -> castMember.id },
+                        items = cast
+                    ) { castMember: CastMember ->
+                        CastMemberCard(
+                            castMember = castMember,
+                            placeHolderPortrait = placeHolderPortrait
                         )
                     }
                 }
             }
+            Spacer(modifier = Modifier.height(12.dp))
+            //#endregion
 
-
-
-//            // VIDEOS
-//            if (videos.isNotEmpty()) {
-//                SectionHeadline(label = "Videos") // TODO
-//                val context = LocalContext.current
-//                AndroidView(
-//                    factory = {
-//                        PlayerView(context).also {
-//                            it.player = player
-//                        }
-//                    },
-//                    update = {
-//                        when (lifecycle) {
-//                            Lifecycle.Event.ON_PAUSE -> {
-//                                it.onPause()
-//                                it.player?.pause()
-//                            }
-//                            Lifecycle.Event.ON_RESUME -> {
-//                                it.onResume()
-//                            }
-//                            else -> Unit
-//                        }
-//                    },
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .aspectRatio(16 / 9f)
-//                        .clip(RoundedCornerShape(10.dp))
-//                )
-//
-//                val videoUrl = extractYoutubeLinks("https://www.youtube.com/watch?v=JX1fwti2LI4", context, setVideoUrl)
-//
-//                Log.d(TAG, "DetailsScreenContent: videoUrl extracted = $videoUrl")
-//                val videoUri = Uri.parse(videoUrl)
-//                LaunchedEffect(key1 = "https://www.youtube.com/watch?v=JX1fwti2LI4" ) {
-//                    scope.launch {
-//                        delay(2000)
-//                        val link = getVideoUrl()
-//                        Log.d(TAG, "DetailsScreenContent: within Scope, got the link = $link")
-//                        player.addMediaItem(MediaItem.fromUri(link))
-//                        player.prepare()
-//                        player.play()
-//                    }
-//                }
-//
-////                val videoSource = player.media
-////                addVideoUri(videoUri)
-//
-//
-//                //playVideo(videoUri)
-//
-//                Log.d(TAG, "DetailsScreenContent: videos[0].contentUri = ${videos[0].contentUri}. link = ${videos[0].name}")
-//                Spacer(modifier = Modifier.height(12.dp))
-//            }
-
+            //#region CAST
+            if (cast != null) {
+                SectionHeadline(label = stringResource(id = R.string.details_cast_label))
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                    items(
+                        key = { castMember -> castMember.id },
+                        items = cast
+                    ) { castMember: CastMember ->
+                        CastMemberCard(
+                            castMember = castMember,
+                            placeHolderPortrait = placeHolderPortrait
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            //#endregion
         }
         Spacer(
             modifier = Modifier
@@ -681,20 +647,40 @@ fun DetailsScreenContent(
     }
 }
 
-//private fun extractYoutubeLinks(youtubeLink: String, context: Context, setVideoUrl: (String) -> Unit): String {
-//    var videoUrl = ""
-//    object : YouTubeExtractor(context) {
-//        override fun onExtractionComplete(ytFiles: SparseArray<YtFile>?, vMeta: VideoMeta?) {
-//            Log.d(TAG, "onExtractionComplete: ytFiles = $ytFiles for link: $youtubeLink")
-//            if (ytFiles != null) {
-//                val itag = 22
-//                videoUrl = ytFiles[itag].url
-//                setVideoUrl(videoUrl)
-//            }
-//        }
-//    }.extract(youtubeLink )
-//    return videoUrl
-//}
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun VideoCard(
+    ytVideo: YtVideo,
+    placeHolderBackdrop: Painter,
+    onCardClick: (YtVideo) -> Unit,
+    modifier: Modifier = Modifier,
+    width: Dp = 220.dp
+) {
+    Card(
+        modifier = modifier
+            .size(
+                width = width,
+                height = (width.value / Constants.YOUTUBE_THUMBNAIL_ASPECT_RATIO).dp
+            )
+            .padding(bottom = 5.dp),
+        shape = MaterialTheme.shapes.medium,
+        elevation = CardDefaults.elevatedCardElevation(),
+        onClick = { onCardClick(ytVideo) }
+    ) {
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(ytVideo.thumbnailLink)
+                .crossfade(true)
+                .build(),
+            placeholder = placeHolderBackdrop,
+            fallback = placeHolderBackdrop,
+            error = placeHolderBackdrop,
+            contentDescription = null, // TODO: provide name of video from api?
+            contentScale = ContentScale.Crop,
+            alignment = Alignment.Center,
+            modifier = Modifier.fillMaxSize())
+    }
+}
 
 @Composable
 fun DetailsInfoRow(

@@ -20,4 +20,7 @@ object Constants {
         22, // MP4 Audio+Video, 720p
         37  // MP4 Audio+Video, 1080p
     )
+    const val YOUTUBE_THUMBNAIL_BASE_URL = "https://img.youtube.com/vi/"
+    const val YOUTUBE_THUMBNAIL_URL_END = "/0.jpg"
+    const val YOUTUBE_THUMBNAIL_ASPECT_RATIO = 1.777777777777778
 }

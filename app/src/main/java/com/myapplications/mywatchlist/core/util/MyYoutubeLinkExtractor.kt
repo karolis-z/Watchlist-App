@@ -8,6 +8,8 @@ import at.huber.youtubeExtractor.VideoMeta
 import at.huber.youtubeExtractor.YouTubeExtractor
 import at.huber.youtubeExtractor.YtFile
 import com.myapplications.mywatchlist.core.di.DefaultDispatcher
+import com.myapplications.mywatchlist.core.util.Constants.YOUTUBE_THUMBNAIL_BASE_URL
+import com.myapplications.mywatchlist.core.util.Constants.YOUTUBE_THUMBNAIL_URL_END
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -31,12 +33,17 @@ class MyYoutubeLinkExtractor(
                 launch(dispatcher) {
                     val extractor = Extractor(context) { ytVideos ->
                         ytLinksState.update {
+                            val videoId = link.substringAfter("watch?v=")
+                            val thumbnailLink =
+                                YOUTUBE_THUMBNAIL_BASE_URL + videoId + YOUTUBE_THUMBNAIL_URL_END
                             val allVideos = it.videos.plus(
                                 YtVideo(
                                     link = link,
+                                    videoId = videoId,
                                     /* TODO: this is temporary, just so we have unique names for now.
                                         Will need to get these names from Api later */
                                     name = link.takeLast(11),
+                                    thumbnailLink = thumbnailLink,
                                     videoTypes = ytVideos
                                 )
                             )
@@ -79,7 +86,9 @@ class MyYoutubeLinkExtractor(
 
 data class YtVideo(
     val link: String,
-    val name: String = "",
+    val videoId: String,
+    val name: String,
+    val thumbnailLink: String,
     val videoTypes: List<YtVideoType>
 )
 
