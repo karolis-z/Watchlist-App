@@ -8,12 +8,8 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import com.myapplications.mywatchlist.core.util.Constants
 import com.myapplications.mywatchlist.core.util.MyYoutubeLinkExtractor
-import com.myapplications.mywatchlist.core.util.YtVideo
-import com.myapplications.mywatchlist.core.util.YtVideoType
 import com.myapplications.mywatchlist.data.ApiGetDetailsException
-import com.myapplications.mywatchlist.domain.entities.Movie
-import com.myapplications.mywatchlist.domain.entities.TV
-import com.myapplications.mywatchlist.domain.entities.TitleType
+import com.myapplications.mywatchlist.domain.entities.*
 import com.myapplications.mywatchlist.domain.repositories.TitlesManager
 import com.myapplications.mywatchlist.domain.result.ResultOf
 import com.myapplications.mywatchlist.ui.NavigationArgument
@@ -47,16 +43,18 @@ class DetailsViewModel @Inject constructor(
                         This is done with later functionality in mind to stream a better quality
                         video if better bandwidth is available and also only those that have both
                         video and audio */
-                        val filteredVideosList = mutableListOf<YtVideo>()
+                        val filteredVideosList = mutableListOf<YtVideoUiModel>()
                         ytLinksState.videos.forEach { ytVideo ->
-                            val filteredVideoTypes = mutableListOf<YtVideoType>()
-                            ytVideo.videoTypes.forEach { ytVideoType ->
+                            val filteredVideoTypes = mutableListOf<YtVideoFormat>()
+                            ytVideo.videoFormats.forEach { ytVideoType ->
                                 if (Constants.ACCEPTABLE_YT_ITAGS.contains(ytVideoType.itag)) {
                                     filteredVideoTypes.add(ytVideoType)
                                 }
                             }
-                            filteredVideosList.add(ytVideo.copy(videoTypes = filteredVideoTypes))
+                            filteredVideosList.add(ytVideo.copy(videoFormats = filteredVideoTypes))
                         }
+                        // Sorting by YtVideoType so that trailer is 1st, teaser 2nd and so on
+                        filteredVideosList.sortBy { it.videoType.sortingOrderIndex() }
                         DetailsUiState.Ready(
                             title = detailsUiState.title,
                             type = detailsUiState.type,
@@ -231,17 +229,17 @@ class DetailsViewModel @Inject constructor(
 
     /**
      * Extracts usable YouTube links to be able to view using ExoPlayer
-     * @param ytPublicLinks a list of YouTube links in this kind of format:
+     * @param ytVideos a list of YouTube links in this kind of format:
      * https://www.youtube.com/watch?v=sTIBDcyCmCg
      */
-    private fun extractYoutubeLinks(ytPublicLinks: List<String>) {
+    private fun extractYoutubeLinks(ytVideos: List<YtVideo>) {
         viewModelScope.launch {
-            ytLinkExtractor.extractYoutubeLinks(ytPublicLinks)
+            ytLinkExtractor.extractYoutubeLinks(ytVideos)
         }
     }
 
-    fun onVideoSelected(video: YtVideo) {
-        player.setMediaItem(MediaItem.fromUri(video.videoTypes[0].downloadUrl))
+    fun onVideoSelected(video: YtVideoUiModel) {
+        player.setMediaItem(MediaItem.fromUri(video.videoFormats[0].downloadUrl))
         player.prepare()
         player.playWhenReady = true
     }
@@ -249,5 +247,18 @@ class DetailsViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         player.release()
+    }
+}
+
+/**
+ * Returns the sorting order index which is used to determine how the videos should be sorted in a list
+ */
+fun YtVideoType.sortingOrderIndex(): Int {
+    return when (this) {
+        YtVideoType.Trailer -> 0
+        YtVideoType.Teaser -> 1
+        YtVideoType.Featurette -> 2
+        YtVideoType.BehindTheScenes -> 3
+        YtVideoType.Other -> 4
     }
 }

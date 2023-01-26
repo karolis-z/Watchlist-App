@@ -2,7 +2,7 @@ package com.myapplications.mywatchlist.data.mappers
 
 import com.myapplications.mywatchlist.data.entities.TvApiModel
 import com.myapplications.mywatchlist.data.entities.TvEntity
-import com.myapplications.mywatchlist.data.entities.TvEntityWithGenresAndCast
+import com.myapplications.mywatchlist.data.entities.TvEntityWithGenresCastVideos
 import com.myapplications.mywatchlist.domain.entities.Genre
 import com.myapplications.mywatchlist.domain.entities.TV
 import com.myapplications.mywatchlist.domain.entities.TitleItem
@@ -73,7 +73,6 @@ fun TV.toTvEntity(): TvEntity {
         tagline = this.tagline,
         posterLink = this.posterLink,
         backdropLink = this.backdropLink,
-        videos = this.videos,
         status =this.status,
         releaseDate = this.releaseDate,
         lastAirDate = this.lastAirDate,
@@ -86,9 +85,9 @@ fun TV.toTvEntity(): TvEntity {
 }
 
 /**
- * Converts [TvEntityWithGenresAndCast] to [TV]
+ * Converts [TvEntityWithGenresCastVideos] to [TV]
  */
-fun TvEntityWithGenresAndCast.toTv(): TV {
+fun TvEntityWithGenresCastVideos.toTv(): TV {
     return TV(
         id = this.tv.id,
         name = this.tv.name,
@@ -98,7 +97,7 @@ fun TvEntityWithGenresAndCast.toTv(): TV {
         backdropLink = this.tv.backdropLink,
         genres = this.genres,
         cast = this.cast,
-        videos = this.tv.videos,
+        videos = this.videos,
         status = this.tv.status,
         releaseDate = this.tv.releaseDate,
         lastAirDate = this.tv.lastAirDate,

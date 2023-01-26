@@ -64,9 +64,11 @@
     <string name="title_status_rumored">Rumored</string>
     <string name="title_status_post_production">Post Production</string>
 
-
-
-
+    <!-- YOUTUBE VIDEO TYPES -->
+    <string name="yt_video_type_trailer">Trailer</string>
+    <string name="yt_video_type_teaser">Teaser</string>
+    <string name="yt_video_type_behind_the_scenes">Behind the scenes</string>
+    <string name="yt_video_type_featurette">Featurette</string>
 
     <!-- GENERAL ERRORS -->
     <string name="error_no_internet_connection">Please check if you are connected to the internet</string>

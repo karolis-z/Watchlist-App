@@ -10,6 +10,9 @@ import at.huber.youtubeExtractor.YtFile
 import com.myapplications.mywatchlist.core.di.DefaultDispatcher
 import com.myapplications.mywatchlist.core.util.Constants.YOUTUBE_THUMBNAIL_BASE_URL
 import com.myapplications.mywatchlist.core.util.Constants.YOUTUBE_THUMBNAIL_URL_END
+import com.myapplications.mywatchlist.domain.entities.YtVideo
+import com.myapplications.mywatchlist.domain.entities.YtVideoFormat
+import com.myapplications.mywatchlist.domain.entities.YtVideoUiModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -24,27 +27,25 @@ class MyYoutubeLinkExtractor(
     val ytLinksState = MutableStateFlow(YtLinksState())
     private var linkCount = 0
 
-    suspend fun extractYoutubeLinks(youtubeLinks: List<String>) {
+    suspend fun extractYoutubeLinks(ytVideos: List<YtVideo>) {
 
-        linkCount = youtubeLinks.size
+        linkCount = ytVideos.size
 
         supervisorScope {
-            youtubeLinks.forEach { link ->
+            ytVideos.forEach { video ->
                 launch(dispatcher) {
                     val extractor = Extractor(context) { ytVideos ->
                         ytLinksState.update {
-                            val videoId = link.substringAfter("watch?v=")
                             val thumbnailLink =
-                                YOUTUBE_THUMBNAIL_BASE_URL + videoId + YOUTUBE_THUMBNAIL_URL_END
+                                YOUTUBE_THUMBNAIL_BASE_URL + video.videoId + YOUTUBE_THUMBNAIL_URL_END
                             val allVideos = it.videos.plus(
-                                YtVideo(
-                                    link = link,
-                                    videoId = videoId,
-                                    /* TODO: this is temporary, just so we have unique names for now.
-                                        Will need to get these names from Api later */
-                                    name = link.takeLast(11),
+                                YtVideoUiModel(
+                                    link = video.link,
+                                    videoId = video.videoId,
+                                    name = video.name,
                                     thumbnailLink = thumbnailLink,
-                                    videoTypes = ytVideos
+                                    videoType = video.type,
+                                    videoFormats = ytVideos
                                 )
                             )
                             // If size is lower by 1 than link count, means we are about to add the last video list
@@ -55,7 +56,7 @@ class MyYoutubeLinkExtractor(
                             }
                         }
                     }
-                    extractor.extract(link)
+                    extractor.extract(video.link)
                 }
             }
         }
@@ -65,41 +66,27 @@ class MyYoutubeLinkExtractor(
     // TODO: Investigate StaticFieldLeak and how to solve this
     private inner class Extractor(
         context: Context,
-        private val updateYtLinksState: (List<YtVideoType>) -> Unit
+        private val updateYtLinksState: (List<YtVideoFormat>) -> Unit
     ) : YouTubeExtractor(context) {
 
         override fun onExtractionComplete(ytFiles: SparseArray<YtFile>?, videoMeta: VideoMeta?) {
-            val ytVideoTypes = mutableListOf<YtVideoType>()
+            val ytVideoFormats = mutableListOf<YtVideoFormat>()
             ytFiles?.forEach { key, ytFile ->
-                ytVideoTypes.add(
-                    YtVideoType(
+                ytVideoFormats.add(
+                    YtVideoFormat(
                         downloadUrl = ytFile.url,
                         itag = key,
                         height = ytFile.format.height
                     )
                 )
             }
-            updateYtLinksState(ytVideoTypes)
+            updateYtLinksState(ytVideoFormats)
         }
     }
 }
 
-data class YtVideo(
-    val link: String,
-    val videoId: String,
-    val name: String,
-    val thumbnailLink: String,
-    val videoTypes: List<YtVideoType>
-)
-
-data class YtVideoType(
-    val downloadUrl: String,
-    val itag: Int,
-    val height: Int,
-)
-
 data class YtLinksState(
     val isReady: Boolean = false,
-    val videos: List<YtVideo> = emptyList()
+    val videos: List<YtVideoUiModel> = emptyList()
 )
 

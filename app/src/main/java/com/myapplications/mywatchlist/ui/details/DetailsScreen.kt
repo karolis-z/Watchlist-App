@@ -1,11 +1,14 @@
 package com.myapplications.mywatchlist.ui.details
 
 import android.util.Log
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -27,8 +30,14 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.layout.*
-import androidx.compose.ui.platform.*
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Placeable
+import androidx.compose.ui.layout.layoutId
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -47,7 +56,6 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.myapplications.mywatchlist.R
 import com.myapplications.mywatchlist.core.util.Constants
 import com.myapplications.mywatchlist.core.util.DateFormatter
-import com.myapplications.mywatchlist.core.util.YtVideo
 import com.myapplications.mywatchlist.domain.entities.*
 import com.myapplications.mywatchlist.ui.components.AnimatedWatchlistButton
 import com.myapplications.mywatchlist.ui.components.ErrorText
@@ -449,9 +457,9 @@ enum class CollapsingToolbarContent {
 fun DetailsScreenContent(
     title: Title,
     titleType: TitleType,
-    videos: List<YtVideo>?,
+    videos: List<YtVideoUiModel>?,
     player: Player,
-    onVideoSelected: (YtVideo) -> Unit,
+    onVideoSelected: (YtVideoUiModel) -> Unit,
     playerState: Int,
     runtimeOrSeasonsString: String,
     placeHolderPortrait: Painter,
@@ -647,41 +655,6 @@ fun DetailsScreenContent(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun VideoCard(
-    ytVideo: YtVideo,
-    placeHolderBackdrop: Painter,
-    onCardClick: (YtVideo) -> Unit,
-    modifier: Modifier = Modifier,
-    width: Dp = 220.dp
-) {
-    Card(
-        modifier = modifier
-            .size(
-                width = width,
-                height = (width.value / Constants.YOUTUBE_THUMBNAIL_ASPECT_RATIO).dp
-            )
-            .padding(bottom = 5.dp),
-        shape = MaterialTheme.shapes.medium,
-        elevation = CardDefaults.elevatedCardElevation(),
-        onClick = { onCardClick(ytVideo) }
-    ) {
-        AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(ytVideo.thumbnailLink)
-                .crossfade(true)
-                .build(),
-            placeholder = placeHolderBackdrop,
-            fallback = placeHolderBackdrop,
-            error = placeHolderBackdrop,
-            contentDescription = null, // TODO: provide name of video from api?
-            contentScale = ContentScale.Crop,
-            alignment = Alignment.Center,
-            modifier = Modifier.fillMaxSize())
-    }
-}
-
 @Composable
 fun DetailsInfoRow(
     title: Title,
@@ -819,10 +792,30 @@ private fun getMovieForTesting(): Movie {
         CastMember(4, "Joe Pantoliano", "Cypher", null),
     )
     val videos = listOf(
-        "https://www.youtube.com/watch?v=nUEQNVV3Gfs",
-        "https://www.youtube.com/watch?v=RZ-MXBjvA38",
-        "https://www.youtube.com/watch?v=L0fw0WzFaBM",
-        "https://www.youtube.com/watch?v=m8e-FF8MsqU"
+        YtVideo(
+            videoId = "nUEQNVV3Gfs",
+            link = "https://www.youtube.com/watch?v=nUEQNVV3Gfs",
+            name = "",
+            type = YtVideoType.Trailer
+        ),
+        YtVideo(
+            videoId = "RZ-MXBjvA38",
+            link = "https://www.youtube.com/watch?v=RZ-MXBjvA38",
+            name = "",
+            type = YtVideoType.Teaser
+        ),
+        YtVideo(
+            videoId = "L0fw0WzFaBM",
+            link = "https://www.youtube.com/watch?v=L0fw0WzFaBM",
+            name = "",
+            type = YtVideoType.BehindTheScenes
+        ),
+        YtVideo(
+            videoId = "m8e-FF8MsqU",
+            link = "https://www.youtube.com/watch?v=m8e-FF8MsqU",
+            name = "",
+            type = YtVideoType.Featurette
+        )
     )
     return Movie(
         id = 603,
@@ -881,9 +874,30 @@ private fun getTvForTesting(): TV {
         ),
     )
     val videos = listOf(
-        "https://www.youtube.com/watch?v=T92iINbl0t4",
-        "https://www.youtube.com/watch?v=YbArSoOP8XQ",
-        "https://www.youtube.com/watch?v=nHGk3sRxjYM"
+        YtVideo(
+            videoId = "nUEQNVV3Gfs",
+            link = "https://www.youtube.com/watch?v=nUEQNVV3Gfs",
+            name = "",
+            type = YtVideoType.Trailer
+        ),
+        YtVideo(
+            videoId = "RZ-MXBjvA38",
+            link = "https://www.youtube.com/watch?v=RZ-MXBjvA38",
+            name = "",
+            type = YtVideoType.Teaser
+        ),
+        YtVideo(
+            videoId = "L0fw0WzFaBM",
+            link = "https://www.youtube.com/watch?v=L0fw0WzFaBM",
+            name = "",
+            type = YtVideoType.BehindTheScenes
+        ),
+        YtVideo(
+            videoId = "m8e-FF8MsqU",
+            link = "https://www.youtube.com/watch?v=m8e-FF8MsqU",
+            name = "",
+            type = YtVideoType.Featurette
+        )
     )
     return TV(
         id = 156902,

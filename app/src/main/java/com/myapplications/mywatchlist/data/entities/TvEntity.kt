@@ -1,9 +1,7 @@
 package com.myapplications.mywatchlist.data.entities
 
 import androidx.room.*
-import com.myapplications.mywatchlist.domain.entities.CastMember
-import com.myapplications.mywatchlist.domain.entities.Genre
-import com.myapplications.mywatchlist.domain.entities.TvStatus
+import com.myapplications.mywatchlist.domain.entities.*
 import java.time.LocalDate
 
 @Entity
@@ -17,7 +15,7 @@ data class TvEntity(
     val backdropLink: String?,  // A Title can possibly not have a backdrop associated with it
 //    val genres: List<Genre>,
 //    val cast: List<CastMember>?,
-    val videos: List<String>?,  // A Title can possibly not have videos associated with it
+//    val videos: List<String>?,  // A Title can possibly not have videos associated with it
     val status: TvStatus,
     val releaseDate: LocalDate?,// A Title can possibly not have a release date associated with it
     val lastAirDate: LocalDate?,
@@ -62,7 +60,25 @@ data class CastMemberForTvEntity(
     val tvId: Long
 )
 
-data class TvEntityWithGenresAndCast(
+@Entity(
+    primaryKeys = ["videoId", "tvId"],
+    foreignKeys = [ForeignKey(
+        entity = TvEntity::class,
+        parentColumns = ["id"],
+        childColumns = ["tvId"],
+        onDelete = ForeignKey.CASCADE,
+        onUpdate = ForeignKey.CASCADE
+    )]
+)
+data class YtVideoForTvEntity(
+    val videoId: String,
+    val link: String,
+    val name: String,
+    val type: YtVideoType,
+    val tvId: Long
+)
+
+data class TvEntityWithGenresCastVideos(
     @Embedded val tv: TvEntity,
     @Relation(
         parentColumn = "id",
@@ -78,5 +94,13 @@ data class TvEntityWithGenresAndCast(
         entity = CastMemberForTvEntity::class,
         projection = ["id","name", "character", "pictureLink"]
     )
-    val cast: List<CastMember>
+    val cast: List<CastMember>,
+
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "tvId",
+        entity = YtVideoForTvEntity::class,
+        projection = ["videoId","link", "name", "type"]
+    )
+    val videos: List<YtVideo>
 )

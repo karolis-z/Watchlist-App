@@ -19,7 +19,9 @@ import com.myapplications.mywatchlist.data.local.titles.TitlesDao
         CastMemberForMovieEntity::class,
         TvEntity::class,
         GenreForTvEntity::class,
-        CastMemberForTvEntity::class
+        CastMemberForTvEntity::class,
+        YtVideoForTvEntity::class,
+        YtVideoForMovieEntity::class
     ],
     version = 1
 )

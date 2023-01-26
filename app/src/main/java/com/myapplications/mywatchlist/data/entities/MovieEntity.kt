@@ -1,9 +1,7 @@
 package com.myapplications.mywatchlist.data.entities
 
 import androidx.room.*
-import com.myapplications.mywatchlist.domain.entities.CastMember
-import com.myapplications.mywatchlist.domain.entities.Genre
-import com.myapplications.mywatchlist.domain.entities.MovieStatus
+import com.myapplications.mywatchlist.domain.entities.*
 import java.time.LocalDate
 
 @Entity
@@ -18,7 +16,7 @@ data class MovieEntity(
     val backdropLink: String?,  // A Title can possibly not have a backdrop associated with it
 //    val genres: List<Genre>,
 //    val cast: List<CastMember>?,
-    val videos: List<String>?,  // A Title can possibly not have videos associated with it
+//    val videos: List<String>?,  // A Title can possibly not have videos associated with it
     val status: MovieStatus,
     val releaseDate: LocalDate?,// A Title can possibly not have a release date associated with it
     val revenue: Long?,         // A Title can possibly not have revenue associated with it
@@ -62,7 +60,25 @@ data class CastMemberForMovieEntity(
     val movieId: Long
 )
 
-data class MovieEntityWithGenresAndCast(
+@Entity(
+    primaryKeys = ["videoId", "movieId"],
+    foreignKeys = [ForeignKey(
+        entity = MovieEntity::class,
+        parentColumns = ["id"],
+        childColumns = ["movieId"],
+        onDelete = ForeignKey.CASCADE,
+        onUpdate = ForeignKey.CASCADE
+    )]
+)
+data class YtVideoForMovieEntity(
+    val videoId: String,
+    val link: String,
+    val name: String,
+    val type: YtVideoType,
+    val movieId: Long
+)
+
+data class MovieEntityWithGenresCastVideos(
     @Embedded val movie: MovieEntity,
     @Relation(
         parentColumn = "id",
@@ -78,5 +94,13 @@ data class MovieEntityWithGenresAndCast(
         entity = CastMemberForMovieEntity::class,
         projection = ["id","name", "character", "pictureLink"]
     )
-    val cast: List<CastMember>
+    val cast: List<CastMember>,
+
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "movieId",
+        entity = YtVideoForMovieEntity::class,
+        projection = ["videoId","link", "name", "type"]
+    )
+    val videos: List<YtVideo>
 )

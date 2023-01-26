@@ -2,7 +2,7 @@ package com.myapplications.mywatchlist.data.mappers
 
 import com.myapplications.mywatchlist.data.entities.MovieApiModel
 import com.myapplications.mywatchlist.data.entities.MovieEntity
-import com.myapplications.mywatchlist.data.entities.MovieEntityWithGenresAndCast
+import com.myapplications.mywatchlist.data.entities.MovieEntityWithGenresCastVideos
 import com.myapplications.mywatchlist.domain.entities.Genre
 import com.myapplications.mywatchlist.domain.entities.Movie
 import com.myapplications.mywatchlist.domain.entities.TitleItem
@@ -74,7 +74,6 @@ fun Movie.toMovieEntity(): MovieEntity {
         tagline = this.tagline,
         posterLink = this.posterLink,
         backdropLink = this.backdropLink,
-        videos = this.videos,
         status = this.status,
         releaseDate = this.releaseDate,
         revenue = this.revenue,
@@ -86,9 +85,9 @@ fun Movie.toMovieEntity(): MovieEntity {
 }
 
 /**
- * Converts [MovieEntityWithGenresAndCast] to [Movie]
+ * Converts [MovieEntityWithGenresCastVideos] to [Movie]
  */
-fun MovieEntityWithGenresAndCast.toMovie(): Movie {
+fun MovieEntityWithGenresCastVideos.toMovie(): Movie {
     return Movie(
         id = this.movie.id,
         name = this.movie.name,
@@ -99,7 +98,7 @@ fun MovieEntityWithGenresAndCast.toMovie(): Movie {
         backdropLink = this.movie.backdropLink,
         genres = this.genres,
         cast = this.cast,
-        videos = this.movie.videos,
+        videos = this.videos,
         status = this.movie.status,
         releaseDate = this.movie.releaseDate,
         revenue = this.movie.revenue,

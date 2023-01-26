@@ -12,7 +12,7 @@ data class Movie(
     override val backdropLink: String?,  // A Title can possibly not have a backdrop associated with it
     override val genres: List<Genre>,
     override val cast: List<CastMember>?,
-    override val videos: List<String>?,  // A Title can possibly not have videos associated with it
+    override val videos: List<YtVideo>?,  // A Title can possibly not have videos associated with it
     val status: MovieStatus,
     override val releaseDate: LocalDate?,// A Title can possibly not have a release date associated with it
     val revenue: Long?,         // A Title can possibly not have revenue associated with it
