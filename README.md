@@ -4,7 +4,35 @@ This is a demo app that lets you create your own watchlist. You can browse and f
 This is a hobby project of mine that I'm using to both show and continue honing my skills as an Android developer.
 
 The app should always be launchable and working in the *main* branch, but this is still a Work-In-Progress project. Features / stuff I'm working on next:
-<ul><li style="color:#19CC1C;font-weight:bold;">Collapsing TopAppBar for the Details screen. - COMPLETED :heavy_check_mark:</li><li style="color:#19CC1C;font-weight:bold;">Refactoring bits of the Data layer to have a single methods for fetching Title details. - COMPLETED :heavy_check_mark:</li><li style="color:#19CC1C;font-weight:bold;">Implementing internet connectivity checks. - COMPLETED :heavy_check_mark:</li><li style="color:#19CC1C;font-weight:bold;">Download Genres list from API only once per day. Implementation with DataStore Preferences. - COMPLETED :heavy_check_mark:</li><li>Better and more appropriate transitions between screens</li><li>Caching of Search and Trending data and getting that data via flows.</li><li>Possible theme change.</li><li>Adding much more data that is available in the API (recommended titles, similar titles, details about actors etc. )</li></ul>
+- [x] Collapsing TopAppBar for the Details screen. :heavy_check_mark: (2023.01.19) 
+- [x] Refactoring bits of the Data layer to have a single methods for fetching Title details. :heavy_check_mark: (2023.01.19) 
+- [x] Implementing internet connectivity checks. :heavy_check_mark: (2023.01.20) 
+- [x] Download Genres list from API only once per day. Implementation with DataStore Preferences. :heavy_check_mark: (2023.01.20) 
+- [x] Download images configuration periodically from Api using WorkManager. :heavy_check_mark: (2023.01.22) 
+- [ ] Structural Changes:
+	- [ ]	Change first Top destination to “Discover” and third to “Watchlist”
+	- [ ]	Discover screen:
+		- [ ]	Add Trending TV + Movies
+		- [ ]	Add Upcoming Movies
+		- [ ]	Add Top Rated Movies
+		- [ ]	Add Popular Movies + TV
+	- [ ]	Search screen:
+		- [ ]	Add Filter (Genres, Years, Score, Movie/TV)
+		- [ ]	Add pre-search content: e.g. recent searches, popular by genre etc. Content still TBD
+	- [ ]	Watchlist Screen: 
+		- [ ]	Add Filter (Genres, Years, Score, Movie/TV)
+	- [ ]	Title List Screen:
+		- [ ]	Prepare screen for viewing full any type of list. 
+	- [ ]	Details Screen:
+		- [x] 	Add Videos section
+		- [ ]	Add Recommended Movies section
+		- [ ]	Add Similar Movies section
+		- [ ]	Add Reviews section
+		- [ ] 	Add more Extra Details: budget, profit, languages. 
+- [ ] Adapt for different screen sizes. 
+- [ ] Better and more appropriate transitions between screens
+- [ ] Caching of Search and Trending data and getting that data via flows.
+- [ ] Possible theme change.
 
 ## Light Theme
 
