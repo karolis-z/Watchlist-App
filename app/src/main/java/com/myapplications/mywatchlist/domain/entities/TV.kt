@@ -19,7 +19,9 @@ data class TV (
     val numberOfEpisodes: Int,
     override val voteCount: Long,
     override val voteAverage: Double,
-    override val isWatchlisted: Boolean
+    override val isWatchlisted: Boolean,
+    override val recommendations: List<TitleItemMinimal>?,
+    override val similar: List<TitleItemMinimal>?
 ) : Title
 
 enum class TvStatus {

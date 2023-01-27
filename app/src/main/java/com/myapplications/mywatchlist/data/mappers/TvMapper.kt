@@ -37,7 +37,9 @@ fun TvApiModel.toTv(allGenres: List<Genre>, apiConfiguration: ApiConfiguration):
         numberOfEpisodes = this.numberOfEpisodes,
         voteCount = this.voteCount,
         voteAverage = this.voteAverage,
-        isWatchlisted = false // Api model does not have this information and assumes False
+        isWatchlisted = false, // Api model does not have this information and assumes False
+        recommendations = this.recommendations?.toTitleItemsMinimal(allGenres, apiConfiguration),
+        similar = this.similar?.toTitleItemsMinimal(allGenres, apiConfiguration)
     )
 }
 

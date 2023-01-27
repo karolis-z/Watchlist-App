@@ -2,17 +2,28 @@ package com.myapplications.mywatchlist.data.remote.api
 
 import com.myapplications.mywatchlist.data.entities.MovieApiModel
 import com.myapplications.mywatchlist.data.entities.TitleItemApiModel
+import com.myapplications.mywatchlist.data.entities.TitleItemMinimalApiModel
 import com.myapplications.mywatchlist.data.entities.TvApiModel
 import com.myapplications.mywatchlist.domain.entities.Genre
 
 sealed class ApiResponse {
 
     /**
-     * Response class for storing results of a query to the TMDB
+     * Response class for storing results list of [TitleItemApiModel]
      */
     data class TitlesListResponse(
         val page: Int,
         val titleItems: List<TitleItemApiModel>?,
+        val totalPages: Int,
+        val totalResults: Int
+    ) : ApiResponse()
+
+    /**
+     * Response class for storing results list of [TitleItemMinimalApiModel]
+     */
+    data class TitlesListMinimalResponse(
+        val page: Int,
+        val titleItems: List<TitleItemMinimalApiModel>?,
         val totalPages: Int,
         val totalResults: Int
     ) : ApiResponse()

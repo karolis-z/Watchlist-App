@@ -19,7 +19,9 @@ data class Movie(
     val runtime: Int?,          // A Title can possibly not have runtime associated with it
     override val voteCount: Long,
     override val voteAverage: Double,
-    override val isWatchlisted: Boolean
+    override val isWatchlisted: Boolean,
+    override val recommendations: List<TitleItemMinimal>?,
+    override val similar: List<TitleItemMinimal>?
 ) : Title
 
 enum class MovieStatus{

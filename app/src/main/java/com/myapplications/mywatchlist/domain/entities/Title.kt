@@ -16,4 +16,6 @@ interface Title {
     val voteCount: Long
     val voteAverage: Double
     val isWatchlisted: Boolean
+    val recommendations: List<TitleItemMinimal>?
+    val similar: List<TitleItemMinimal>?
 }
