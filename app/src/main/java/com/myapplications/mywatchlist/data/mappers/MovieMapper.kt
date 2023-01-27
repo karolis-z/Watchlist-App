@@ -26,7 +26,10 @@ fun MovieApiModel.toMovie(allGenres: List<Genre>, apiConfiguration: ApiConfigura
         backdropLink = apiConfiguration.baseImageUrl +
                 apiConfiguration.backdropDefaultSize + this.backdropLinkEnding,
         genres = allGenres.filter { it.id in setOfGenreIds },
-        cast = this.cast,
+        cast = this.cast?.withFullProfilePictureLinks(
+            imagesBaseUrl = apiConfiguration.baseImageUrl,
+            profileImageSize = apiConfiguration.profileDefaultSize
+        ),
         videos = this.videos,
         status = this.status,
         releaseDate = this.releaseDate,

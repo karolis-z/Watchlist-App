@@ -25,7 +25,10 @@ fun TvApiModel.toTv(allGenres: List<Genre>, apiConfiguration: ApiConfiguration):
         backdropLink = apiConfiguration.baseImageUrl
                 + apiConfiguration.backdropDefaultSize + this.backdropLinkEnding,
         genres = allGenres.filter { it.id in setOfGenreIds },
-        cast = this.cast,
+        cast = this.cast?.withFullProfilePictureLinks(
+            imagesBaseUrl = apiConfiguration.baseImageUrl,
+            profileImageSize = apiConfiguration.profileDefaultSize
+        ),
         videos = this.videos,
         status = this.status,
         releaseDate = this.releaseDate,
@@ -79,7 +82,6 @@ fun TV.toTvEntity(): TvEntity {
         tagline = this.tagline,
         posterLink = this.posterLink,
         backdropLink = this.backdropLink,
-        videos = this.videos,
         status = this.status,
         releaseDate = this.releaseDate,
         lastAirDate = this.lastAirDate,

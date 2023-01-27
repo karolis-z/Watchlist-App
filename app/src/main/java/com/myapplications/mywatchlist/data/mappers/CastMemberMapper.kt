@@ -53,3 +53,37 @@ fun List<CastMember>.toCastMembersForTvEntity(tvId: Long): List<CastMemberForTvE
         it.toCastMemberForTvEntity(tvId)
     }
 }
+
+/**
+ * @return [CastMember] with full picture link that includes the base url instead of only the ending.
+ */
+fun CastMember.withFullProfilePictureLinks(
+    imagesBaseUrl: String,
+    profileImageSize: String
+): CastMember {
+    // Check if link is not null and whether it already contains "http" which would indicate a full link
+    val link = if (this.pictureLink != null && !this.pictureLink.contains("http")) {
+        imagesBaseUrl + profileImageSize + this.pictureLink
+    } else {
+        null
+    }
+    return CastMember(
+        id = this.id,
+        name = this.name,
+        character = this.character,
+        pictureLink = link
+    )
+}
+
+/**
+ * @return list of [CastMember]s with full picture links that includes the base url instead of only
+ * the ending.
+ */
+fun List<CastMember>.withFullProfilePictureLinks(
+    imagesBaseUrl: String,
+    profileImageSize: String
+): List<CastMember> {
+    return this.map {
+        it.withFullProfilePictureLinks(imagesBaseUrl, profileImageSize)
+    }
+}
