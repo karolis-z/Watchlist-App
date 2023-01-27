@@ -10,9 +10,9 @@ The app should always be launchable and working in the *main* branch, but this i
 - [x] Download Genres list from API only once per day. Implementation with DataStore Preferences. :heavy_check_mark: (2023.01.20) 
 - [x] Download images configuration periodically from Api using WorkManager. :heavy_check_mark: (2023.01.22) 
 - [ ] Structural Changes:
-  - [ ]	Change first Top destination to “Discover” and third to “Watchlist”
-  - [ ]	Discover screen:
-    - [ ]	Add Trending TV + Movies
+	- [ ]	Change first Top destination to “Discover” and third to “Watchlist”
+	- [ ]	Discover screen:
+		- [ ]	Add Trending TV + Movies
 		- [ ]	Add Upcoming Movies
 		- [ ]	Add Top Rated Movies
 		- [ ]	Add Popular Movies + TV
@@ -23,6 +23,12 @@ The app should always be launchable and working in the *main* branch, but this i
 		- [ ]	Add Filter (Genres, Years, Score, Movie/TV)
 	- [ ]	Title List Screen:
 		- [ ]	Prepare screen for viewing full any type of list. 
+	- [ ]	Details Screen:
+		- [ ] 	Add Videos section
+		- [ ]	Add Recommended Movies section
+		- [ ]	Add Similar Movies section
+		- [ ]	Add Reviews section
+		- [ ] 	Add more Extra Details: budget, profit, languages. 
 - [ ] Adapt for different screen sizes. 
 - [ ] Better and more appropriate transitions between screens
 - [ ] Caching of Search and Trending data and getting that data via flows.
