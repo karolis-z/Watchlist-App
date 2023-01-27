@@ -11,7 +11,7 @@ interface Title {
     val backdropLink: String?
     val genres: List<Genre>
     val cast: List<CastMember>?
-    val videos: List<String>?
+    val videos: List<YtVideo>?
     val releaseDate: LocalDate?
     val voteCount: Long
     val voteAverage: Double

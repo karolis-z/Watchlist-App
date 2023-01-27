@@ -7,10 +7,7 @@ import com.myapplications.mywatchlist.data.entities.MovieApiModel
 import com.myapplications.mywatchlist.data.entities.TitleItemApiModel
 import com.myapplications.mywatchlist.data.entities.TitleTypeApiModel
 import com.myapplications.mywatchlist.data.entities.TvApiModel
-import com.myapplications.mywatchlist.domain.entities.CastMember
-import com.myapplications.mywatchlist.domain.entities.Genre
-import com.myapplications.mywatchlist.domain.entities.MovieStatus
-import com.myapplications.mywatchlist.domain.entities.TvStatus
+import com.myapplications.mywatchlist.domain.entities.*
 import java.lang.reflect.Type
 import java.time.LocalDate
 
@@ -398,17 +395,51 @@ object MyGsonConverter {
          * "videos" and it has a property "results" that is not empty JsonArray.
          * @return list of [String] of Youtube links, or null if no links available. 
          */
-        private fun getYoutubeVideoLinks(resultJsonObject: JsonObject): List<String>? {
-            val linksArray = resultJsonObject.get("videos").asJsonObject.get("results").asJsonArray
-            val links = mutableListOf<String>()
-            linksArray.forEach { jsonElement ->
-                val youtubeKey = jsonElement.asJsonObject.get("key").asString
-                links.add(Constants.YOUTUBE_WATCH_URL + youtubeKey)
-            }
-            return if (links.isEmpty()){
+        private fun getYoutubeVideoLinks(resultJsonObject: JsonObject): List<YtVideo>? {
+            val linksArray = try {
+                resultJsonObject.get("videos").asJsonObject.get("results").asJsonArray
+            } catch (e: Exception) {
+                val error = "Could not extract an array of videos from json Object. " +
+                        "Reason = $e. JsonObject = $resultJsonObject"
+                Log.d(TAG, "getYoutubeVideoLinks: $error", e)
                 null
+            }
+            if (linksArray != null) {
+                val videos = mutableListOf<YtVideo>()
+                linksArray.forEach { jsonElement ->
+                    try {
+                        /* We don't videos that are not from YouTube since we are not implementing
+                           their playback functionality */
+                        if (jsonElement.asJsonObject.get("site").asString == "YouTube") {
+                            val type = when(jsonElement.asJsonObject.get("type").asString) {
+                                "Featurette" -> YtVideoType.Featurette
+                                "Teaser" -> YtVideoType.Teaser
+                                "Behind the Scenes" -> YtVideoType.BehindTheScenes
+                                "Trailer" -> YtVideoType.Trailer
+                                else -> YtVideoType.Other
+                            }
+                            val video = YtVideo(
+                                link = Constants.YOUTUBE_WATCH_URL +
+                                        jsonElement.asJsonObject.get("key").asString,
+                                videoId = jsonElement.asJsonObject.get("key").asString,
+                                name = jsonElement.asJsonObject.get("name").asString,
+                                type = type
+                            )
+                            videos.add(video)
+                        }
+                    } catch (e: Exception) {
+                        val error = "Failed to parse jsonElement into a YtVideoApiModel. " +
+                                "Reason: $e. JsonElement = $jsonElement"
+                        Log.d(TAG, "getYoutubeVideoLinks: $error", e)
+                    }
+                }
+                return if (videos.isEmpty()){
+                    null
+                } else {
+                    videos
+                }
             } else {
-                links
+                return null
             }
         }
 

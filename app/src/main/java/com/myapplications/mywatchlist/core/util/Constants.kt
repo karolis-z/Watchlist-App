@@ -12,11 +12,21 @@ object Constants {
     const val TMDB_PROFILE_SIZE_H632 = "h632"
     const val BACKDROP_IMAGE_ASPECT_RATIO = 1.776765375854214
 
-    const val YOUTUBE_WATCH_URL = "https://www.youtube.com/watch?v="
-
     // IMDB LINK BASE URL
     const val IMDB_BASE_URL = "https://www.imdb.com/title/"
 
+    // YOUTUBE CONSTANTS
+    const val YOUTUBE_WATCH_URL = "https://www.youtube.com/watch?v="
+    const val YOUTUBE_APP_URI = "vnd.youtube:"
+    val ACCEPTABLE_YT_ITAGS = listOf(
+        18, // MP4 Audio+Video, 360p
+        22, // MP4 Audio+Video, 720p
+        37  // MP4 Audio+Video, 1080p
+    )
+    const val YOUTUBE_THUMBNAIL_BASE_URL = "https://img.youtube.com/vi/"
+    const val YOUTUBE_THUMBNAIL_URL_END = "/0.jpg"
+    const val YOUTUBE_THUMBNAIL_ASPECT_RATIO = 1.777777777777778
+    
     // WORK REQUEST NAMES
     const val PERIODIC_WORK_REQUEST_UPDATE_CONFIGURATION = "update_configuration_periodically"
 }

@@ -4,41 +4,100 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import com.myapplications.mywatchlist.core.util.Constants
+import com.myapplications.mywatchlist.core.util.MyYoutubeLinkExtractor
 import com.myapplications.mywatchlist.data.ApiGetDetailsException
-import com.myapplications.mywatchlist.domain.entities.Movie
-import com.myapplications.mywatchlist.domain.entities.TV
-import com.myapplications.mywatchlist.domain.entities.TitleType
+import com.myapplications.mywatchlist.domain.entities.*
 import com.myapplications.mywatchlist.domain.repositories.TitlesManager
 import com.myapplications.mywatchlist.domain.result.ResultOf
 import com.myapplications.mywatchlist.ui.NavigationArgument
+import com.myapplications.mywatchlist.ui.entities.VideoItem
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
 
 private const val TAG = "DETAILS_VIEWMODEL"
 
 @HiltViewModel
 class DetailsViewModel @Inject constructor(
     private val titlesManager: TitlesManager,
+    val player: Player,
+    private val ytLinkExtractor: MyYoutubeLinkExtractor,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    val uiState = MutableStateFlow(DetailsUiState())
+    private val uiStateInternal: MutableStateFlow<DetailsUiState> = MutableStateFlow(DetailsUiState.Loading)
+    var videos: List<VideoItem> = emptyList()
+
+    val uiState =
+        combine(uiStateInternal, ytLinkExtractor.ytLinksState) { detailsUiState, ytLinksState ->
+            when (detailsUiState) {
+                is DetailsUiState.Error, DetailsUiState.Loading -> detailsUiState
+                is DetailsUiState.Ready -> {
+                    if (ytLinksState.isReady) {
+                        /* Filtering the videos to only acceptable types as defined in Constants.
+                        This is done with later functionality in mind to stream a better quality
+                        video if better bandwidth is available and also only those that have both
+                        video and audio */
+                        val filteredVideosList = mutableListOf<YtVideoUiModel>()
+                        ytLinksState.videos.forEach { ytVideo ->
+                            val filteredVideoTypes = mutableListOf<YtVideoFormat>()
+                            ytVideo.videoFormats.forEach { ytVideoType ->
+                                if (Constants.ACCEPTABLE_YT_ITAGS.contains(ytVideoType.itag)) {
+                                    filteredVideoTypes.add(ytVideoType)
+                                }
+                            }
+                            filteredVideosList.add(ytVideo.copy(videoFormats = filteredVideoTypes))
+                        }
+                        // Sorting by YtVideoType so that trailer is 1st, teaser 2nd and so on
+                        filteredVideosList.sortBy { it.videoType.sortingOrderIndex() }
+                        DetailsUiState.Ready(
+                            title = detailsUiState.title,
+                            type = detailsUiState.type,
+                            videos = filteredVideosList
+                        )
+                    } else {
+                        DetailsUiState.Ready(
+                            title = detailsUiState.title,
+                            type = detailsUiState.type,
+                            videos = null
+                        )
+                    }
+                }
+            }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Lazily,
+            initialValue = DetailsUiState.Loading
+        )
+
+    val playerState = MutableStateFlow(Player.STATE_IDLE)
 
     init {
         initializeData()
+        // TODO: Must remove the listener in onCleared?
+        player.addListener(object : Player.Listener {
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                super.onPlaybackStateChanged(playbackState)
+                playerState.update { playbackState }
+            }
+        })
     }
 
     fun initializeData() {
+        uiStateInternal.update { DetailsUiState.Loading }
         try {
             val titleId = savedStateHandle.get<Long>(NavigationArgument.MEDIA_ID.value)
             val titleType = savedStateHandle.get<String>(NavigationArgument.TITLE_TYPE.value)
             if (titleId == null || titleType == null) {
                 // Unknown why it failed to parse the provided title, so should show general error
-                uiState.update {
-                    it.copy(isLoading = false, error = DetailsError.Unknown)
+                uiStateInternal.update {
+                    DetailsUiState.Error(DetailsError.Unknown)
+                    //it.copy(isLoading = false, error = DetailsError.Unknown)
                 }
             } else {
                 getTitle(id = titleId, titleTypeString = titleType)
@@ -46,8 +105,9 @@ class DetailsViewModel @Inject constructor(
         } catch (e: Exception) {
             Log.e(TAG, "Failed to get title id and titletype from savedStateHandle. Reason: $e", e)
             // Unknown why it failed to parse the provided title, so should show general error
-            uiState.update {
-                it.copy(isLoading = false, error = DetailsError.Unknown)
+            uiStateInternal.update {
+                DetailsUiState.Error(DetailsError.Unknown)
+//                it.copy(isLoading = false, error = DetailsError.Unknown)
             }
         }
     }
@@ -59,30 +119,36 @@ class DetailsViewModel @Inject constructor(
         val titleType = getTitleTypeFromString(titleTypeString)
         viewModelScope.launch {
             if (titleType == null) {
-                uiState.update {
-                    it.copy(isLoading = false, error = DetailsError.Unknown)
+                uiStateInternal.update {
+                    DetailsUiState.Error(DetailsError.Unknown)
+//                    it.copy(isLoading = false, error = DetailsError.Unknown)
                 }
                 return@launch
             }
             val result = titlesManager.getTitle(mediaId = id, type = titleType)
             when (result) {
                 is ResultOf.Failure -> {
-                    uiState.update {
-                        it.copy(
-                            type = titleType,
-                            isLoading = false,
-                            error = getErrorFromResultThrowable(result.throwable)
-                        )
+                    uiStateInternal.update {
+                        DetailsUiState.Error(error = getErrorFromResultThrowable(result.throwable))
+//                        it.copy(
+//                            type = titleType,
+//                            isLoading = false,
+//                            error = getErrorFromResultThrowable(result.throwable)
+//                        )
                     }
                 }
                 is ResultOf.Success -> {
-                    uiState.update {
-                        it.copy(
-                            title = result.data,
-                            type = titleType,
-                            isLoading = false,
-                            error = null
-                        )
+                    result.data.videos?.let {
+                        extractYoutubeLinks(it)
+                    }
+                    uiStateInternal.update {
+                        DetailsUiState.Ready(title = result.data, type = titleType)
+//                        it.copy(
+//                            title = result.data,
+//                            type = titleType,
+//                            isLoading = false,
+//                            error = null
+//                        )
                     }
                 }
             }
@@ -110,30 +176,33 @@ class DetailsViewModel @Inject constructor(
      */
     fun onWatchlistClicked() {
         viewModelScope.launch {
-            val title = uiState.value.title
-            if (title != null) {
+            try {
+                /* uiState should always be of type Ready at this stage, since function should only
+                be available to be called when screen is ready and showing a "Watchlist" button */
+                val readyUiState = uiStateInternal.value as DetailsUiState.Ready
+                val title = readyUiState.title
                 if (title.isWatchlisted) {
-                    Log.d(TAG, "onWatchlistClicked: title IS watclisted. Unbookmarking")
                     titlesManager.unBookmarkTitle(title)
                 } else {
-                    Log.d(TAG, "onWatchlistClicked: title IS NOT watclisted. Bookmarking")
                     titlesManager.bookmarkTitle(title)
                 }
                 /* Updating the uiState to hold a changed value of the Title so that the correct
                 state of watchlist button is shown */
-                uiState.update {
-                    when (uiState.value.type) {
+                uiStateInternal.update {
+                    when (readyUiState.type) {
                         TitleType.MOVIE -> {
-                            it.copy(title = (title as Movie).copy(isWatchlisted = !title.isWatchlisted))
+                            readyUiState.copy(title = (title as Movie)
+                                .copy(isWatchlisted = !title.isWatchlisted))
                         }
                         TitleType.TV -> {
-                            it.copy(title = (title as TV).copy(isWatchlisted = !title.isWatchlisted))
+                            readyUiState.copy(title = (title as TV)
+                                .copy(isWatchlisted = !title.isWatchlisted))
                         }
-                        /* Should never happen, but if it does, then don't do anything as we can't determine
-                        * what to add to watchlist */
-                        null -> return@launch
                     }
                 }
+            } catch (e: Exception) {
+                Log.e(TAG, "onWatchlistClicked: failed. Probably failed cast of uiState as " +
+                            "DetailsUiState.Ready. Reason: $e", e)
             }
         }
     }
@@ -156,5 +225,40 @@ class DetailsViewModel @Inject constructor(
         val hours = runtime / 60
         val minutes = runtime - (hours * 60)
         return Pair(hours, minutes)
+    }
+
+    /**
+     * Extracts usable YouTube links to be able to view using ExoPlayer
+     * @param ytVideos a list of YouTube links in this kind of format:
+     * https://www.youtube.com/watch?v=sTIBDcyCmCg
+     */
+    private fun extractYoutubeLinks(ytVideos: List<YtVideo>) {
+        viewModelScope.launch {
+            ytLinkExtractor.extractYoutubeLinks(ytVideos)
+        }
+    }
+
+    fun onVideoSelected(video: YtVideoUiModel) {
+        player.setMediaItem(MediaItem.fromUri(video.videoFormats[0].downloadUrl))
+        player.prepare()
+        player.playWhenReady = true
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        player.release()
+    }
+}
+
+/**
+ * Returns the sorting order index which is used to determine how the videos should be sorted in a list
+ */
+fun YtVideoType.sortingOrderIndex(): Int {
+    return when (this) {
+        YtVideoType.Trailer -> 0
+        YtVideoType.Teaser -> 1
+        YtVideoType.Featurette -> 2
+        YtVideoType.BehindTheScenes -> 3
+        YtVideoType.Other -> 4
     }
 }

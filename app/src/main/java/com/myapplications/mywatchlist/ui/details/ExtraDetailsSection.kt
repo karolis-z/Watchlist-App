@@ -278,10 +278,30 @@ private fun getMovieForTesting(): Movie {
         CastMember(4, "Joe Pantoliano", "Cypher", null),
     )
     val videos = listOf(
-        "https://www.youtube.com/watch?v=nUEQNVV3Gfs",
-        "https://www.youtube.com/watch?v=RZ-MXBjvA38",
-        "https://www.youtube.com/watch?v=L0fw0WzFaBM",
-        "https://www.youtube.com/watch?v=m8e-FF8MsqU"
+        YtVideo(
+            videoId = "nUEQNVV3Gfs",
+            link = "https://www.youtube.com/watch?v=nUEQNVV3Gfs",
+            name = "",
+            type = YtVideoType.Trailer
+        ),
+        YtVideo(
+            videoId = "RZ-MXBjvA38",
+            link = "https://www.youtube.com/watch?v=RZ-MXBjvA38",
+            name = "",
+            type = YtVideoType.Teaser
+        ),
+        YtVideo(
+            videoId = "L0fw0WzFaBM",
+            link = "https://www.youtube.com/watch?v=L0fw0WzFaBM",
+            name = "",
+            type = YtVideoType.BehindTheScenes
+        ),
+        YtVideo(
+            videoId = "m8e-FF8MsqU",
+            link = "https://www.youtube.com/watch?v=m8e-FF8MsqU",
+            name = "",
+            type = YtVideoType.Featurette
+        )
     )
     return Movie(
         id = 603,
@@ -340,9 +360,30 @@ private fun getTvForTesting(): TV {
         ),
     )
     val videos = listOf(
-        "https://www.youtube.com/watch?v=T92iINbl0t4",
-        "https://www.youtube.com/watch?v=YbArSoOP8XQ",
-        "https://www.youtube.com/watch?v=nHGk3sRxjYM"
+        YtVideo(
+            videoId = "nUEQNVV3Gfs",
+            link = "https://www.youtube.com/watch?v=nUEQNVV3Gfs",
+            name = "",
+            type = YtVideoType.Trailer
+        ),
+        YtVideo(
+            videoId = "RZ-MXBjvA38",
+            link = "https://www.youtube.com/watch?v=RZ-MXBjvA38",
+            name = "",
+            type = YtVideoType.Teaser
+        ),
+        YtVideo(
+            videoId = "L0fw0WzFaBM",
+            link = "https://www.youtube.com/watch?v=L0fw0WzFaBM",
+            name = "",
+            type = YtVideoType.BehindTheScenes
+        ),
+        YtVideo(
+            videoId = "m8e-FF8MsqU",
+            link = "https://www.youtube.com/watch?v=m8e-FF8MsqU",
+            name = "",
+            type = YtVideoType.Featurette
+        )
     )
     return TV(
         id = 156902,

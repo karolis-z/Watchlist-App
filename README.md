@@ -24,7 +24,7 @@ The app should always be launchable and working in the *main* branch, but this i
 	- [ ]	Title List Screen:
 		- [ ]	Prepare screen for viewing full any type of list. 
 	- [ ]	Details Screen:
-		- [ ] 	Add Videos section
+		- [x] 	Add Videos section
 		- [ ]	Add Recommended Movies section
 		- [ ]	Add Similar Movies section
 		- [ ]	Add Reviews section

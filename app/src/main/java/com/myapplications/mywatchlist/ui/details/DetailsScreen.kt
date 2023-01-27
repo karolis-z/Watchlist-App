@@ -1,7 +1,14 @@
 package com.myapplications.mywatchlist.ui.details
 
+import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -42,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.media3.common.Player
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
@@ -101,8 +109,10 @@ fun DetailsScreen(
     toolbarState.scrollValue = scrollState.value
 
     val viewModel = hiltViewModel<DetailsViewModel>()
-    val uiState = viewModel.uiState.collectAsState()
-    val error = uiState.value.error
+    val uiState by viewModel.uiState.collectAsState()
+    val playerState by viewModel.playerState.collectAsState()
+
+    Log.d(TAG, "DetailsScreen: uiState = $uiState")
 
     val systemUiController = rememberSystemUiController()
     val isDarkTheme = isSystemInDarkTheme()
@@ -113,51 +123,52 @@ fun DetailsScreen(
         )
     }
 
-    if (uiState.value.isLoading) {
-        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            LoadingCircle()
-        }
-    } else if (error != null) {
-        Box(modifier = modifier.fillMaxSize()) {
-            IconButton(
-                onClick = onNavigateUp,
-                modifier = Modifier.padding(
-                    top = statusBarPadding + NavigationIconPadding.calculateTopPadding(),
-                    start = NavigationIconPadding.calculateStartPadding(LocalLayoutDirection.current)
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = stringResource(id = R.string.cd_back_arrow),
-                    modifier = Modifier.align(Alignment.Center)
-                )
+    when (uiState) {
+        DetailsUiState.Loading -> {
+            Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                LoadingCircle()
             }
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = StandardHzPadding),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                val errorMessage = when (error) {
-                    DetailsError.NoInternet -> stringResource(id = R.string.error_no_internet_connection)
-                    DetailsError.FailedApiRequest -> stringResource(id = R.string.details_error_failed_api_request)
-                    DetailsError.Unknown -> stringResource(id = R.string.error_something_went_wrong)
+        }
+        is DetailsUiState.Error -> {
+            Box(modifier = modifier.fillMaxSize()) {
+                IconButton(
+                    onClick = onNavigateUp,
+                    modifier = Modifier.padding(
+                        top = statusBarPadding + NavigationIconPadding.calculateTopPadding(),
+                        start = NavigationIconPadding.calculateStartPadding(LocalLayoutDirection.current)
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = stringResource(id = R.string.cd_back_arrow),
+                        modifier = Modifier.align(Alignment.Center)
+                    )
                 }
-                ErrorText(
-                    errorMessage = errorMessage,
-                    onButtonRetryClick = { viewModel.initializeData() })
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = StandardHzPadding),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    val errorMessage = when ((uiState as DetailsUiState.Error).error) {
+                        DetailsError.NoInternet -> stringResource(id = R.string.error_no_internet_connection)
+                        DetailsError.FailedApiRequest -> stringResource(id = R.string.details_error_failed_api_request)
+                        DetailsError.Unknown -> stringResource(id = R.string.error_something_went_wrong)
+                    }
+                    ErrorText(
+                        errorMessage = errorMessage,
+                        onButtonRetryClick = { viewModel.initializeData() })
+                }
             }
-
         }
-    } else {
-        val title = uiState.value.title
-        val type = uiState.value.type
+        is DetailsUiState.Ready -> {
+            val title = (uiState as DetailsUiState.Ready).title
+            val type = (uiState as DetailsUiState.Ready).type
 
-        // Setting to data unavailable string, but will be replaced below if actually available
-        var runtimeOrSeasonsString = stringResource(id = R.string.details_data_notavailable)
-        if (title != null && type != null) {
-            when (uiState.value.type) {
+            // Setting to data unavailable string, but will be replaced below if actually available
+            var runtimeOrSeasonsString = stringResource(id = R.string.details_data_notavailable)
+            when (type) {
                 TitleType.TV -> {
                     runtimeOrSeasonsString = pluralStringResource(
                         id = R.plurals.details_seasons,
@@ -166,7 +177,7 @@ fun DetailsScreen(
                     )
                 }
                 TitleType.MOVIE -> {
-                    val runtime = (uiState.value.title as Movie).runtime
+                    val runtime = (title as Movie).runtime
                     if (runtime != null) {
                         val hoursAndMinutesPair =
                             viewModel.convertRuntimeToHourAndMinutesPair(runtime)
@@ -177,15 +188,19 @@ fun DetailsScreen(
                         )
                     }
                 }
-                else -> Unit // At this stage type should never be null
             }
             Box(modifier = modifier) {
                 DetailsScreenContent(
                     title = title,
                     titleType = type,
+                    videos = (uiState as DetailsUiState.Ready).videos,
+                    player = viewModel.player,
+                    onVideoSelected = { viewModel.onVideoSelected(it) } ,
                     runtimeOrSeasonsString = runtimeOrSeasonsString,
                     placeHolderPortrait = placeHolderPortrait,
+                    placeHolderBackdrop = placeHolderBackdrop,
                     onWatchlistClicked = { viewModel.onWatchlistClicked() },
+                    playerState = playerState,
                     scrollState = scrollState,
                     contentPadding = PaddingValues(top = maxToolbarHeight),
                     modifier = Modifier
@@ -298,7 +313,6 @@ fun DetailsCollapsingToolbar(
                                 modifier = Modifier.align(Alignment.Center)
                             )
                         }
-
                     }
                     Text(
                         text = titleName,
@@ -443,8 +457,13 @@ enum class CollapsingToolbarContent {
 fun DetailsScreenContent(
     title: Title,
     titleType: TitleType,
+    videos: List<YtVideoUiModel>?,
+    player: Player,
+    onVideoSelected: (YtVideoUiModel) -> Unit,
+    playerState: Int,
     runtimeOrSeasonsString: String,
     placeHolderPortrait: Painter,
+    placeHolderBackdrop: Painter,
     onWatchlistClicked: () -> Unit,
     scrollState: ScrollState,
     contentPadding: PaddingValues,
@@ -463,7 +482,7 @@ fun DetailsScreenContent(
         Column(modifier = Modifier.fillMaxSize()) {
             Spacer(modifier = Modifier.height(12.dp))
 
-            // MAIN DETAILS
+            //#region MAIN DETAILS
             DetailsInfoRow(
                 title = title,
                 titleType = titleType,
@@ -471,8 +490,9 @@ fun DetailsScreenContent(
                 runtimeOrSeasonsString = runtimeOrSeasonsString
             )
             Spacer(modifier = Modifier.height(15.dp))
+            //#endregion
 
-            // GENRES
+            //#region GENRES
             LazyRow(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                 items(key = { genre -> genre.id }, items = title.genres) { genre: Genre ->
                     GenreChip(
@@ -482,7 +502,9 @@ fun DetailsScreenContent(
                 }
             }
             Spacer(modifier = Modifier.height(14.dp))
+            //#endregion
 
+            //#region WATCHLIST BUTTON
             // WATCHLIST BUTTON
             Row(
                 horizontalArrangement = Arrangement.End,
@@ -498,8 +520,9 @@ fun DetailsScreenContent(
                 )
             }
             Spacer(modifier = Modifier.height(7.dp))
+            //#endregion
 
-            // OVERVIEW
+            //#region OVERVIEW
             val titleOverview = title.overview
             if (titleOverview != null) {
                 Row(
@@ -538,12 +561,14 @@ fun DetailsScreenContent(
                 )
             }
             Spacer(modifier = Modifier.height(12.dp))
+            //#endregion
 
-            // EXTRA DETAILS - the headline label is within the ExtraDetailsSection composable
+            //#region EXTRA DETAILS - the headline label is within the ExtraDetailsSection composable
             ExtraDetailsSection(title = title)
             Spacer(modifier = Modifier.height(12.dp))
+            //#endregion
 
-            // CAST
+            //#region CAST
             val cast = title.cast
             if (cast != null) {
                 SectionHeadline(label = stringResource(id = R.string.details_cast_label))
@@ -560,6 +585,67 @@ fun DetailsScreenContent(
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))
+            //#endregion
+
+            //#region VIDEOS
+            AnimatedVisibility(
+                visible = videos != null,
+                enter = expandVertically(
+                    expandFrom = Alignment.Top,
+                    animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing)
+                ),
+                exit = shrinkVertically(
+                    shrinkTowards = Alignment.Top,
+                    animationSpec = tween(durationMillis = 300, easing = LinearOutSlowInEasing)
+                )
+            ) {
+                /* Non-null assertion because AnimatedVisibility already does the null check */
+                VideosSection(
+                    videos = videos!!,
+                    player = player,
+                    onVideoSelected = onVideoSelected,
+                    playerState = playerState,
+                    placeHolderBackdrop = placeHolderBackdrop
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            //#enregion
+
+            //#region CAST
+            if (cast != null) {
+                SectionHeadline(label = stringResource(id = R.string.details_cast_label))
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                    items(
+                        key = { castMember -> castMember.id },
+                        items = cast
+                    ) { castMember: CastMember ->
+                        CastMemberCard(
+                            castMember = castMember,
+                            placeHolderPortrait = placeHolderPortrait
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            //#endregion
+
+            //#region CAST
+            if (cast != null) {
+                SectionHeadline(label = stringResource(id = R.string.details_cast_label))
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                    items(
+                        key = { castMember -> castMember.id },
+                        items = cast
+                    ) { castMember: CastMember ->
+                        CastMemberCard(
+                            castMember = castMember,
+                            placeHolderPortrait = placeHolderPortrait
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            //#endregion
         }
         Spacer(
             modifier = Modifier
@@ -706,10 +792,30 @@ private fun getMovieForTesting(): Movie {
         CastMember(4, "Joe Pantoliano", "Cypher", null),
     )
     val videos = listOf(
-        "https://www.youtube.com/watch?v=nUEQNVV3Gfs",
-        "https://www.youtube.com/watch?v=RZ-MXBjvA38",
-        "https://www.youtube.com/watch?v=L0fw0WzFaBM",
-        "https://www.youtube.com/watch?v=m8e-FF8MsqU"
+        YtVideo(
+            videoId = "nUEQNVV3Gfs",
+            link = "https://www.youtube.com/watch?v=nUEQNVV3Gfs",
+            name = "",
+            type = YtVideoType.Trailer
+        ),
+        YtVideo(
+            videoId = "RZ-MXBjvA38",
+            link = "https://www.youtube.com/watch?v=RZ-MXBjvA38",
+            name = "",
+            type = YtVideoType.Teaser
+        ),
+        YtVideo(
+            videoId = "L0fw0WzFaBM",
+            link = "https://www.youtube.com/watch?v=L0fw0WzFaBM",
+            name = "",
+            type = YtVideoType.BehindTheScenes
+        ),
+        YtVideo(
+            videoId = "m8e-FF8MsqU",
+            link = "https://www.youtube.com/watch?v=m8e-FF8MsqU",
+            name = "",
+            type = YtVideoType.Featurette
+        )
     )
     return Movie(
         id = 603,
@@ -768,9 +874,30 @@ private fun getTvForTesting(): TV {
         ),
     )
     val videos = listOf(
-        "https://www.youtube.com/watch?v=T92iINbl0t4",
-        "https://www.youtube.com/watch?v=YbArSoOP8XQ",
-        "https://www.youtube.com/watch?v=nHGk3sRxjYM"
+        YtVideo(
+            videoId = "nUEQNVV3Gfs",
+            link = "https://www.youtube.com/watch?v=nUEQNVV3Gfs",
+            name = "",
+            type = YtVideoType.Trailer
+        ),
+        YtVideo(
+            videoId = "RZ-MXBjvA38",
+            link = "https://www.youtube.com/watch?v=RZ-MXBjvA38",
+            name = "",
+            type = YtVideoType.Teaser
+        ),
+        YtVideo(
+            videoId = "L0fw0WzFaBM",
+            link = "https://www.youtube.com/watch?v=L0fw0WzFaBM",
+            name = "",
+            type = YtVideoType.BehindTheScenes
+        ),
+        YtVideo(
+            videoId = "m8e-FF8MsqU",
+            link = "https://www.youtube.com/watch?v=m8e-FF8MsqU",
+            name = "",
+            type = YtVideoType.Featurette
+        )
     )
     return TV(
         id = 156902,

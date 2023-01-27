@@ -49,18 +49,27 @@
     </plurals>
     <string name="details_revenue">Revenue</string>
     <string name="details_imdb_link">IMDb link</string>
-        <!-- MOVIE AND TV STATUSES -->
-        <string name="title_status_ended">Ended</string>
-        <string name="title_status_returning_series">Returning Series</string>
-        <string name="title_status_pilot">Pilot</string>
-        <string name="title_status_in_production">In Production</string>
-        <string name="title_status_planned">Planned</string>
-        <string name="title_status_cancelled">Cancelled</string>
-        <string name="title_status_unknown">Unknown</string>
-        <string name="title_status_released">Released</string>
-        <string name="title_status_rumored">Rumored</string>
-        <string name="title_status_post_production">Post Production</string>
+    <string name="details_videos_label">Videos</string>
+    <string name="details_close_player">Close Player</string>
+    <string name="details_open_video_in_youtube">Open video in YouTube</string>
 
+    <!-- MOVIE AND TV STATUSES -->
+    <string name="title_status_ended">Ended</string>
+    <string name="title_status_returning_series">Returning Series</string>
+    <string name="title_status_pilot">Pilot</string>
+    <string name="title_status_in_production">In Production</string>
+    <string name="title_status_planned">Planned</string>
+    <string name="title_status_cancelled">Cancelled</string>
+    <string name="title_status_unknown">Unknown</string>
+    <string name="title_status_released">Released</string>
+    <string name="title_status_rumored">Rumored</string>
+    <string name="title_status_post_production">Post Production</string>
+
+    <!-- YOUTUBE VIDEO TYPES -->
+    <string name="yt_video_type_trailer">Trailer</string>
+    <string name="yt_video_type_teaser">Teaser</string>
+    <string name="yt_video_type_behind_the_scenes">Behind the scenes</string>
+    <string name="yt_video_type_featurette">Featurette</string>
 
     <!-- GENERAL ERRORS -->
     <string name="error_no_internet_connection">Please check if you are connected to the internet</string>
