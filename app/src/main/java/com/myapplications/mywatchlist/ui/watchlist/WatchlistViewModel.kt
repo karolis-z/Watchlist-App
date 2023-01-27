@@ -2,7 +2,11 @@ package com.myapplications.mywatchlist.ui.watchlist
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.*
+import com.myapplications.mywatchlist.core.util.Constants.PERIODIC_WORK_REQUEST_UPDATE_CONFIGURATION
+import com.myapplications.mywatchlist.core.workmanager.UpdateConfigurationInfoWorker
 import com.myapplications.mywatchlist.data.ApiGetGenresExceptions
+import com.myapplications.mywatchlist.data.datastore.UserPrefsRepository
 import com.myapplications.mywatchlist.domain.entities.TitleItem
 import com.myapplications.mywatchlist.domain.entities.TitleType
 import com.myapplications.mywatchlist.domain.repositories.GenresRepository
@@ -12,6 +16,7 @@ import com.myapplications.mywatchlist.ui.components.TitleListFilter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 private const val TAG = "WATCHLIST_VIEWMODEL"
@@ -19,7 +24,8 @@ private const val TAG = "WATCHLIST_VIEWMODEL"
 @HiltViewModel
 class WatchlistViewModel @Inject constructor(
     private val titlesManager: TitlesManager,
-    private val genresRepository: GenresRepository
+    private val genresRepository: GenresRepository,
+    private val workManager: WorkManager
 ): ViewModel() {
 
     private val titleFilter = MutableStateFlow(TitleListFilter.All)
@@ -78,6 +84,9 @@ class WatchlistViewModel @Inject constructor(
                 is BasicResult.Success -> Unit
             }
         }
+        viewModelScope.launch {
+            launchPeriodicConfigurationUpdateWorker()
+        }
     }
 
     /**
@@ -105,6 +114,26 @@ class WatchlistViewModel @Inject constructor(
      */
     fun onTitleFilterChosen(titleListFilter: TitleListFilter){
         titleFilter.update { titleListFilter }
+    }
+
+    /**
+     * Creates a periodic [WorkRequest] that updated the Configuration details from the api. If this
+     * work had already been scheduled, then the ExistingPeriodicWorkPolicy.KEEP will ensure the
+     * existing work request is kept and not replaced.
+     */
+    private fun launchPeriodicConfigurationUpdateWorker() {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+        val workRequest = PeriodicWorkRequestBuilder<UpdateConfigurationInfoWorker>(3, TimeUnit.DAYS)
+            .setConstraints(constraints)
+            .addTag("UPDATE_CONFIGURATION")
+            .build()
+        workManager.enqueueUniquePeriodicWork(
+            /* uniqueWorkName = */ PERIODIC_WORK_REQUEST_UPDATE_CONFIGURATION,
+            /* existingPeriodicWorkPolicy = */ ExistingPeriodicWorkPolicy.KEEP,
+            /* periodicWork = */ workRequest
+        )
     }
 
 }
