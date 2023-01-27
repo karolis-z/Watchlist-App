@@ -51,6 +51,7 @@
     <string name="details_imdb_link">IMDb link</string>
     <string name="details_videos_label">Videos</string>
     <string name="details_close_player">Close Player</string>
+    <string name="details_open_video_in_youtube">Open video in YouTube</string>
 
     <!-- MOVIE AND TV STATUSES -->
     <string name="title_status_ended">Ended</string>

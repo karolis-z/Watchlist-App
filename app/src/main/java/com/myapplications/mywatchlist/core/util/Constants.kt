@@ -15,6 +15,7 @@ object Constants {
 
     // YOUTUBE CONSTANTS
     const val YOUTUBE_WATCH_URL = "https://www.youtube.com/watch?v="
+    const val YOUTUBE_APP_URI = "vnd.youtube:"
     val ACCEPTABLE_YT_ITAGS = listOf(
         18, // MP4 Audio+Video, 360p
         22, // MP4 Audio+Video, 720p

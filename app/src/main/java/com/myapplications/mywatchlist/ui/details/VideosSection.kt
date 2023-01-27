@@ -1,10 +1,15 @@
 package com.myapplications.mywatchlist.ui.details
 
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -47,8 +52,56 @@ fun VideosSection(
 ) {
 
     var showPlayer by remember { mutableStateOf(false) }
-
+    var videoId by remember { mutableStateOf("") }
     val videosListState = rememberLazyListState()
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        SectionHeadline(label = stringResource(id = R.string.details_videos_label))
+        Crossfade(
+            targetState = showPlayer,
+            animationSpec = tween(500, easing = FastOutSlowInEasing)
+        ) { showPlayerState ->
+            when (showPlayerState) {
+                true -> {
+                    Column(Modifier.fillMaxWidth()) {
+                        val context = LocalContext.current
+                        VideoPlayer(
+                            player = player,
+                            playerState = playerState,
+                            onCloseButtonClick = { showPlayer = !showPlayer }
+                        )
+                        TextButton(onClick = {
+                            player.pause()
+                            openYoutubeLink(videoId, context) }
+                        ) {
+                            Text(text = stringResource(id = R.string.details_open_video_in_youtube))
+                        }
+                    }
+                }
+                false -> {
+                    VideoHorizontalList(
+                        videos = videos,
+                        placeHolderBackdrop = placeHolderBackdrop,
+                        lazyListState = videosListState,
+                        onVideoSelected = {
+                            showPlayer = !showPlayer
+                            videoId = it.videoId
+                            onVideoSelected(it)
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun VideoPlayer(
+    player: Player,
+    playerState: Int,
+    onCloseButtonClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
 
     // This is needed to handle pausing/resuming once activity enters Paused or Resumed states.
     var lifecycle by remember { mutableStateOf(Lifecycle.Event.ON_CREATE) }
@@ -63,106 +116,96 @@ fun VideosSection(
         }
     }
 
-    Column(modifier = modifier.fillMaxWidth()) {
-        SectionHeadline(label = stringResource(id = R.string.details_videos_label))
-
-        Crossfade(
-            targetState = showPlayer,
-            animationSpec = tween(500, easing = FastOutSlowInEasing)
-        ) { showPlayerState ->
-            when (showPlayerState) {
-                true -> {
-                    val context = LocalContext.current
-                    Box(
-                        modifier = Modifier
-                            .aspectRatio(16 / 9f)
-                            .fillMaxWidth()
-                            .clip(MaterialTheme.shapes.medium)
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                    ) {
-                        if (playerState == Player.STATE_BUFFERING) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(50.dp),
-                                    color = MaterialTheme.colorScheme.primary,
-                                    strokeWidth = 2.dp
-                                )
-                            }
-                        } else {
-                            AndroidView(
-                                factory = {
-                                    PlayerView(context).also { it.player = player }
-                                },
-                                update = { playerView ->
-                                    when (lifecycle) {
-                                        Lifecycle.Event.ON_PAUSE -> {
-                                            playerView.onPause()
-                                            playerView.player?.pause()
-                                        }
-                                        Lifecycle.Event.ON_RESUME -> playerView.onResume()
-                                        else -> Unit
-                                    }
-                                },
-                                modifier = Modifier
-                                    .aspectRatio(16 / 9f)
-                                    .fillMaxWidth()
-                            )
-                        }
-
-
-                        IconButton(
-                            onClick = {
-                                player.pause()
-                                showPlayer = !showPlayer
-                            },
-                            modifier = Modifier.align(Alignment.TopEnd)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(35.dp)
-                                    .align(Alignment.Center)
-                                    .background(
-                                        color = Color.Black.copy(alpha = 0.32f),
-                                        shape = CircleShape
-                                    )
-                                    .padding(5.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = stringResource(id = R.string.details_close_player),
-                                    modifier = Modifier.align(Alignment.Center),
-                                    tint = Color.White.copy(alpha = 0.64f)
-                                )
-                            }
-                        }
+    val context = LocalContext.current
+    Box(
+        modifier = modifier
+            .aspectRatio(16 / 9f)
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        AndroidView(
+            factory = {
+                PlayerView(context).also { it.player = player }
+            },
+            update = { playerView ->
+                when (lifecycle) {
+                    Lifecycle.Event.ON_PAUSE -> {
+                        playerView.onPause()
+                        playerView.player?.pause()
                     }
-
+                    Lifecycle.Event.ON_RESUME -> playerView.onResume()
+                    else -> Unit
                 }
-                false -> {
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(7.dp),
-                        state = videosListState
-                    ) {
-                        items(
-                            key = { video -> video.videoId },
-                            items = videos
-                        ) { video: YtVideoUiModel ->
-                            VideoCard(
-                                ytVideoUiModel = video,
-                                placeHolderBackdrop = placeHolderBackdrop,
-                                onCardClick = {
-                                    showPlayer = !showPlayer
-                                    onVideoSelected(video)
-                                })
-                        }
-                    }
-                }
+            },
+            modifier = Modifier
+                .aspectRatio(16 / 9f)
+                .fillMaxWidth()
+        )
+        if (playerState == Player.STATE_BUFFERING) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(color = Color.Black.copy(alpha = 0.15f)),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(50.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                    strokeWidth = 2.dp
+                )
             }
+        }
+        IconButton(
+            onClick = {
+                player.pause()
+                onCloseButtonClick()
+            },
+            modifier = Modifier.align(Alignment.TopEnd)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(35.dp)
+                    .align(Alignment.Center)
+                    .background(
+                        color = Color.Black.copy(alpha = 0.32f),
+                        shape = CircleShape
+                    )
+                    .padding(5.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = stringResource(id = R.string.details_close_player),
+                    modifier = Modifier.align(Alignment.Center),
+                    tint = Color.White.copy(alpha = 0.64f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun VideoHorizontalList(
+    videos: List<YtVideoUiModel>,
+    placeHolderBackdrop: Painter,
+    lazyListState: LazyListState,
+    modifier: Modifier = Modifier,
+    onVideoSelected: (YtVideoUiModel) -> Unit,
+) {
+    LazyRow(
+        horizontalArrangement = Arrangement.spacedBy(7.dp),
+        state = lazyListState,
+        modifier = modifier
+    ) {
+        items(
+            key = { video -> video.videoId },
+            items = videos
+        ) { video: YtVideoUiModel ->
+            VideoCard(
+                ytVideoUiModel = video,
+                placeHolderBackdrop = placeHolderBackdrop,
+                onCardClick = onVideoSelected
+            )
         }
     }
 }
@@ -234,4 +277,16 @@ fun getYtVideoTypeString(type: YtVideoType): String {
         YtVideoType.BehindTheScenes -> stringResource(id = R.string.yt_video_type_behind_the_scenes)
         YtVideoType.Other -> ""
     }
+}
+
+fun openYoutubeLink(ytVideoId: String, context: Context) {
+    val intentApp = Intent(Intent.ACTION_VIEW, Uri.parse(Constants.YOUTUBE_APP_URI + ytVideoId))
+    val intentBrowser =
+        Intent(Intent.ACTION_VIEW, Uri.parse(Constants.YOUTUBE_WATCH_URL + ytVideoId))
+    try {
+        context.startActivity(intentApp)
+    } catch (ex: ActivityNotFoundException) {
+        context.startActivity(intentBrowser)
+    }
+
 }
