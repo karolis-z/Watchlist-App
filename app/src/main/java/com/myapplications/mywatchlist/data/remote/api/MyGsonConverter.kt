@@ -31,7 +31,7 @@ object MyGsonConverter {
                 val error = "Could not convert json to a JsonObject. Reason: $e"
                 Log.e(TAG, "deserialize: $error", e)
                 // Returning a response which should be checked for totalResults before proceeding
-                return emptyResponse()
+                return emptyTitleItemsResponse()
             }
 
             // Check if this is deserialization of Genres, Movie, Tv or Search/Trending
@@ -44,7 +44,10 @@ object MyGsonConverter {
             } else if (mJson.get("change_keys") != null) {
                 handleConfigurationResponse(mJson)
             } else {
-                handleAnyRequestReturningListOfTitleItems(mJson = mJson, getMinimalResponse = false)
+                handleAnyRequestReturningListOfTitleItems(
+                    mJson = mJson,
+                    requestType = TitleItemsRequest.SEARCH_OR_TRENDING
+                )
             }
         }
 
@@ -77,17 +80,17 @@ object MyGsonConverter {
                     val recommendations = try {
                         handleAnyRequestReturningListOfTitleItems(
                             mJson = mJson.get("recommendations").asJsonObject,
-                            getMinimalResponse = true
+                            requestType = TitleItemsRequest.RECOMMENDATIONS
                         ) as ApiResponse.TitlesListMinimalResponse
                     } catch (e: Exception) {
                         val error = "Could not get recommendations for json object. Reason: $e. Json = $mJson"
                         Log.d(TAG, "handleMovieResponse: $error", e)
                         null
-                    } as ApiResponse.TitlesListMinimalResponse
+                    }
                     val similar = try {
                         handleAnyRequestReturningListOfTitleItems(
                             mJson = mJson.get("similar").asJsonObject,
-                            getMinimalResponse = true
+                            requestType = TitleItemsRequest.SIMILAR_MOVIES
                         ) as ApiResponse.TitlesListMinimalResponse
                     } catch (e: Exception) {
                         val error = "Could not get similar titles for json object. Reason: $e. Json = $mJson"
@@ -149,7 +152,7 @@ object MyGsonConverter {
                     val recommendations = try {
                         handleAnyRequestReturningListOfTitleItems(
                             mJson = mJson.get("recommendations").asJsonObject,
-                            getMinimalResponse = true
+                            requestType = TitleItemsRequest.RECOMMENDATIONS
                         ) as ApiResponse.TitlesListMinimalResponse
                     } catch (e: Exception) {
                         val error = "Could not get recommendations for json object. Reason: $e. Json = $mJson"
@@ -159,7 +162,7 @@ object MyGsonConverter {
                     val similar = try {
                         handleAnyRequestReturningListOfTitleItems(
                             mJson = mJson.get("similar").asJsonObject,
-                            getMinimalResponse = true
+                            requestType = TitleItemsRequest.SIMILAR_TV
                         ) as ApiResponse.TitlesListMinimalResponse
                     } catch (e: Exception) {
                         val error = "Could not get similar titles for json object. Reason: $e. Json = $mJson"
@@ -253,18 +256,20 @@ object MyGsonConverter {
         /**
          * Handles the response if it is a list of Title items that must be returned.
          * @param mJson the root [JsonObject] received from the request.
-         * @param getMinimalResponse indicates whether the method should return response with
-         * [TitleItemApiModel] or [TitleItemMinimalApiModel]
+         * @param requestType indicates which type of request the method should handle
          * @return [ApiResponse.TitlesListResponse] or [ApiResponse.TitlesListMinimalResponse]
-         * dependening on [getMinimalResponse] parameter
+         * dependening on which [requestType] was provided
          */
-        private fun handleAnyRequestReturningListOfTitleItems(mJson: JsonObject, getMinimalResponse: Boolean): ApiResponse {
+        private fun handleAnyRequestReturningListOfTitleItems(
+            mJson: JsonObject,
+            requestType: TitleItemsRequest
+        ): ApiResponse {
             val page = mJson.get("page").asInt
             val pageCount = mJson.get("total_pages").asInt
             val resultCount = mJson.get("total_results").asInt
             // If nothing found by the query, return an 'empty' response
             if (resultCount == 0) {
-                return emptyResponse()
+                return emptyTitleItemsResponse()
             }
 
             val titleItems = mutableListOf<ITitleItemApiModel>()
@@ -273,30 +278,27 @@ object MyGsonConverter {
             results.forEachIndexed { index, jsonElement ->
                 try {
                     val resultJson = jsonElement.asJsonObject
-                    val mediaTypeString = resultJson.get("media_type").asString
-                    if (mediaTypeString == "movie" || mediaTypeString == "tv") {
-                        val titleItem = when (getMinimalResponse) {
-                            true -> {
-                                TitleItemMinimalApiModel(
-                                    id = 0,
-                                    name = getName(resultJson),
-                                    type = getMediaType(resultJson),
-                                    mediaId = resultJson.get("id").asLong,
-                                    overview = getOverview(resultJson),
-                                    posterLinkEnding = getImageLink(
-                                        resultJsonObject = resultJson,
-                                        propertyName = "poster_path"
-                                    ),
-                                    releaseDate = getReleaseDate(resultJson),
-                                    voteCount = resultJson.get("vote_count").asLong,
-                                    voteAverage = resultJson.get("vote_average").asDouble
-                                )
+                    val mediaType = when (requestType) {
+                        TitleItemsRequest.SEARCH_OR_TRENDING, TitleItemsRequest.RECOMMENDATIONS -> {
+                            val mediaTypeString = resultJson.get("media_type").asString
+                            if (mediaTypeString == "movie" || mediaTypeString == "tv") {
+                                getMediaType(resultJson)
+                            } else {
+                                null
                             }
-                            false -> {
+                        }
+                        TitleItemsRequest.SIMILAR_TV -> TitleTypeApiModel.TV
+                        TitleItemsRequest.SIMILAR_MOVIES -> TitleTypeApiModel.MOVIE
+                    }
+                    /* mediaType will only be null if it's a Search, Trending or Recommendations
+                    query where the found item was a Person which we are not handling. */
+                    if (mediaType != null) {
+                        val titleItem = when (requestType) {
+                            TitleItemsRequest.SEARCH_OR_TRENDING -> {
                                 TitleItemApiModel(
                                     id = 0,
                                     name = getName(resultJson),
-                                    type = getMediaType(resultJson),
+                                    type = mediaType,
                                     mediaId = resultJson.get("id").asLong,
                                     overview = getOverview(resultJson),
                                     posterLinkEnding = getImageLink(
@@ -309,6 +311,25 @@ object MyGsonConverter {
                                     voteAverage = resultJson.get("vote_average").asDouble
                                 )
                             }
+                            TitleItemsRequest.SIMILAR_TV,
+                            TitleItemsRequest.SIMILAR_MOVIES,
+                            TitleItemsRequest.RECOMMENDATIONS -> {
+                                TitleItemMinimalApiModel(
+                                    id = 0,
+                                    name = getName(resultJson),
+                                    type = mediaType,
+                                    mediaId = resultJson.get("id").asLong,
+                                    overview = getOverview(resultJson),
+                                    posterLinkEnding = getImageLink(
+                                        resultJsonObject = resultJson,
+                                        propertyName = "poster_path"
+                                    ),
+                                    releaseDate = getReleaseDate(resultJson),
+                                    voteCount = resultJson.get("vote_count").asLong,
+                                    voteAverage = resultJson.get("vote_average").asDouble
+                                )
+                            }
+
                         }
                         titleItems.add(titleItem)
                     }
@@ -320,22 +341,33 @@ object MyGsonConverter {
 
             // If at least 1 result parsing did not fail - returning a non empty SearchApiResponse
             return if (titleItems.isNotEmpty()) {
-                when (getMinimalResponse) {
-                    true -> ApiResponse.TitlesListMinimalResponse(
-                        page = page,
-                        titleItems = titleItems.filterIsInstance<TitleItemMinimalApiModel>(),
-                        totalPages = pageCount,
-                        totalResults = resultCount
-                    )
-                    false -> ApiResponse.TitlesListResponse(
-                        page = page,
-                        titleItems = titleItems.filterIsInstance<TitleItemApiModel>(),
-                        totalPages = pageCount,
-                        totalResults = resultCount
-                    )
+                when (requestType) {
+                    TitleItemsRequest.SEARCH_OR_TRENDING -> {
+                        ApiResponse.TitlesListResponse(
+                            page = page,
+                            titleItems = titleItems.filterIsInstance<TitleItemApiModel>(),
+                            totalPages = pageCount,
+                            totalResults = resultCount
+                        )
+                    }
+                    TitleItemsRequest.SIMILAR_TV,
+                    TitleItemsRequest.SIMILAR_MOVIES,
+                    TitleItemsRequest.RECOMMENDATIONS -> {
+                        ApiResponse.TitlesListMinimalResponse(
+                            page = page,
+                            titleItems = titleItems.filterIsInstance<TitleItemMinimalApiModel>(),
+                            totalPages = pageCount,
+                            totalResults = resultCount
+                        )
+                    }
                 }
             } else {
-                emptyResponse()
+                when (requestType) {
+                    TitleItemsRequest.SEARCH_OR_TRENDING -> emptyTitleItemsResponse()
+                    TitleItemsRequest.SIMILAR_TV,
+                    TitleItemsRequest.SIMILAR_MOVIES,
+                    TitleItemsRequest.RECOMMENDATIONS -> emptyTitleItemsMinimalResponse()
+                }
             }
         }
 
@@ -626,7 +658,7 @@ object MyGsonConverter {
          * @return [ApiResponse.TitlesListResponse] with page, totalPages and totalResults equal to 0 and
          * titleItems set as null.
          */
-        private fun emptyResponse(): ApiResponse.TitlesListResponse {
+        private fun emptyTitleItemsResponse(): ApiResponse.TitlesListResponse {
             return ApiResponse.TitlesListResponse(
                 page = 0,
                 titleItems = null,
@@ -634,5 +666,27 @@ object MyGsonConverter {
                 totalResults = 0
             )
         }
+
+        /**
+         * Returns an empty [ApiResponse.TitlesListMinimalResponse] which indicates a successful api
+         * request, but with nothing found by the query.
+         * @return [ApiResponse.TitlesListMinimalResponse] with page, totalPages and totalResults
+         * equal to 0 and titleItems set as null.
+         */
+        private fun emptyTitleItemsMinimalResponse(): ApiResponse.TitlesListMinimalResponse {
+            return ApiResponse.TitlesListMinimalResponse(
+                page = 0,
+                titleItems = null,
+                totalPages = 0,
+                totalResults = 0
+            )
+        }
     }
+}
+
+enum class TitleItemsRequest {
+    SEARCH_OR_TRENDING,
+    SIMILAR_TV,
+    SIMILAR_MOVIES,
+    RECOMMENDATIONS
 }

@@ -52,6 +52,8 @@
     <string name="details_videos_label">Videos</string>
     <string name="details_close_player">Close Player</string>
     <string name="details_open_video_in_youtube">Open video in YouTube</string>
+    <string name="details_recommended_label">Recommended</string>
+    <string name="details_similar_label">Similar</string>
 
     <!-- MOVIE AND TV STATUSES -->
     <string name="title_status_ended">Ended</string>

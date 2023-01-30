@@ -198,6 +198,7 @@ class MainActivity : ComponentActivity() {
                             DetailsScreen(
                                 placeHolderBackdrop = placeHolderBackdrop,
                                 placeHolderPortrait = placeHolderPortrait,
+                                placeholderPoster = placeholderPoster,
                                 onNavigateUp = { navController.navigateUp() },
                                 modifier = Modifier.padding(
                                     bottom = paddingValues.calculateBottomPadding()

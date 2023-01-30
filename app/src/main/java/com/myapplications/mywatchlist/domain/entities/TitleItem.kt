@@ -23,7 +23,7 @@ data class TitleItem(
  * Model representing a minimal Title in a list without nested lists.
  */
 data class TitleItemMinimal(
-    val id: Long,
+//    val id: Long,
     val name: String,
     val type: TitleType,
     val mediaId: Long,

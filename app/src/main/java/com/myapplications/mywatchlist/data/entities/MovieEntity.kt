@@ -124,7 +124,7 @@ data class TitleItemSimilarMovieEntity(
     val isWatchlisted: Boolean
 )
 
-data class MovieEntityWithGenresCastVideos(
+data class MovieEntityFull(
     @Embedded val movie: MovieEntity,
     @Relation(
         parentColumn = "id",
@@ -154,17 +154,15 @@ data class MovieEntityWithGenresCastVideos(
         parentColumn = "id",
         entityColumn = "parentMovieId",
         entity = TitleItemRecommendedMovieEntity::class,
-        // TODO: Removing projection, but need to check if it works and Room can infer data?
-//        projection = ["videoId","name", "type", "mediaId", "overview", "posterLink", "releaseDate", "voteCount", "voteAverage", "isWatchlisted"]
+        projection = ["name", "type", "mediaId", "overview", "posterLink", "releaseDate", "voteCount", "voteAverage", "isWatchlisted"]
     )
-    val recommended: List<TitleItemMinimal>,
+    val recommendations: List<TitleItemMinimal>,
 
     @Relation(
         parentColumn = "id",
         entityColumn = "parentMovieId",
         entity = TitleItemSimilarMovieEntity::class,
-        // TODO: Removing projection, but need to check if it works and Room can infer data?
-        // projection = ["videoId","name", "type", "mediaId", "overview", "posterLink", "releaseDate", "voteCount", "voteAverage", "isWatchlisted"]
+         projection = ["name", "type", "mediaId", "overview", "posterLink", "releaseDate", "voteCount", "voteAverage", "isWatchlisted"]
     )
     val similar: List<TitleItemMinimal>
 

@@ -22,10 +22,10 @@ interface TmdbApi {
     @GET("trending/all/week?api_key=$apiKey")
     suspend fun getTrendingTitles(): Response<ApiResponse>
 
-    @GET("movie/{titleId}?api_key=$apiKey&append_to_response=credits,videos")
+    @GET("movie/{titleId}?api_key=$apiKey&append_to_response=credits,videos,recommendations,similar")
     suspend fun getMovie(@Path("titleId") titleId: Long): Response<ApiResponse>
 
-    @GET("tv/{titleId}?api_key=$apiKey&append_to_response=credits,videos")
+    @GET("tv/{titleId}?api_key=$apiKey&append_to_response=credits,videos,recommendations,similar")
     suspend fun getTv(@Path("titleId") titleId: Long): Response<ApiResponse>
 
     @GET("configuration?api_key=$apiKey")

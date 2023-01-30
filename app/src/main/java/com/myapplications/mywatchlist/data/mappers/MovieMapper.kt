@@ -3,7 +3,7 @@ package com.myapplications.mywatchlist.data.mappers
 import com.myapplications.mywatchlist.data.datastore.ApiConfiguration
 import com.myapplications.mywatchlist.data.entities.MovieApiModel
 import com.myapplications.mywatchlist.data.entities.MovieEntity
-import com.myapplications.mywatchlist.data.entities.MovieEntityWithGenresCastVideos
+import com.myapplications.mywatchlist.data.entities.MovieEntityFull
 import com.myapplications.mywatchlist.domain.entities.Genre
 import com.myapplications.mywatchlist.domain.entities.Movie
 import com.myapplications.mywatchlist.domain.entities.TitleItem
@@ -38,8 +38,8 @@ fun MovieApiModel.toMovie(allGenres: List<Genre>, apiConfiguration: ApiConfigura
         voteCount = this.voteCount,
         voteAverage = this.voteAverage,
         isWatchlisted = false, // Api model does not have this information and assumes False
-        recommendations = this.recommendations?.toTitleItemsMinimal(allGenres, apiConfiguration),
-        similar = this.similar?.toTitleItemsMinimal(allGenres, apiConfiguration)
+        recommendations = this.recommendations?.toTitleItemsMinimal(apiConfiguration),
+        similar = this.similar?.toTitleItemsMinimal(apiConfiguration)
     )
 }
 
@@ -96,9 +96,9 @@ fun Movie.toMovieEntity(): MovieEntity {
 }
 
 /**
- * Converts [MovieEntityWithGenresCastVideos] to [Movie]
+ * Converts [MovieEntityFull] to [Movie]
  */
-fun MovieEntityWithGenresCastVideos.toMovie(): Movie {
+fun MovieEntityFull.toMovie(): Movie {
     return Movie(
         id = this.movie.id,
         name = this.movie.name,
@@ -116,6 +116,8 @@ fun MovieEntityWithGenresCastVideos.toMovie(): Movie {
         runtime = this.movie.runtime,
         voteCount = this.movie.voteCount,
         voteAverage = this.movie.voteAverage,
-        isWatchlisted = this.movie.isWatchlisted
+        isWatchlisted = this.movie.isWatchlisted,
+        recommendations = this.recommendations,
+        similar = this.similar
     )
 }
