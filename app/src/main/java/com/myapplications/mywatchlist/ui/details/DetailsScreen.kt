@@ -15,9 +15,8 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Today
 import androidx.compose.material3.*
@@ -25,6 +24,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
@@ -65,6 +65,12 @@ import com.myapplications.mywatchlist.ui.components.LoadingCircle
 import com.myapplications.mywatchlist.ui.details.toolbarstate.ExitUntilCollapsedState
 import com.myapplications.mywatchlist.ui.details.toolbarstate.ToolbarState
 import com.myapplications.mywatchlist.ui.theme.IMDBOrange
+import com.skydoves.balloon.ArrowPositionRules
+import com.skydoves.balloon.BalloonAnimation
+import com.skydoves.balloon.BalloonSizeSpec
+import com.skydoves.balloon.compose.Balloon
+import com.skydoves.balloon.compose.rememberBalloonBuilder
+import com.skydoves.balloon.compose.setBackgroundColor
 import java.time.LocalDate
 import kotlin.math.roundToInt
 
@@ -618,9 +624,57 @@ fun DetailsScreenContent(
             Spacer(modifier = Modifier.height(12.dp))
             //#enregion
 
+            val backgroundColor = MaterialTheme.colorScheme.primaryContainer
+            val balloonBuilder = rememberBalloonBuilder {
+                setArrowSize(10)
+                setArrowPosition(0.5f)
+                setArrowPositionRules(ArrowPositionRules.ALIGN_ANCHOR)
+                setWidth(BalloonSizeSpec.WRAP)
+                setHeight(BalloonSizeSpec.WRAP)
+                setPadding(12)
+                setMarginHorizontal(12)
+                setCornerRadius(8f)
+                setBackgroundColor(backgroundColor)
+                setBalloonAnimation(BalloonAnimation.CIRCULAR)
+                setCircularDuration(300)
+                setDismissWhenTouchOutside(true)
+                setDismissWhenClicked(true)
+                setDismissWhenLifecycleOnPause(true)
+                setDismissWhenOverlayClicked(true)
+                setDismissWhenShowAgain(true)
+                setAutoDismissDuration(5000)
+            }
+
             //#region SIMILAR
             if (title.similar != null) {
-                SectionHeadline(label = stringResource(id = R.string.details_similar_label))
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    SectionHeadline(
+                        label = stringResource(id = R.string.details_similar_label),
+                        modifier = Modifier.align(Alignment.CenterStart)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Balloon(
+                        builder = balloonBuilder,
+                        balloonContent = {
+                            Text(
+                                text = stringResource(id = R.string.details_similar_help),
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        },
+                        modifier = Modifier.align(Alignment.CenterEnd)
+                    ) { balloonWindow ->
+                        IconButton(onClick = { balloonWindow.showAlignTop() }) {
+                            Icon(
+                                imageVector = Icons.Outlined.HelpOutline,
+                                contentDescription = stringResource(id = R.string.cd_similar_help_text),
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .alpha(0.66f),
+                            )
+                        }
+                    }
+                }
+
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                     items(
                         /* Non-null assertion because we check for null before */
@@ -640,7 +694,33 @@ fun DetailsScreenContent(
 
             //#region RECOMMENDATIONS
             if (title.recommendations != null) {
-                SectionHeadline(label = stringResource(id = R.string.details_recommended_label))
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    SectionHeadline(
+                        label = stringResource(id = R.string.details_recommended_label),
+                        modifier = Modifier.align(Alignment.CenterStart)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Balloon(
+                        builder = balloonBuilder,
+                        balloonContent = {
+                            Text(
+                                text = stringResource(id = R.string.details_recommended_help),
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        },
+                        modifier = Modifier.align(Alignment.CenterEnd)
+                    ) { balloonWindow ->
+                        IconButton(onClick = { balloonWindow.showAlignTop() }) {
+                            Icon(
+                                imageVector = Icons.Outlined.HelpOutline,
+                                contentDescription = stringResource(id = R.string.cd_recommended_help_text),
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .alpha(0.66f),
+                            )
+                        }
+                    }
+                }
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                     items(
                         key = { titleItemMinimal -> titleItemMinimal.mediaId },
@@ -835,7 +915,9 @@ fun TitleMinimalCard(
                     imageVector = Icons.Filled.Star,
                     contentDescription = null,
                     tint = IMDBOrange,
-                    modifier = Modifier.scale(0.8f).padding(top = 2.dp)
+                    modifier = Modifier
+                        .scale(0.8f)
+                        .padding(top = 2.dp)
                 )
                 Text(
                     text = "%.1f".format(titleItemMinimal.voteAverage),

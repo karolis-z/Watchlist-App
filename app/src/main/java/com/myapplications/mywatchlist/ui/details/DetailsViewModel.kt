@@ -51,14 +51,20 @@ class DetailsViewModel @Inject constructor(
                                     filteredVideoTypes.add(ytVideoType)
                                 }
                             }
-                            filteredVideosList.add(ytVideo.copy(videoFormats = filteredVideoTypes))
+                            if (filteredVideoTypes.isNotEmpty()) {
+                                filteredVideosList.add(ytVideo.copy(videoFormats = filteredVideoTypes))
+                            }
                         }
                         // Sorting by YtVideoType so that trailer is 1st, teaser 2nd and so on
                         filteredVideosList.sortBy { it.videoType.sortingOrderIndex() }
                         DetailsUiState.Ready(
                             title = detailsUiState.title,
                             type = detailsUiState.type,
-                            videos = filteredVideosList
+                            videos = if (filteredVideosList.isEmpty()) {
+                                null
+                            } else {
+                                filteredVideosList
+                            }
                         )
                     } else {
                         DetailsUiState.Ready(
@@ -97,7 +103,6 @@ class DetailsViewModel @Inject constructor(
                 // Unknown why it failed to parse the provided title, so should show general error
                 uiStateInternal.update {
                     DetailsUiState.Error(DetailsError.Unknown)
-                    //it.copy(isLoading = false, error = DetailsError.Unknown)
                 }
             } else {
                 getTitle(id = titleId, titleTypeString = titleType)
@@ -107,7 +112,6 @@ class DetailsViewModel @Inject constructor(
             // Unknown why it failed to parse the provided title, so should show general error
             uiStateInternal.update {
                 DetailsUiState.Error(DetailsError.Unknown)
-//                it.copy(isLoading = false, error = DetailsError.Unknown)
             }
         }
     }
@@ -121,7 +125,6 @@ class DetailsViewModel @Inject constructor(
             if (titleType == null) {
                 uiStateInternal.update {
                     DetailsUiState.Error(DetailsError.Unknown)
-//                    it.copy(isLoading = false, error = DetailsError.Unknown)
                 }
                 return@launch
             }
@@ -130,11 +133,6 @@ class DetailsViewModel @Inject constructor(
                 is ResultOf.Failure -> {
                     uiStateInternal.update {
                         DetailsUiState.Error(error = getErrorFromResultThrowable(result.throwable))
-//                        it.copy(
-//                            type = titleType,
-//                            isLoading = false,
-//                            error = getErrorFromResultThrowable(result.throwable)
-//                        )
                     }
                 }
                 is ResultOf.Success -> {
@@ -143,12 +141,6 @@ class DetailsViewModel @Inject constructor(
                     }
                     uiStateInternal.update {
                         DetailsUiState.Ready(title = result.data, type = titleType)
-//                        it.copy(
-//                            title = result.data,
-//                            type = titleType,
-//                            isLoading = false,
-//                            error = null
-//                        )
                     }
                 }
             }

@@ -54,6 +54,8 @@
     <string name="details_open_video_in_youtube">Open video in YouTube</string>
     <string name="details_recommended_label">Recommended</string>
     <string name="details_similar_label">Similar</string>
+    <string name="details_recommended_help">Recommended list based on users\' ratings and favourite titles.</string>
+    <string name="details_similar_help">Similar titles based on keywords and genres for this title.</string>
 
     <!-- MOVIE AND TV STATUSES -->
     <string name="title_status_ended">Ended</string>
@@ -96,5 +98,7 @@
     <string name="cd_imdb_link">Link to IMDb</string>
     <string name="cd_expand_more">Expand for more information</string>
     <string name="cd_selected_filter_chip">Selected filter is %s</string>
+    <string name="cd_recommended_help_text">This list shows recommended titles for currently viewed title.</string>
+    <string name="cd_similar_help_text">This list shows similar titles for currently viewed title.</string>
 
 </resources>
