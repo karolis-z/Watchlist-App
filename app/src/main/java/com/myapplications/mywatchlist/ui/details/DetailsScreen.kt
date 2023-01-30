@@ -91,6 +91,7 @@ fun DetailsScreen(
     placeHolderPortrait: Painter,
     placeholderPoster: Painter,
     onNavigateUp: () -> Unit,
+    onSimilarOrRecommendedTitleClicked: (TitleItemMinimal) -> Unit,
     modifier: Modifier = Modifier
 ) {
     // Calculating status bar height
@@ -203,6 +204,7 @@ fun DetailsScreen(
                     placeHolderBackdrop = placeHolderBackdrop,
                     placeholderPoster = placeholderPoster,
                     onWatchlistClicked = { viewModel.onWatchlistClicked() },
+                    onSimilarOrRecommendedTitleClicked = onSimilarOrRecommendedTitleClicked,
                     playerState = playerState,
                     scrollState = scrollState,
                     contentPadding = PaddingValues(top = maxToolbarHeight),
@@ -469,6 +471,7 @@ fun DetailsScreenContent(
     placeHolderBackdrop: Painter,
     placeholderPoster: Painter,
     onWatchlistClicked: () -> Unit,
+    onSimilarOrRecommendedTitleClicked: (TitleItemMinimal) -> Unit,
     scrollState: ScrollState,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier
@@ -627,7 +630,7 @@ fun DetailsScreenContent(
                         TitleMinimalCard(
                             titleItemMinimal = titleItemMinimal,
                             placeholderPoster = placeholderPoster,
-                            onTitleClicked = { /* TODO */ }
+                            onTitleClicked = onSimilarOrRecommendedTitleClicked
                         )
                     }
                 }
@@ -647,7 +650,7 @@ fun DetailsScreenContent(
                         TitleMinimalCard(
                             titleItemMinimal = titleItemMinimal,
                             placeholderPoster = placeholderPoster,
-                            onTitleClicked = { /* TODO */ }
+                            onTitleClicked = onSimilarOrRecommendedTitleClicked
                         )
                     }
                 }
