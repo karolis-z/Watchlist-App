@@ -1,4 +1,4 @@
-package com.myapplications.mywatchlist.ui.trending
+package com.myapplications.mywatchlist.ui.home
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -20,12 +20,12 @@ import com.myapplications.mywatchlist.ui.components.LoadingCircle
 import com.myapplications.mywatchlist.ui.components.TitleItemsList
 
 @Composable
-fun TrendingScreen(
+fun HomeScreen(
     placeholderImage: Painter,
     onTitleClicked: (TitleItem) -> Unit,
     modifier: Modifier
 ) {
-    val viewModel = hiltViewModel<TrendingViewModel>()
+    val viewModel = hiltViewModel<HomeViewModel>()
 
     val uiState = viewModel.uiState.collectAsState()
     val filterState = viewModel.titleFilter.collectAsState()
@@ -68,21 +68,21 @@ fun TrendingScreen(
                 verticalArrangement = Arrangement.Center
             ) {
                 when (error) {
-                    TrendingError.NO_INTERNET -> {
+                    HomeError.NO_INTERNET -> {
                         val errorMessage =
                             stringResource(id = R.string.error_no_internet_connection)
                         ErrorText(
                             errorMessage = errorMessage,
                             onButtonRetryClick = { viewModel.retryGetTrending() })
                     }
-                    TrendingError.FAILED_API_REQUEST -> {
+                    HomeError.FAILED_API_REQUEST -> {
                         val errorMessage =
                             stringResource(id = R.string.error_something_went_wrong)
                         ErrorText(
                             errorMessage = errorMessage,
                             onButtonRetryClick = { viewModel.retryGetTrending() })
                     }
-                    TrendingError.NO_TITLES -> {
+                    HomeError.NO_TITLES -> {
                         val errorMessage = stringResource(id = R.string.trending_nothing_trending)
                         ErrorText(errorMessage = errorMessage)
                     }

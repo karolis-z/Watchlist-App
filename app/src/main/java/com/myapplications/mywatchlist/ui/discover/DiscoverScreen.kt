@@ -1,4 +1,4 @@
-package com.myapplications.mywatchlist.ui.search
+package com.myapplications.mywatchlist.ui.discover
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -44,12 +44,12 @@ private const val TAG = "SEARCH_SCREEN"
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun SearchScreen(
+fun DiscoverScreen(
     placeholderImage: Painter,
     onTitleClicked: (TitleItem) -> Unit,
     modifier: Modifier
 ) {
-    val viewModel = hiltViewModel<SearchViewModel>()
+    val viewModel = hiltViewModel<DiscoverViewModel>()
     val uiState = viewModel.uiState.collectAsState()
     val error = uiState.value.error
 
@@ -120,21 +120,21 @@ fun SearchScreen(
                     verticalArrangement = Arrangement.Center
                 ) {
                     when (error) {
-                        SearchError.NO_INTERNET -> {
+                        DiscoverError.NO_INTERNET -> {
                             val errorMessage =
                                 stringResource(id = R.string.error_no_internet_connection)
                             ErrorText(
                                 errorMessage = errorMessage,
                                 onButtonRetryClick = { viewModel.retrySearch() })
                         }
-                        SearchError.FAILED_API_REQUEST -> {
+                        DiscoverError.FAILED_API_REQUEST -> {
                             val errorMessage =
                                 stringResource(id = R.string.error_something_went_wrong)
                             ErrorText(
                                 errorMessage = errorMessage,
                                 onButtonRetryClick = { viewModel.retrySearch() })
                         }
-                        SearchError.NOTHING_FOUND -> {
+                        DiscoverError.NOTHING_FOUND -> {
                             val errorMessage = stringResource(id = R.string.search_nothing_found)
                             ErrorText(errorMessage = errorMessage)
                         }
@@ -257,7 +257,7 @@ fun SearchFAB(
         FloatingActionButton(onClick = onFabClicked) {
             Icon(
                 imageVector = Icons.Default.Search,
-                contentDescription = stringResource(id = R.string.cd_search_icon)
+                contentDescription = stringResource(id = R.string.cd_discover_icon)
             )
         }
     }

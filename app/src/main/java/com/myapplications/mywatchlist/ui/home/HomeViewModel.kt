@@ -1,4 +1,4 @@
-package com.myapplications.mywatchlist.ui.trending
+package com.myapplications.mywatchlist.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,20 +13,20 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-private const val TAG = "TRENDING_VIEWMODEL"
+private const val TAG = "HOME_VIEWMODEL"
 
 @HiltViewModel
-class TrendingViewModel @Inject constructor(
+class HomeViewModel @Inject constructor(
     private val titlesManager: TitlesManager
 ) : ViewModel() {
 
-    private val trendingDataState: MutableStateFlow<TrendingUiState> =
-        MutableStateFlow(TrendingUiState())
+    private val trendingDataState: MutableStateFlow<HomeUiState> =
+        MutableStateFlow(HomeUiState())
 
     val titleFilter = MutableStateFlow(TitleListFilter.All)
 
     val uiState =
-        trendingDataState.combine(titleFilter) { uiState: TrendingUiState, titleFilter: TitleListFilter ->
+        trendingDataState.combine(titleFilter) { uiState: HomeUiState, titleFilter: TitleListFilter ->
             val titleItems = uiState.titleItems
             if (!titleItems.isNullOrEmpty()) {
                 val filteredList = when (titleFilter) {
@@ -35,13 +35,13 @@ class TrendingViewModel @Inject constructor(
                     TitleListFilter.TV -> titleItems.filter { it.type == TitleType.TV }
                 }
                 if (filteredList.isEmpty()) {
-                    TrendingUiState(
+                    HomeUiState(
                         titleItems = null,
                         isLoading = false,
-                        error = TrendingError.NO_TITLES
+                        error = HomeError.NO_TITLES
                     )
                 } else {
-                    TrendingUiState(titleItems = filteredList, isLoading = false, error = null)
+                    HomeUiState(titleItems = filteredList, isLoading = false, error = null)
                 }
             } else {
                 uiState
@@ -49,7 +49,7 @@ class TrendingViewModel @Inject constructor(
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = TrendingUiState()
+            initialValue = HomeUiState()
         )
 
     init {
@@ -70,18 +70,18 @@ class TrendingViewModel @Inject constructor(
                 }
                 is ResultOf.Failure -> {
                     val exception = response.throwable
-                    val error: TrendingError =
+                    val error: HomeError =
                         if (exception is ApiGetTitleItemsExceptions) {
                             when (exception) {
                                 is ApiGetTitleItemsExceptions.FailedApiRequestException ->
-                                    TrendingError.FAILED_API_REQUEST
+                                    HomeError.FAILED_API_REQUEST
                                 is ApiGetTitleItemsExceptions.NothingFoundException ->
-                                    TrendingError.NO_TITLES
+                                    HomeError.NO_TITLES
                                 is ApiGetTitleItemsExceptions.NoConnectionException ->
-                                    TrendingError.NO_INTERNET
+                                    HomeError.NO_INTERNET
                             }
                         } else {
-                            TrendingError.FAILED_API_REQUEST
+                            HomeError.FAILED_API_REQUEST
                         }
                     trendingDataState.update {
                         it.copy(titleItems = emptyList(), isLoading = false, error = error)
