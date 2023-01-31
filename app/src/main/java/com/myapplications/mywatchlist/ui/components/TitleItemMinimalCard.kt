@@ -15,15 +15,49 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.myapplications.mywatchlist.domain.entities.TitleItem
+import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 import com.myapplications.mywatchlist.domain.entities.TitleItemMinimal
 import com.myapplications.mywatchlist.ui.theme.IMDBOrange
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TitleMinimalCard(
-    titleItemMinimal: TitleItemMinimal,
+fun TitleItemVerticalCard(
+    titleItem: TitleItemFull,
+    placeholderPoster: Painter,
+    onTitleClicked: (TitleItemFull) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    BaseTitleItemVerticalCard(
+        titleItem = titleItem,
+        placeholderPoster = placeholderPoster,
+        onTitleClicked = onTitleClicked as (TitleItem) -> Unit,
+        modifier = modifier
+    )
+}
+
+@Composable
+fun TitleItemVerticalCard(
+    titleItem: TitleItemMinimal,
     placeholderPoster: Painter,
     onTitleClicked: (TitleItemMinimal) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    BaseTitleItemVerticalCard(
+        titleItem = titleItem,
+        placeholderPoster = placeholderPoster,
+        onTitleClicked = onTitleClicked as (TitleItem) -> Unit,
+        modifier = modifier
+    )
+}
+
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun BaseTitleItemVerticalCard(
+    titleItem: TitleItem,
+    placeholderPoster: Painter,
+    onTitleClicked: (TitleItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -31,11 +65,11 @@ fun TitleMinimalCard(
             .size(width = 150.dp, height = 300.dp)
             .padding(bottom = 5.dp),
         shape = MaterialTheme.shapes.medium,
-        onClick = { onTitleClicked(titleItemMinimal) }
+        onClick = { onTitleClicked(titleItem) }
     ) {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
-                .data(titleItemMinimal.posterLink)
+                .data(titleItem.posterLink)
                 .crossfade(true)
                 .build(),
             placeholder = placeholderPoster,
@@ -55,7 +89,7 @@ fun TitleMinimalCard(
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = titleItemMinimal.name,
+                text = titleItem.name,
                 style = MaterialTheme.typography.labelLarge,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
@@ -65,9 +99,10 @@ fun TitleMinimalCard(
                 modifier = Modifier.padding(horizontal = 5.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                if (titleItemMinimal.releaseDate != null) {
+                if (titleItem.releaseDate != null) {
                     Text(
-                        text = titleItemMinimal.releaseDate.year.toString(),
+                        /* Non-null assertion because we already check for null above */
+                        text = titleItem.releaseDate!!.year.toString(),
                         style = MaterialTheme.typography.labelMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -85,7 +120,7 @@ fun TitleMinimalCard(
                         .padding(top = 2.dp)
                 )
                 Text(
-                    text = "%.1f".format(titleItemMinimal.voteAverage),
+                    text = "%.1f".format(titleItem.voteAverage),
                     style = MaterialTheme.typography.labelMedium,
                     modifier = Modifier.padding(start = 2.dp)
                 )

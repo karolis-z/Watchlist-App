@@ -8,7 +8,7 @@ import com.myapplications.mywatchlist.data.mappers.toTitleItems
 import com.myapplications.mywatchlist.data.remote.api.ApiResponse
 import com.myapplications.mywatchlist.data.remote.api.TmdbApi
 import com.myapplications.mywatchlist.domain.entities.Genre
-import com.myapplications.mywatchlist.domain.entities.TitleItem
+import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 import com.myapplications.mywatchlist.domain.result.ResultOf
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
@@ -17,19 +17,19 @@ import javax.inject.Inject
 interface TitlesRemoteDataSource {
     /**
      * Searches for the given query in The Movie Database.
-     * @return [ResultOf.Success] containing List of [TitleItem] if successful and [ResultOf.Failure]
+     * @return [ResultOf.Success] containing List of [TitleItemFull] if successful and [ResultOf.Failure]
      * if not.
      * @param allGenres required to map genre ids received from API to to a list of [Genre] used in
-     * [TitleItem]
+     * [TitleItemFull]
      */
-    suspend fun searchTitles(query: String, allGenres: List<Genre>): ResultOf<List<TitleItem>>
+    suspend fun searchTitles(query: String, allGenres: List<Genre>): ResultOf<List<TitleItemFull>>
 
     /**
      * Retrieves the titles that are trending this week from TMDB.
-     * @return [ResultOf.Success] containing List of [TitleItem] if successful and [ResultOf.Failure]
+     * @return [ResultOf.Success] containing List of [TitleItemFull] if successful and [ResultOf.Failure]
      * if not.
      */
-    suspend fun getTrendingTitles(allGenres: List<Genre>): ResultOf<List<TitleItem>>
+    suspend fun getTrendingTitles(allGenres: List<Genre>): ResultOf<List<TitleItemFull>>
 }
 
 private const val TAG = "TITLES_REMOTE_DATASRC"
@@ -43,7 +43,7 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
     override suspend fun searchTitles(
         query: String,
         allGenres: List<Genre>
-    ): ResultOf<List<TitleItem>> =
+    ): ResultOf<List<TitleItemFull>> =
         withContext(dispatcher) {
             val apiResponse = try {
                 api.search(query)
@@ -71,12 +71,12 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
     /**
      * Parses the API's response body to a [ResultOf]
      * @param allGenres required to map genre ids received from API to to a list of [Genre] used in
-     * [TitleItem]
+     * [TitleItemFull]
      */
     private suspend fun parseTitleItemsApiResponse(
         responseBody: ApiResponse.TitlesListResponse,
         allGenres: List<Genre>
-    ): ResultOf<List<TitleItem>> {
+    ): ResultOf<List<TitleItemFull>> {
         return if (responseBody.titleItems == null) {
             val error = "No titles found for the given search or trending list is empty."
             ResultOf.Failure(
@@ -92,7 +92,7 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
         }
     }
 
-    override suspend fun getTrendingTitles(allGenres: List<Genre>): ResultOf<List<TitleItem>> =
+    override suspend fun getTrendingTitles(allGenres: List<Genre>): ResultOf<List<TitleItemFull>> =
         withContext(dispatcher) {
             val apiResponse = try {
                 api.getTrendingTitles()

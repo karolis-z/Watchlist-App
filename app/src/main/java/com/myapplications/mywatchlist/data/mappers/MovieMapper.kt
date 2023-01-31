@@ -6,7 +6,7 @@ import com.myapplications.mywatchlist.data.entities.MovieEntity
 import com.myapplications.mywatchlist.data.entities.MovieEntityFull
 import com.myapplications.mywatchlist.domain.entities.Genre
 import com.myapplications.mywatchlist.domain.entities.Movie
-import com.myapplications.mywatchlist.domain.entities.TitleItem
+import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 import com.myapplications.mywatchlist.domain.entities.TitleType
 
 /**
@@ -57,10 +57,10 @@ fun List<MovieApiModel>.toMovies(
 }
 
 /**
- * Converts a [Movie] to a [TitleItem]
+ * Converts a [Movie] to a [TitleItemFull]
  */
-fun Movie.toTitleItem(): TitleItem {
-    return TitleItem(
+fun Movie.toTitleItem(): TitleItemFull {
+    return TitleItemFull(
         id = 0,
         name = this.name,
         type = TitleType.MOVIE,

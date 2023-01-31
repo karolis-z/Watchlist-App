@@ -35,17 +35,17 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.myapplications.mywatchlist.R
 import com.myapplications.mywatchlist.domain.entities.Genre
-import com.myapplications.mywatchlist.domain.entities.TitleItem
+import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 import com.myapplications.mywatchlist.domain.entities.TitleType
 import com.myapplications.mywatchlist.ui.theme.*
 import java.time.LocalDate
 
 @Composable
 fun TitleItemCard(
-    title: TitleItem,
+    title: TitleItemFull,
     placeholderImage: Painter,
     onWatchlistClicked: () -> Unit,
-    onTitleClicked: (TitleItem) -> Unit,
+    onTitleClicked: (TitleItemFull) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -213,7 +213,7 @@ fun AnimatedWatchlistButton(
 @Composable
 fun TitleItemCardPreview() {
     TitleItemCard(
-        title = TitleItem(
+        title = TitleItemFull(
             id = 0,
             name = "Matrix Resurrections",
             type = TitleType.MOVIE,

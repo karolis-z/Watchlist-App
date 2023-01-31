@@ -3,13 +3,14 @@ package com.myapplications.mywatchlist.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.myapplications.mywatchlist.data.ApiGetTitleItemsExceptions
-import com.myapplications.mywatchlist.domain.entities.TitleItem
-import com.myapplications.mywatchlist.domain.entities.TitleType
+import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 import com.myapplications.mywatchlist.domain.repositories.TitlesManager
 import com.myapplications.mywatchlist.domain.result.ResultOf
-import com.myapplications.mywatchlist.ui.components.TitleListFilter
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -21,35 +22,38 @@ class HomeViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val trendingDataState: MutableStateFlow<HomeUiState> =
-        MutableStateFlow(HomeUiState())
+        MutableStateFlow(HomeUiState.Loading)
 
-    val titleFilter = MutableStateFlow(TitleListFilter.All)
+    // TODO: Commenting out the filter for now, but will likely need it later
+    //val titleFilter = MutableStateFlow(TitleListFilter.All)
 
-    val uiState =
-        trendingDataState.combine(titleFilter) { uiState: HomeUiState, titleFilter: TitleListFilter ->
-            val titleItems = uiState.titleItems
-            if (!titleItems.isNullOrEmpty()) {
-                val filteredList = when (titleFilter) {
-                    TitleListFilter.All -> titleItems
-                    TitleListFilter.Movies -> titleItems.filter { it.type == TitleType.MOVIE }
-                    TitleListFilter.TV -> titleItems.filter { it.type == TitleType.TV }
-                }
-                if (filteredList.isEmpty()) {
-                    HomeUiState(
-                        titleItems = null,
-                        isLoading = false,
-                        error = HomeError.NO_TITLES
-                    )
-                } else {
-                    HomeUiState(titleItems = filteredList, isLoading = false, error = null)
-                }
-            } else {
-                uiState
-            }
-        }.stateIn(
+    // TODO: Commenting the combine out for now, but will later need to combine different sources
+    val uiState = trendingDataState
+//        trendingDataState.combine(titleFilter) { uiState: HomeUiState, titleFilter: TitleListFilter ->
+//            val titleItems = uiState.titleItemsFull
+//            if (!titleItems.isNullOrEmpty()) {
+//                val filteredList = when (titleFilter) {
+//                    TitleListFilter.All -> titleItems
+//                    TitleListFilter.Movies -> titleItems.filter { it.type == TitleType.MOVIE }
+//                    TitleListFilter.TV -> titleItems.filter { it.type == TitleType.TV }
+//                }
+//                if (filteredList.isEmpty()) {
+//                    HomeUiState(
+//                        titleItemsFull = null,
+//                        isLoading = false,
+//                        error = HomeError.NO_TITLES
+//                    )
+//                } else {
+//                    HomeUiState(titleItemsFull = filteredList, isLoading = false, error = null)
+//                }
+//            } else {
+//                uiState
+//            }
+//        }
+        .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = HomeUiState()
+            initialValue = HomeUiState.Loading
         )
 
     init {
@@ -58,14 +62,12 @@ class HomeViewModel @Inject constructor(
 
     private fun getTrendingTitles() {
         viewModelScope.launch {
-            trendingDataState.update {
-                it.copy(isLoading = true)
-            }
+            trendingDataState.update { HomeUiState.Loading }
             val response = titlesManager.getTrendingTitles()
             when (response) {
                 is ResultOf.Success -> {
                     trendingDataState.update {
-                        it.copy(titleItems = response.data, isLoading = false, error = null)
+                        HomeUiState.Ready(trendingItems = response.data)
                     }
                 }
                 is ResultOf.Failure -> {
@@ -84,7 +86,7 @@ class HomeViewModel @Inject constructor(
                             HomeError.FAILED_API_REQUEST
                         }
                     trendingDataState.update {
-                        it.copy(titleItems = emptyList(), isLoading = false, error = error)
+                        HomeUiState.Error(error = error)
                     }
                 }
             }
@@ -92,9 +94,9 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
-     * Bookmarks or unbookmarks the chosen [TitleItem]
+     * Bookmarks or unbookmarks the chosen [TitleItemFull]
      */
-    fun onWatchlistClicked(title: TitleItem) {
+    fun onWatchlistClicked(title: TitleItemFull) {
         viewModelScope.launch {
             if (title.isWatchlisted) {
                 titlesManager.unBookmarkTitleItem(title)
@@ -104,12 +106,12 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Applies the user's chosen filter on the Trending list of Titles.
-     */
-    fun onTitleFilterChosen(titleListFilter: TitleListFilter){
-        titleFilter.update { titleListFilter }
-    }
+//    /**
+//     * Applies the user's chosen filter on the Trending list of Titles.
+//     */
+//    fun onTitleFilterChosen(titleListFilter: TitleListFilter){
+//        titleFilter.update { titleListFilter }
+//    }
 
     /**
      * Retry getting trending titles

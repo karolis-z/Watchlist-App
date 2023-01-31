@@ -11,15 +11,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
-import com.myapplications.mywatchlist.domain.entities.TitleItem
+import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TitleItemsList(
-    titleItems: List<TitleItem>,
+    titleItemsFull: List<TitleItemFull>,
     placeholderImage: Painter,
-    onWatchlistClicked: (TitleItem) -> Unit,
-    onTitleClicked: (TitleItem) -> Unit,
+    onWatchlistClicked: (TitleItemFull) -> Unit,
+    onTitleClicked: (TitleItemFull) -> Unit,
     modifier: Modifier = Modifier,
     state: LazyListState = rememberLazyListState(),
     verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(10.dp),
@@ -32,8 +32,8 @@ fun TitleItemsList(
         modifier = modifier
     ) {
         items(
-            items = titleItems,
-            key = { titleItem -> "${titleItem.type.name}-${titleItem.mediaId}" }) { item: TitleItem ->
+            items = titleItemsFull,
+            key = { titleItem -> "${titleItem.type.name}-${titleItem.mediaId}" }) { item: TitleItemFull ->
             TitleItemCard(
                 title = item,
                 onWatchlistClicked = { onWatchlistClicked(item) },

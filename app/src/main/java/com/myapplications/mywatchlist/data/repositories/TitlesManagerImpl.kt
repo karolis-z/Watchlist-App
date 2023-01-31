@@ -21,34 +21,34 @@ class TitlesManagerImpl @Inject constructor(
     @IoDispatcher private val dispatcher: CoroutineDispatcher
 ) : TitlesManager {
 
-    override suspend fun searchTitles(query: String): ResultOf<List<TitleItem>> =
+    override suspend fun searchTitles(query: String): ResultOf<List<TitleItemFull>> =
         withContext(dispatcher) {
             titleItemsRepository.searchTitles(query)
         }
 
-    override suspend fun bookmarkTitleItem(titleItem: TitleItem) = withContext(dispatcher) {
+    override suspend fun bookmarkTitleItem(titleItemFull: TitleItemFull) = withContext(dispatcher) {
         val titleResult =
-            detailsRepository.getTitle(mediaId = titleItem.mediaId, type = titleItem.type)
+            detailsRepository.getTitle(mediaId = titleItemFull.mediaId, type = titleItemFull.type)
         when (titleResult) {
             is ResultOf.Failure -> {
                 // If not successful - not bookmarking either the Title nor the TitleItem
                 Log.e(
                     TAG, "bookmarkTitleItem: did not succeed in fetching a Title " +
-                            "with id:${titleItem.mediaId} of type:${titleItem.type}. " +
+                            "with id:${titleItemFull.mediaId} of type:${titleItemFull.type}. " +
                             "Reason: ${titleResult.message}", titleResult.throwable
                 )
                 return@withContext
             }
             is ResultOf.Success -> {
                 detailsRepository.bookmarkTitle(titleResult.data)
-                titleItemsRepository.bookmarkTitleItem(titleItem)
+                titleItemsRepository.bookmarkTitleItem(titleItemFull)
             }
         }
     }
 
-    override suspend fun unBookmarkTitleItem(titleItem: TitleItem) = withContext(dispatcher) {
+    override suspend fun unBookmarkTitleItem(titleItemFull: TitleItemFull) = withContext(dispatcher) {
         val titleResult =
-            detailsRepository.getTitle(mediaId = titleItem.mediaId, type = titleItem.type)
+            detailsRepository.getTitle(mediaId = titleItemFull.mediaId, type = titleItemFull.type)
         when (titleResult) {
             is ResultOf.Failure -> {
                 /* If not successful - not unbookmarking Title, but still unbookmarking TitleItem
@@ -56,27 +56,27 @@ class TitlesManagerImpl @Inject constructor(
                 * should not happen */
                 Log.e(
                     TAG, "unBookmarkTitleItem: did not succeed in fetching a Title " +
-                            "with id:${titleItem.mediaId} of type:${titleItem.type}. " +
+                            "with id:${titleItemFull.mediaId} of type:${titleItemFull.type}. " +
                             "Reason: ${titleResult.message}", titleResult.throwable
                 )
-                titleItemsRepository.unBookmarkTitleItem(titleItem)
+                titleItemsRepository.unBookmarkTitleItem(titleItemFull)
             }
             is ResultOf.Success -> {
                 detailsRepository.unBookmarkTitle(titleResult.data)
-                titleItemsRepository.unBookmarkTitleItem(titleItem)
+                titleItemsRepository.unBookmarkTitleItem(titleItemFull)
             }
         }
     }
 
-    override suspend fun getWatchlistedTitles(): List<TitleItem>? = withContext(dispatcher) {
+    override suspend fun getWatchlistedTitles(): List<TitleItemFull>? = withContext(dispatcher) {
         titleItemsRepository.getWatchlistedTitles()
     }
 
-    override fun allWatchlistedTitleItems(): Flow<List<TitleItem>> {
+    override fun allWatchlistedTitleItems(): Flow<List<TitleItemFull>> {
         return titleItemsRepository.allWatchlistedTitleItems()
     }
 
-    override suspend fun getTrendingTitles(): ResultOf<List<TitleItem>> = withContext(dispatcher) {
+    override suspend fun getTrendingTitles(): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
         titleItemsRepository.getTrendingTitles()
     }
 

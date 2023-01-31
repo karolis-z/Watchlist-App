@@ -3,7 +3,7 @@ package com.myapplications.mywatchlist.ui.discover
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.myapplications.mywatchlist.data.ApiGetTitleItemsExceptions
-import com.myapplications.mywatchlist.domain.entities.TitleItem
+import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 import com.myapplications.mywatchlist.domain.repositories.TitlesManager
 import com.myapplications.mywatchlist.domain.result.ResultOf
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,7 +31,7 @@ class DiscoverViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update {
                 it.copy(
-                    titleItems = null,
+                    titleItemsFull = null,
                     isLoading = true,
                     isSearchFinished = false,
                     error = null
@@ -42,7 +42,7 @@ class DiscoverViewModel @Inject constructor(
                 is ResultOf.Success -> {
                     _uiState.update {
                         it.copy(
-                            titleItems = response.data,
+                            titleItemsFull = response.data,
                             isLoading = false,
                             isSearchFinished = true,
                             error = null
@@ -66,7 +66,7 @@ class DiscoverViewModel @Inject constructor(
                         }
                     _uiState.update {
                         it.copy(
-                            titleItems = emptyList(),
+                            titleItemsFull = emptyList(),
                             isLoading = false,
                             isSearchFinished = true,
                             error = error
@@ -77,7 +77,7 @@ class DiscoverViewModel @Inject constructor(
         }
     }
 
-    fun onWatchlistClicked(title: TitleItem) {
+    fun onWatchlistClicked(title: TitleItemFull) {
         viewModelScope.launch {
             if (title.isWatchlisted) {
                 titlesManager.unBookmarkTitleItem(title)

@@ -5,7 +5,7 @@ import com.myapplications.mywatchlist.core.util.NetworkStatusManager
 import com.myapplications.mywatchlist.data.ApiGetTitleItemsExceptions
 import com.myapplications.mywatchlist.data.local.titles.TitlesLocalDataSource
 import com.myapplications.mywatchlist.data.remote.TitlesRemoteDataSource
-import com.myapplications.mywatchlist.domain.entities.TitleItem
+import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 import com.myapplications.mywatchlist.domain.repositories.GenresRepository
 import com.myapplications.mywatchlist.domain.repositories.TitleItemsRepository
 import com.myapplications.mywatchlist.domain.result.ResultOf
@@ -24,7 +24,7 @@ class TitleItemsRepositoryImpl @Inject constructor(
     @IoDispatcher private val dispatcher: CoroutineDispatcher
 ) : TitleItemsRepository {
 
-    override suspend fun searchTitles(query: String): ResultOf<List<TitleItem>> =
+    override suspend fun searchTitles(query: String): ResultOf<List<TitleItemFull>> =
         withContext(dispatcher) {
             if (!networkStatusManager.isOnline()){
                 return@withContext ResultOf.Failure(
@@ -37,23 +37,23 @@ class TitleItemsRepositoryImpl @Inject constructor(
             return@withContext parseTitlesListResult(result)
         }
 
-    override suspend fun bookmarkTitleItem(titleItem: TitleItem) = withContext(dispatcher) {
-        localDataSource.bookmarkTitleItem(titleItem = titleItem.copy(isWatchlisted = true))
+    override suspend fun bookmarkTitleItem(titleItemFull: TitleItemFull) = withContext(dispatcher) {
+        localDataSource.bookmarkTitleItem(titleItemFull = titleItemFull.copy(isWatchlisted = true))
     }
 
-    override suspend fun unBookmarkTitleItem(titleItem: TitleItem) = withContext(dispatcher) {
-        localDataSource.unBookmarkTitleItem(titleItem = titleItem)
+    override suspend fun unBookmarkTitleItem(titleItemFull: TitleItemFull) = withContext(dispatcher) {
+        localDataSource.unBookmarkTitleItem(titleItemFull = titleItemFull)
     }
 
-    override suspend fun getWatchlistedTitles(): List<TitleItem>? = withContext(dispatcher) {
+    override suspend fun getWatchlistedTitles(): List<TitleItemFull>? = withContext(dispatcher) {
         localDataSource.getAllBookmarkedTitles()
     }
 
-    override fun allWatchlistedTitleItems(): Flow<List<TitleItem>> {
+    override fun allWatchlistedTitleItems(): Flow<List<TitleItemFull>> {
         return localDataSource.allWatchlistedTitlesFlow()
     }
 
-    override suspend fun getTrendingTitles(): ResultOf<List<TitleItem>> = withContext(dispatcher) {
+    override suspend fun getTrendingTitles(): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
         if (!networkStatusManager.isOnline()){
             return@withContext ResultOf.Failure(
                 message = null,
@@ -72,12 +72,12 @@ class TitleItemsRepositoryImpl @Inject constructor(
      * @param result is a [ResultOf] returned from remote data source.
      * @return [ResultOf] that can be further returned to the requester.
      */
-    private suspend fun parseTitlesListResult(result: ResultOf<List<TitleItem>>): ResultOf<List<TitleItem>> =
+    private suspend fun parseTitlesListResult(result: ResultOf<List<TitleItemFull>>): ResultOf<List<TitleItemFull>> =
         withContext(dispatcher) {
             when (result) {
                 is ResultOf.Failure -> return@withContext result
                 is ResultOf.Success -> {
-                    val titlesFilteredForWatchlisted = mutableListOf<TitleItem>()
+                    val titlesFilteredForWatchlisted = mutableListOf<TitleItemFull>()
                     result.data.forEach { titleItem ->
                         val isWatchlisted = localDataSource.checkIfTitleItemWatchlisted(titleItem)
                         if (isWatchlisted) {
