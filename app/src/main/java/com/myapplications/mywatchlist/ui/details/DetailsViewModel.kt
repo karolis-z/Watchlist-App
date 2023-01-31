@@ -85,15 +85,16 @@ class DetailsViewModel @Inject constructor(
 
     val playerState = MutableStateFlow(Player.STATE_IDLE)
 
+    private val playerListener = object : Player.Listener {
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            super.onPlaybackStateChanged(playbackState)
+            playerState.update { playbackState }
+        }
+    }
+
     init {
         initializeData()
-        // TODO: Must remove the listener in onCleared?
-        player.addListener(object : Player.Listener {
-            override fun onPlaybackStateChanged(playbackState: Int) {
-                super.onPlaybackStateChanged(playbackState)
-                playerState.update { playbackState }
-            }
-        })
+        player.addListener(playerListener)
     }
 
     fun initializeData() {
@@ -270,6 +271,7 @@ class DetailsViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
+        player.removeListener(playerListener)
         player.release()
     }
 }
