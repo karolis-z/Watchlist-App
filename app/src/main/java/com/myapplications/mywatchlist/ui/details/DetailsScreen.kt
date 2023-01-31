@@ -205,6 +205,7 @@ fun DetailsScreen(
                     player = viewModel.player,
                     onVideoSelected = { viewModel.onVideoSelected(it) } ,
                     runtimeOrSeasonsString = runtimeOrSeasonsString,
+                    spokenLanguagesString = viewModel.getSpokenLanguagesString(),
                     placeHolderPortrait = placeHolderPortrait,
                     placeHolderBackdrop = placeHolderBackdrop,
                     placeholderPoster = placeholderPoster,
@@ -472,6 +473,7 @@ fun DetailsScreenContent(
     onVideoSelected: (YtVideoUiModel) -> Unit,
     playerState: Int,
     runtimeOrSeasonsString: String,
+    spokenLanguagesString: String?,
     placeHolderPortrait: Painter,
     placeHolderBackdrop: Painter,
     placeholderPoster: Painter,
@@ -576,7 +578,7 @@ fun DetailsScreenContent(
             //#endregion
 
             //#region EXTRA DETAILS - the headline label is within the ExtraDetailsSection composable
-            ExtraDetailsSection(title = title)
+            ExtraDetailsSection(title = title, spokenLanguagesString = spokenLanguagesString)
             Spacer(modifier = Modifier.height(12.dp))
             //#endregion
 

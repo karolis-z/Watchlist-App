@@ -43,6 +43,7 @@ private const val TAG = "EXTRA_DETAILS_SECTION"
 @Composable
 fun ExtraDetailsSection(
     title: Title,
+    spokenLanguagesString: String?,
     modifier: Modifier = Modifier
 ) {
     val categoryStyle = MaterialTheme.typography.bodyLarge
@@ -87,6 +88,7 @@ fun ExtraDetailsSection(
         ) {
             Column(modifier = modifier.fillMaxWidth()) {
 
+                //#region STATUS
                 if (status.isNotEmpty()) {
                     Row(modifier = modifier.fillMaxWidth()) {
                         Text(
@@ -98,6 +100,9 @@ fun ExtraDetailsSection(
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                 }
+                //#endregion
+
+                //#region TAGLINE
                 val tagline = title.tagline
                 if (tagline != null) {
                     Row(modifier = modifier.fillMaxWidth()) {
@@ -110,6 +115,9 @@ fun ExtraDetailsSection(
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                 }
+                //#endregion
+
+                //#region VOTE COUNT
                 Row(modifier = modifier.fillMaxWidth()) {
                     Text(
                         text = stringResource(id = R.string.details_vote_count),
@@ -127,9 +135,29 @@ fun ExtraDetailsSection(
                     )
                 }
                 Spacer(modifier = Modifier.height(8.dp))
+                //#endregion
+
+                //#region SPOKEN LANGUAGES
+                if (spokenLanguagesString != null) {
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = stringResource(id = R.string.details_spoken_languages),
+                            modifier = Modifier.weight(0.4f),
+                            style = categoryStyle
+                        )
+                        Text(
+                            text = spokenLanguagesString,
+                            modifier = Modifier.weight(0.6f),
+                            style = infoStyle
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                //#endregion
 
                 when (title) {
                     is Movie -> {
+                        //#region REVENUE
                         val revenue = title.revenue
                         if (revenue != null) {
                             Row(modifier = modifier.fillMaxWidth()) {
@@ -146,6 +174,52 @@ fun ExtraDetailsSection(
                             }
                             Spacer(modifier = Modifier.height(8.dp))
                         }
+                        //#endregion
+
+                        //#region BUDGET
+                        val budget = title.budget
+                        if (budget != null) {
+                            Row(modifier = modifier.fillMaxWidth()) {
+                                Text(
+                                    text = stringResource(id = R.string.details_budget),
+                                    modifier = Modifier.weight(0.4f),
+                                    style = categoryStyle
+                                )
+                                Text(
+                                    text =
+                                        CurrencyFormatter.getUsdAmountInLocalCurrencyFormat(budget),
+                                    modifier = Modifier.weight(0.6f),
+                                    style = infoStyle
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                        //#endregion
+
+                        //#region PROFIT
+                        /* Both budget and revenue must be non-null and not equal to 0 to be able
+                        to calculated a meaningful profit. If one parameter is 0, it means the data
+                        is not available */
+                        if (budget != null && revenue != null && budget != 0L && revenue != 0L) {
+                            Row(modifier = modifier.fillMaxWidth()) {
+                                Text(
+                                    text = stringResource(id = R.string.details_profit),
+                                    modifier = Modifier.weight(0.4f),
+                                    style = categoryStyle
+                                )
+                                Text(
+                                    text = CurrencyFormatter.getUsdAmountInLocalCurrencyFormat(
+                                        amount = revenue-budget
+                                    ),
+                                    modifier = Modifier.weight(0.6f),
+                                    style = infoStyle
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                        //#endregion
+
+                        //#region IMDB
                         val imdbId = title.imdbId
                         if (imdbId != null) {
                             val context = LocalContext.current
@@ -176,8 +250,10 @@ fun ExtraDetailsSection(
                             }
                             Spacer(modifier = Modifier.height(8.dp))
                         }
+                        //#endregion
                     }
                     is TV -> {
+                        //#region EPISODE COUNT
                         Row(modifier = modifier.fillMaxWidth()) {
                             Text(
                                 text = stringResource(id = R.string.details_number_of_episodes),
@@ -194,6 +270,7 @@ fun ExtraDetailsSection(
                                 style = infoStyle
                             )
                         }
+                        //#endregion
                     }
                 }
             }

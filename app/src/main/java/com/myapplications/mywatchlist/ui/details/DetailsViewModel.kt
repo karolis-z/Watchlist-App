@@ -8,6 +8,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import com.myapplications.mywatchlist.core.util.Constants
 import com.myapplications.mywatchlist.core.util.MyYoutubeLinkExtractor
+import com.myapplications.mywatchlist.core.util.capitalizedFirstLetter
 import com.myapplications.mywatchlist.data.ApiGetDetailsException
 import com.myapplications.mywatchlist.domain.entities.*
 import com.myapplications.mywatchlist.domain.repositories.TitlesManager
@@ -17,6 +18,7 @@ import com.myapplications.mywatchlist.ui.entities.VideoItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.util.*
 import javax.inject.Inject
 
 
@@ -217,6 +219,36 @@ class DetailsViewModel @Inject constructor(
         val hours = runtime / 60
         val minutes = runtime - (hours * 60)
         return Pair(hours, minutes)
+    }
+
+    /**
+     * Get a prepared spoken languages string that can be shown on screen from
+     * [Title.spokenLanguages]
+     */
+    fun getSpokenLanguagesString(): String? {
+        var languagesString = ""
+        if (uiState.value !is DetailsUiState.Ready) {
+            return null
+        } else {
+            val languages = (uiState.value as DetailsUiState.Ready).title.spokenLanguages
+            languages?.let { spokenLanguages ->
+                spokenLanguages.forEach { langCode ->
+                    try {
+                        languagesString +=
+                            Locale(langCode).displayLanguage.capitalizedFirstLetter() + ", "
+                        Log.d(TAG, "getSpokenLanguagesString: languagesString = $languagesString")
+                    } catch (e: Exception) {
+                        /* Nothing to do, just skip */
+                    }
+                }
+                languagesString = languagesString.dropLast(2) // Dropping last space and comma
+            }
+            return if (languagesString == "") {
+                null
+            } else {
+                languagesString
+            }
+        }
     }
 
     /**
