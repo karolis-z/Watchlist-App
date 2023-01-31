@@ -784,7 +784,7 @@ fun RecommendedOrSimilarSection(
             }
         }
     }
-    TitleItemsMinimalLazyRow(
+    TitleItemsLazyRow(
         titleItemsMinimal = titleItemsMinimal,
         placeholderPoster = placeholderPoster,
         onTitleClicked = onTitleClicked

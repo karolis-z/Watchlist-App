@@ -34,7 +34,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.myapplications.mywatchlist.R
-import com.myapplications.mywatchlist.domain.entities.TitleItem
+import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 import com.myapplications.mywatchlist.ui.components.ErrorText
 import com.myapplications.mywatchlist.ui.components.LoadingCircle
 import com.myapplications.mywatchlist.ui.components.TitleItemsList
@@ -46,7 +46,7 @@ private const val TAG = "SEARCH_SCREEN"
 @Composable
 fun DiscoverScreen(
     placeholderImage: Painter,
-    onTitleClicked: (TitleItem) -> Unit,
+    onTitleClicked: (TitleItemFull) -> Unit,
     modifier: Modifier
 ) {
     val viewModel = hiltViewModel<DiscoverViewModel>()
@@ -67,7 +67,7 @@ fun DiscoverScreen(
 
             val isLoading = uiState.value.isLoading
             val isError = uiState.value.error != null
-            val isTitlesAvailable = !uiState.value.titleItems.isNullOrEmpty()
+            val isTitlesAvailable = !uiState.value.titleItemsFull.isNullOrEmpty()
             val isNewSearch = !uiState.value.isSearchFinished && !uiState.value.isLoading
 
             SearchTextField(
@@ -147,10 +147,10 @@ fun DiscoverScreen(
                 enter = fadeIn(),
                 exit = fadeOut()
             ) {
-                val titleItems = uiState.value.titleItems
+                val titleItems = uiState.value.titleItemsFull
                 if (titleItems != null) {
                     TitleItemsList(
-                        titleItems = titleItems,
+                        titleItemsFull = titleItems,
                         placeholderImage = placeholderImage,
                         onWatchlistClicked = { viewModel.onWatchlistClicked(it) },
                         onTitleClicked = { onTitleClicked(it) },

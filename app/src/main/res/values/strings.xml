@@ -21,8 +21,9 @@
     <string name="search_nothing_found">Oops… No titles found</string>
     <string name="search_searchfield_label">Search for titles…</string>
 
-    <!-- TRENDING SCREEN -->
-    <string name="trending_nothing_trending">Nothing trending in this category…</string>
+    <!-- HOME SCREEN -->
+    <string name="home_no_data">No data available…</string>
+    <string name="home_trending_label">Trending</string>
 
     <!-- DETAILS SCREEN -->
     <string name="details_summary_label">Summary</string>
@@ -84,6 +85,7 @@
 
     <!-- GENERAL BUTTON LABELS -->
     <string name="button_retry">Retry</string>
+    <string name="button_see_all">See all</string>
 
     <!-- FILTER LABELS -->
     <string name="filter_all">All</string>
@@ -103,5 +105,6 @@
     <string name="cd_selected_filter_chip">Selected filter is %s</string>
     <string name="cd_recommended_help_text">This list shows recommended titles for currently viewed title.</string>
     <string name="cd_similar_help_text">This list shows similar titles for currently viewed title.</string>
+    <string name="cd_see_all">See all</string>
 
 </resources>

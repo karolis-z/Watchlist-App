@@ -6,8 +6,7 @@ import androidx.work.*
 import com.myapplications.mywatchlist.core.util.Constants.PERIODIC_WORK_REQUEST_UPDATE_CONFIGURATION
 import com.myapplications.mywatchlist.core.workmanager.UpdateConfigurationInfoWorker
 import com.myapplications.mywatchlist.data.ApiGetGenresExceptions
-import com.myapplications.mywatchlist.data.datastore.UserPrefsRepository
-import com.myapplications.mywatchlist.domain.entities.TitleItem
+import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 import com.myapplications.mywatchlist.domain.entities.TitleType
 import com.myapplications.mywatchlist.domain.repositories.GenresRepository
 import com.myapplications.mywatchlist.domain.repositories.TitlesManager
@@ -41,7 +40,7 @@ class WatchlistViewModel @Inject constructor(
             }
             if (filteredList.isEmpty()) {
                 WatchlistUiState(
-                    titleItems = null,
+                    titleItemsFull = null,
                     isLoading = false,
                     isNoData = true,
                     filter = titleFilter,
@@ -49,7 +48,7 @@ class WatchlistViewModel @Inject constructor(
                 )
             } else {
                 WatchlistUiState(
-                    titleItems = filteredList,
+                    titleItemsFull = filteredList,
                     isLoading = false,
                     isNoData = false,
                     filter = titleFilter,
@@ -58,7 +57,7 @@ class WatchlistViewModel @Inject constructor(
             }
         } else {
             WatchlistUiState(
-                titleItems = null,
+                titleItemsFull = null,
                 isLoading = false,
                 isNoData = true,
                 filter = titleFilter,
@@ -97,9 +96,9 @@ class WatchlistViewModel @Inject constructor(
     }
 
     /**
-     * Bookmarks or unbookmarks the chosen [TitleItem]
+     * Bookmarks or unbookmarks the chosen [TitleItemFull]
      */
-    fun onWatchlistClicked(title: TitleItem) {
+    fun onWatchlistClicked(title: TitleItemFull) {
         viewModelScope.launch {
             if (title.isWatchlisted){
                 titlesManager.unBookmarkTitleItem(title)

@@ -1,13 +1,13 @@
 package com.myapplications.mywatchlist.data.mappers
 
 import com.myapplications.mywatchlist.data.entities.TitleItemWithGenres
-import com.myapplications.mywatchlist.domain.entities.TitleItem
+import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 
 /**
- * Converts a [TitleItemWithGenres] to a [TitleItem]
+ * Converts a [TitleItemWithGenres] to a [TitleItemFull]
  */
-fun TitleItemWithGenres.toTitleItem(): TitleItem {
-    return TitleItem(
+fun TitleItemWithGenres.toTitleItem(): TitleItemFull {
+    return TitleItemFull(
         id = this.titleItem.id,
         name = this.titleItem.name,
         type = this.titleItem.type,
@@ -23,8 +23,8 @@ fun TitleItemWithGenres.toTitleItem(): TitleItem {
 }
 
 /**
- * Converts a list of [TitleItemWithGenres] to a list of [TitleItem]
+ * Converts a list of [TitleItemWithGenres] to a list of [TitleItemFull]
  */
-fun List<TitleItemWithGenres>.toTitleItems(): List<TitleItem> {
+fun List<TitleItemWithGenres>.toTitleItems(): List<TitleItemFull> {
     return this.map { it.toTitleItem() }
 }

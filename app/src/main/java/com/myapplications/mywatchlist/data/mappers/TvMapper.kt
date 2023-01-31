@@ -6,7 +6,7 @@ import com.myapplications.mywatchlist.data.entities.TvEntity
 import com.myapplications.mywatchlist.data.entities.TvEntityFull
 import com.myapplications.mywatchlist.domain.entities.Genre
 import com.myapplications.mywatchlist.domain.entities.TV
-import com.myapplications.mywatchlist.domain.entities.TitleItem
+import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 import com.myapplications.mywatchlist.domain.entities.TitleType
 
 /**
@@ -56,10 +56,10 @@ fun List<TvApiModel>.toTvList(
 }
 
 /**
- * Converts a [TV] to a [TitleItem]
+ * Converts a [TV] to a [TitleItemFull]
  */
-fun TV.toTitleItem(): TitleItem {
-    return TitleItem(
+fun TV.toTitleItem(): TitleItemFull {
+    return TitleItemFull(
         id = 0,
         name = this.name,
         type = TitleType.TV,

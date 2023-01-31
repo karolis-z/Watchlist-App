@@ -154,7 +154,7 @@ class MainActivity : ComponentActivity() {
                             exitTransition = { ExitTransition.None }
                         ) {
                             HomeScreen(
-                                placeholderImage = placeholderPoster,
+                                placeholderPoster = placeholderPoster,
                                 onTitleClicked = { title ->
                                     navController.navigate(
                                         route = OtherScreens.Details.route + "/${title.mediaId}&${title.type.name}"

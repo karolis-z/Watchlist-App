@@ -4,18 +4,18 @@ import com.myapplications.mywatchlist.data.datastore.ApiConfiguration
 import com.myapplications.mywatchlist.data.entities.TitleItemApiModel
 import com.myapplications.mywatchlist.data.entities.TitleItemEntity
 import com.myapplications.mywatchlist.domain.entities.Genre
-import com.myapplications.mywatchlist.domain.entities.TitleItem
+import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 
 /**
- * Converts a [TitleItemApiModel] to [TitleItem]
+ * Converts a [TitleItemApiModel] to [TitleItemFull]
  * @param allGenres a list of [Genre] from the database to map the genre ids received from api.
  */
 fun TitleItemApiModel.toTitleItem(
     allGenres: List<Genre>,
     apiConfiguration: ApiConfiguration
-): TitleItem {
+): TitleItemFull {
     val setOfGenreIds = this.genres.map { it.toLong() }.toSet()
-    return TitleItem(
+    return TitleItemFull(
         id = this.id,
         name = this.name,
         type = this.type.toTitleType(),
@@ -32,20 +32,20 @@ fun TitleItemApiModel.toTitleItem(
 }
 
 /**
- * Converts a list of [TitleItemApiModel] to a list of [TitleItem]
+ * Converts a list of [TitleItemApiModel] to a list of [TitleItemFull]
  * @param allGenres a list of [Genre] from the database to map the genre ids received from api.
  */
 fun List<TitleItemApiModel>.toTitleItems(
     allGenres: List<Genre>,
     apiConfiguration: ApiConfiguration
-): List<TitleItem> {
+): List<TitleItemFull> {
     return this.map { it.toTitleItem(allGenres, apiConfiguration) }
 }
 
 /**
- * Converts [TitleItem] to [TitleItemEntity]
+ * Converts [TitleItemFull] to [TitleItemEntity]
  */
-fun TitleItem.toTitleItemEntity(): TitleItemEntity {
+fun TitleItemFull.toTitleItemEntity(): TitleItemEntity {
     return TitleItemEntity(
         name = this.name,
         type = this.type,

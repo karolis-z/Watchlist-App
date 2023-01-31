@@ -16,7 +16,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.myapplications.mywatchlist.R
-import com.myapplications.mywatchlist.domain.entities.TitleItem
+import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 import com.myapplications.mywatchlist.ui.components.FilterChipGroup
 import com.myapplications.mywatchlist.ui.components.LoadingCircle
 import com.myapplications.mywatchlist.ui.components.TitleItemsList
@@ -24,7 +24,7 @@ import com.myapplications.mywatchlist.ui.components.TitleItemsList
 @Composable
 fun WatchlistScreen(
     placeholderImage: Painter,
-    onTitleClicked: (TitleItem) -> Unit,
+    onTitleClicked: (TitleItemFull) -> Unit,
     onShowSnackbar: (String) -> Unit,
     modifier: Modifier
 ) {
@@ -34,7 +34,7 @@ fun WatchlistScreen(
 
     val isLoading = uiState.value.isLoading
     val isNoData = uiState.value.isNoData
-    val isTitlesAvailable = !uiState.value.titleItems.isNullOrEmpty()
+    val isTitlesAvailable = !uiState.value.titleItemsFull.isNullOrEmpty()
     val showSnackbar = uiState.value.showSnackbar
 
     if (showSnackbar != null) {
@@ -89,11 +89,11 @@ fun WatchlistScreen(
             enter = fadeIn(),
             exit = fadeOut()
         ) {
-            val titleItems = uiState.value.titleItems
+            val titleItems = uiState.value.titleItemsFull
             if (titleItems != null) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     TitleItemsList(
-                        titleItems = titleItems,
+                        titleItemsFull = titleItems,
                         placeholderImage = placeholderImage,
                         onWatchlistClicked = { viewModel.onWatchlistClicked(it) },
                         onTitleClicked = { onTitleClicked(it) },

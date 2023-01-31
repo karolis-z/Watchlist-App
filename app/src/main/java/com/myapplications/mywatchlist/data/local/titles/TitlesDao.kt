@@ -6,7 +6,7 @@ import com.myapplications.mywatchlist.data.entities.TitleItemEntity
 import com.myapplications.mywatchlist.data.entities.TitleItemWithGenres
 import com.myapplications.mywatchlist.data.mappers.toListOfGenreForTitleEntity
 import com.myapplications.mywatchlist.data.mappers.toTitleItemEntity
-import com.myapplications.mywatchlist.domain.entities.TitleItem
+import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 import com.myapplications.mywatchlist.domain.entities.TitleType
 import kotlinx.coroutines.flow.Flow
 
@@ -40,34 +40,34 @@ interface TitlesDao {
     suspend fun deleteTitleItemEntity(titleItemEntity: TitleItemEntity)
 
     @Transaction
-    suspend fun insertTitleItem(titleItem: TitleItem) {
-        val titleItemId = insertTitleItemEntity(titleItemEntity = titleItem.toTitleItemEntity())
+    suspend fun insertTitleItem(titleItemFull: TitleItemFull) {
+        val titleItemId = insertTitleItemEntity(titleItemEntity = titleItemFull.toTitleItemEntity())
         if (titleItemId >= 0) {
-            val genresToInsert = titleItem.genres.toListOfGenreForTitleEntity(titleId = titleItemId)
+            val genresToInsert = titleItemFull.genres.toListOfGenreForTitleEntity(titleId = titleItemId)
             insertGenresForTitleEntity(genres = genresToInsert)
         }
     }
 
     @Transaction
-    suspend fun updateTitleItem(titleItem: TitleItem) {
+    suspend fun updateTitleItem(titleItemFull: TitleItemFull) {
         /* Updating is trickier that due to relation between TitleItemEntity and GenreForTitleEntity,
         * so it's simpler to just delete and insert new data. Deleting TitleItemEntity will also
         * delete GenreForTitleEntity because of onDelete = CASCADE policy set on GenreForTitleEntity. */
         val titleItemEntity = getTitleItemEntityByTypeAndMediaId(
-            type = titleItem.type,
-            mediaId = titleItem.mediaId
+            type = titleItemFull.type,
+            mediaId = titleItemFull.mediaId
         )
         deleteTitleItemEntity(titleItemEntity)
 
         // Inserting new TitleItemEntity and GenreForTitleEntity
-        insertTitleItem(titleItem)
+        insertTitleItem(titleItemFull)
     }
 
     @Transaction
-    suspend fun deleteTitleItem(titleItem: TitleItem) {
+    suspend fun deleteTitleItem(titleItemFull: TitleItemFull) {
         val titleItemEntity = getTitleItemEntityByTypeAndMediaId(
-            type = titleItem.type,
-            mediaId = titleItem.mediaId
+            type = titleItemFull.type,
+            mediaId = titleItemFull.mediaId
         )
         deleteTitleItemEntity(titleItemEntity)
     }
