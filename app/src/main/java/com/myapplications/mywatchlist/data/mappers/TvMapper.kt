@@ -35,6 +35,7 @@ fun TvApiModel.toTv(allGenres: List<Genre>, apiConfiguration: ApiConfiguration):
         lastAirDate = this.lastAirDate,
         numberOfSeasons = this.numberOfSeasons,
         numberOfEpisodes = this.numberOfEpisodes,
+        spokenLanguages = this.spokenLanguages,
         voteCount = this.voteCount,
         voteAverage = this.voteAverage,
         isWatchlisted = false, // Api model does not have this information and assumes False
@@ -89,6 +90,7 @@ fun TV.toTvEntity(): TvEntity {
         lastAirDate = this.lastAirDate,
         numberOfSeasons = this.numberOfSeasons,
         numberOfEpisodes = this.numberOfEpisodes,
+        spokenLanguages = this.spokenLanguages,
         voteCount = this.voteCount,
         voteAverage = this.voteAverage,
         isWatchlisted = this.isWatchlisted
@@ -114,6 +116,7 @@ fun TvEntityFull.toTv(): TV {
         lastAirDate = this.tv.lastAirDate,
         numberOfSeasons = this.tv.numberOfSeasons,
         numberOfEpisodes = this.tv.numberOfEpisodes,
+        spokenLanguages = this.tv.spokenLanguages,
         voteCount = this.tv.voteCount,
         voteAverage = this.tv.voteAverage,
         isWatchlisted = this.tv.isWatchlisted,

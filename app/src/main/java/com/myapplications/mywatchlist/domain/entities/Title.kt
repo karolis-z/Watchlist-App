@@ -13,6 +13,7 @@ interface Title {
     val cast: List<CastMember>?
     val videos: List<YtVideo>?
     val releaseDate: LocalDate?
+    val spokenLanguages: List<String>?
     val voteCount: Long
     val voteAverage: Double
     val isWatchlisted: Boolean

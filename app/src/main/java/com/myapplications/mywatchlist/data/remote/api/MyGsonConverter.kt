@@ -114,7 +114,9 @@ object MyGsonConverter {
                         videos = getYoutubeVideoLinks(mJson),
                         status = getMovieStatus(mJson.get("status").asString),
                         releaseDate = getReleaseDate(mJson),
-                        revenue = mJson.get("revenue").asLong,
+                        revenue = getNullableLongProperty(mJson, "revenue"),
+                        budget = getNullableLongProperty(mJson, "budget"),
+                        spokenLanguages = getSpokenLanguages(mJson),
                         runtime = getNullableIntProperty(mJson, "runtime"),
                         voteCount = mJson.get("vote_count").asLong,
                         voteAverage = mJson.get("vote_average").asDouble,
@@ -188,6 +190,7 @@ object MyGsonConverter {
                         lastAirDate = getLastAirDate(mJson),
                         numberOfSeasons = mJson.get("number_of_seasons").asInt,
                         numberOfEpisodes = mJson.get("number_of_episodes").asInt,
+                        spokenLanguages = getSpokenLanguages(mJson),
                         voteCount = mJson.get("vote_count").asLong,
                         voteAverage = mJson.get("vote_average").asDouble,
                         recommendations = if (recommendations?.titleItems.isNullOrEmpty()) {
@@ -459,12 +462,58 @@ object MyGsonConverter {
             propertyName: String
         ): Int? {
             val jsonObject = resultJsonObject.get(propertyName)
+            Log.d(TAG, "getNullableIntProperty. JsonObject did not have a property " +
+                    "$propertyName and returned null. Json Object: $resultJsonObject")
+            return if (jsonObject.isJsonNull) {
+                null
+            } else {
+                jsonObject.asInt
+            }
+        }
+
+        /**
+         * Returns an [Long] value from provided [resultJsonObject]'s [propertyName]
+         * or null if not found.
+         */
+        private fun getNullableLongProperty(
+            resultJsonObject: JsonObject,
+            propertyName: String
+        ): Long? {
+            val jsonObject = resultJsonObject.get(propertyName)
             Log.d(TAG, "getNullableIntProperty. JsonObject: $resultJsonObject " +
                     "did not have a property $propertyName and returned null.")
             return if (jsonObject.isJsonNull) {
                 null
             } else {
-                jsonObject.asInt
+                jsonObject.asLong
+            }
+        }
+
+        /**
+         * Get spoken languages from provided [resultJsonObject]'s property "spoken_languages"
+         */
+        private fun getSpokenLanguages(resultJsonObject: JsonObject): List<String>? {
+            val langArray =  try {
+                resultJsonObject.get("spoken_languages").asJsonArray
+            } catch (e: Exception) {
+                val error = "Could get get spoken languages. Reason: $e. For json: $resultJsonObject"
+                Log.d(TAG, "getSpokenLanguages: $error", e)
+                null
+            }
+            if (langArray == null || langArray.isJsonNull) {
+                return null
+            }
+            val languages = mutableListOf<String>()
+            langArray.forEach { langObject ->
+                try {
+                    languages.add(langObject.asJsonObject.get("iso_639_1").asString)
+                } catch (e: Exception) {
+                    val error = "Could not get language code from object: $langObject"
+                    Log.d(TAG, "getSpokenLanguages: $error", e)
+                }
+            }
+            return languages.ifEmpty {
+                null
             }
         }
 

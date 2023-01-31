@@ -17,6 +17,7 @@ data class TV (
     val lastAirDate: LocalDate?,
     val numberOfSeasons: Int,
     val numberOfEpisodes: Int,
+    override val spokenLanguages: List<String>?,
     override val voteCount: Long,
     override val voteAverage: Double,
     override val isWatchlisted: Boolean,
