@@ -2,9 +2,9 @@
     <string name="app_name">My Watchlist</string>
     
     <!-- SCREEN TITLES -->
+    <string name="title_home">Home</string>
+    <string name="title_discover">Discover</string>
     <string name="title_watchlist">Watchlist</string>
-    <string name="title_search">Search</string>
-    <string name="title_trending">Trending</string>
     <string name="title_details">Details</string>
 
     <!-- TITLE LIST ITEM -->
@@ -91,9 +91,9 @@
     <string name="filter_tv">TV</string>
 
     <!-- CONTENT DESCRIPTIONS -->
+    <string name="cd_home_icon">Home</string>
+    <string name="cd_discover_icon">Discover</string>
     <string name="cd_watchlist_icon">Watchlist</string>
-    <string name="cd_search_icon">Search</string>
-    <string name="cd_trending_icon">Trending</string>
     <string name="cd_clear_field">Clear Field</string>
     <string name="cd_watchlist_button_watchlist">Put title in watchlist</string>
     <string name="cd_watchlist_button_watchlisted">Remove title from watchlist</string>

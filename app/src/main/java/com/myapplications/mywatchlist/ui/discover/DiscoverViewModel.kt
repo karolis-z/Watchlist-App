@@ -1,4 +1,4 @@
-package com.myapplications.mywatchlist.ui.search
+package com.myapplications.mywatchlist.ui.discover
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,14 +13,14 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-private const val TAG = "SEARCH_VIEWMODEL"
+private const val TAG = "DISCOVER_VIEWMODEL"
 
 @HiltViewModel
-class SearchViewModel @Inject constructor(
+class DiscoverViewModel @Inject constructor(
     private val titlesManager: TitlesManager
 ) : ViewModel() {
 
-    private val _uiState: MutableStateFlow<SearchUiState> = MutableStateFlow(SearchUiState())
+    private val _uiState: MutableStateFlow<DiscoverUiState> = MutableStateFlow(DiscoverUiState())
     val uiState = _uiState.asStateFlow()
 
     // Used to store the search string for when 'Retry' button is clicked
@@ -51,18 +51,18 @@ class SearchViewModel @Inject constructor(
                 }
                 is ResultOf.Failure -> {
                     val exception = response.throwable
-                    val error: SearchError =
+                    val error: DiscoverError =
                         if (exception is ApiGetTitleItemsExceptions) {
                             when (exception) {
                                 is ApiGetTitleItemsExceptions.FailedApiRequestException ->
-                                    SearchError.FAILED_API_REQUEST
+                                    DiscoverError.FAILED_API_REQUEST
                                 is ApiGetTitleItemsExceptions.NothingFoundException ->
-                                    SearchError.NOTHING_FOUND
+                                    DiscoverError.NOTHING_FOUND
                                 is ApiGetTitleItemsExceptions.NoConnectionException ->
-                                    SearchError.NO_INTERNET
+                                    DiscoverError.NO_INTERNET
                             }
                         } else {
-                            SearchError.FAILED_API_REQUEST
+                            DiscoverError.FAILED_API_REQUEST
                         }
                     _uiState.update {
                         it.copy(

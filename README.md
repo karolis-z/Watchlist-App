@@ -10,7 +10,7 @@ The app should always be launchable and working in the *main* branch, but this i
 - [x] Download Genres list from API only once per day. Implementation with DataStore Preferences. :heavy_check_mark: (2023.01.20) 
 - [x] Download images configuration periodically from Api using WorkManager. :heavy_check_mark: (2023.01.22) 
 - [ ] Structural Changes:
-	- [ ]	Change first Top destination to “Discover” and third to “Watchlist”
+	- [x]	Change first Top destination to “Home”, second to “Discover” and third to “Watchlist”. :heavy_check_mark: (2023.01.31)
 	- [ ]	Discover screen:
 		- [ ]	Add Trending TV + Movies
 		- [ ]	Add Upcoming Movies

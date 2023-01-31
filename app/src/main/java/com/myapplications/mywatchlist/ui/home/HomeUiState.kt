@@ -1,14 +1,14 @@
-package com.myapplications.mywatchlist.ui.trending
+package com.myapplications.mywatchlist.ui.home
 
 import com.myapplications.mywatchlist.domain.entities.TitleItem
 
-data class TrendingUiState(
+data class HomeUiState(
     val titleItems: List<TitleItem>? = null,
     val isLoading: Boolean = false,
-    val error: TrendingError? = null
+    val error: HomeError? = null
 )
 
-enum class TrendingError {
+enum class HomeError {
     NO_INTERNET,
     FAILED_API_REQUEST,
     NO_TITLES

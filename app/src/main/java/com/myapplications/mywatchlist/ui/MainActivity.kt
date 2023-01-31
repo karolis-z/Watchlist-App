@@ -10,8 +10,10 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmarks
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material.icons.outlined.Bookmarks
+import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -31,9 +33,9 @@ import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.myapplications.mywatchlist.R
 import com.myapplications.mywatchlist.ui.details.DetailsScreen
-import com.myapplications.mywatchlist.ui.search.SearchScreen
+import com.myapplications.mywatchlist.ui.discover.DiscoverScreen
+import com.myapplications.mywatchlist.ui.home.HomeScreen
 import com.myapplications.mywatchlist.ui.theme.MyWatchlistTheme
-import com.myapplications.mywatchlist.ui.trending.TrendingScreen
 import com.myapplications.mywatchlist.ui.watchlist.WatchlistScreen
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -46,8 +48,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val topLevelScreens = listOf(TopLevelScreens.Watchlist, TopLevelScreens.Search, TopLevelScreens.Trending)
-        val allTopLevelScreens = listOf(TopLevelScreens.Watchlist, TopLevelScreens.Search, TopLevelScreens.Trending)
+        val topLevelScreens = listOf(TopLevelScreens.Home, TopLevelScreens.Discover, TopLevelScreens.Watchlist)
+        val allTopLevelScreens = listOf(TopLevelScreens.Home, TopLevelScreens.Discover, TopLevelScreens.Watchlist)
 
         setContent {
 
@@ -107,10 +109,20 @@ class MainActivity : ComponentActivity() {
                             for (screen in topLevelScreens) {
                                 NavigationBarItem(
                                     icon = {
-                                        Icon(
-                                            imageVector = screen.icon,
-                                            contentDescription = stringResource(id = screen.contentDescResId)
-                                        )
+                                        Crossfade(targetState = currentDestination) {
+                                            when (it?.route) {
+                                                screen.route -> Icon(
+                                                    imageVector = screen.selectedIcon,
+                                                    contentDescription =
+                                                        stringResource(id = screen.contentDescResId)
+                                                )
+                                                else -> Icon(
+                                                    imageVector = screen.unselectedIcon,
+                                                    contentDescription =
+                                                        stringResource(id = screen.contentDescResId)
+                                                )
+                                            }
+                                        }
                                     },
                                     label = { Text(text = stringResource(id = screen.titleResId)) },
                                     selected = currentDestination?.hierarchy?.any {
@@ -129,13 +141,41 @@ class MainActivity : ComponentActivity() {
                     }) { paddingValues ->
                     AnimatedNavHost(
                         navController = navController,
-                        startDestination = TopLevelScreens.Watchlist.route,
+                        startDestination = TopLevelScreens.Home.route,
                         /* NOT adding the Scaffold provided padding values here because we want to
                         * individually adjust for insets in each screen, because in Details screen
                         * we show the backdrop image under the status bar. Appropriate padding
                         * values must be passed on to each screen and used however needed. */
                         modifier = Modifier
                     ) {
+                        composable(
+                            route = TopLevelScreens.Home.route,
+                            enterTransition = { EnterTransition.None },
+                            exitTransition = { ExitTransition.None }
+                        ) {
+                            HomeScreen(
+                                placeholderImage = placeholderPoster,
+                                onTitleClicked = { title ->
+                                    navController.navigate(
+                                        route = OtherScreens.Details.route + "/${title.mediaId}&${title.type.name}"
+                                    )
+                                },
+                                modifier = Modifier.padding(paddingValues)
+                            )
+                        }
+                        composable(
+                            route = TopLevelScreens.Discover.route,
+                            enterTransition = { EnterTransition.None },
+                            exitTransition = { ExitTransition.None }
+                        ) {
+                            DiscoverScreen(
+                                placeholderImage = placeholderPoster,
+                                onTitleClicked = { title ->
+                                    navController.navigate(route = OtherScreens.Details.route + "/${title.mediaId}&${title.type.name}")
+                                },
+                                modifier = Modifier.padding(paddingValues)
+                            )
+                        }
                         composable(
                             route = TopLevelScreens.Watchlist.route,
                             enterTransition = { EnterTransition.None },
@@ -148,34 +188,6 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onShowSnackbar = {
                                     scope.launch { snackbarHostState.showSnackbar(it) }
-                                },
-                                modifier = Modifier.padding(paddingValues)
-                            )
-                        }
-                        composable(
-                            route = TopLevelScreens.Search.route,
-                            enterTransition = { EnterTransition.None },
-                            exitTransition = { ExitTransition.None }
-                        ) {
-                            SearchScreen(
-                                placeholderImage = placeholderPoster,
-                                onTitleClicked = { title ->
-                                    navController.navigate(route = OtherScreens.Details.route + "/${title.mediaId}&${title.type.name}")
-                                },
-                                modifier = Modifier.padding(paddingValues)
-                            )
-                        }
-                        composable(
-                            route = TopLevelScreens.Trending.route,
-                            enterTransition = { EnterTransition.None },
-                            exitTransition = { ExitTransition.None }
-                        ) {
-                            TrendingScreen(
-                                placeholderImage = placeholderPoster,
-                                onTitleClicked = { title ->
-                                    navController.navigate(
-                                        route = OtherScreens.Details.route + "/${title.mediaId}&${title.type.name}"
-                                    )
                                 },
                                 modifier = Modifier.padding(paddingValues)
                             )
@@ -237,28 +249,32 @@ fun MyTopAppBar(
 sealed class TopLevelScreens(
     val route: String,
     @StringRes val titleResId: Int,
-    val icon: ImageVector,
+    val unselectedIcon: ImageVector,
+    val selectedIcon: ImageVector,
     @StringRes val contentDescResId: Int
 ) {
+    object Home : TopLevelScreens(
+        route = "home",
+        titleResId = R.string.title_home,
+        unselectedIcon = Icons.Outlined.Home,
+        selectedIcon = Icons.Filled.Home,
+        contentDescResId = R.string.cd_home_icon
+    )
+
+    object Discover : TopLevelScreens(
+        route = "discover",
+        titleResId = R.string.title_discover,
+        unselectedIcon = Icons.Filled.Search,
+        selectedIcon = Icons.Filled.Search,
+        contentDescResId = R.string.cd_discover_icon
+    )
+
     object Watchlist : TopLevelScreens(
         route = "watchlist",
         titleResId = R.string.title_watchlist,
-        icon = Icons.Filled.Bookmarks,
+        unselectedIcon = Icons.Outlined.Bookmarks,
+        selectedIcon = Icons.Filled.Bookmarks,
         contentDescResId = R.string.cd_watchlist_icon
-    )
-
-    object Search : TopLevelScreens(
-        route = "search",
-        titleResId = R.string.title_search,
-        icon = Icons.Filled.Search,
-        contentDescResId = R.string.cd_search_icon
-    )
-
-    object Trending : TopLevelScreens(
-        route = "trending",
-        titleResId = R.string.title_trending,
-        icon = Icons.Filled.TrendingUp,
-        contentDescResId = R.string.cd_trending_icon
     )
 }
 
