@@ -26,7 +26,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -58,14 +57,12 @@ import com.myapplications.mywatchlist.R
 import com.myapplications.mywatchlist.core.util.Constants
 import com.myapplications.mywatchlist.core.util.DateFormatter
 import com.myapplications.mywatchlist.domain.entities.*
-import com.myapplications.mywatchlist.ui.components.AnimatedWatchlistButton
-import com.myapplications.mywatchlist.ui.components.ErrorText
-import com.myapplications.mywatchlist.ui.components.GenreChip
-import com.myapplications.mywatchlist.ui.components.LoadingCircle
+import com.myapplications.mywatchlist.ui.components.*
 import com.myapplications.mywatchlist.ui.details.toolbarstate.ExitUntilCollapsedState
 import com.myapplications.mywatchlist.ui.details.toolbarstate.ToolbarState
 import com.myapplications.mywatchlist.ui.theme.IMDBOrange
 import com.skydoves.balloon.ArrowPositionRules
+import com.skydoves.balloon.Balloon
 import com.skydoves.balloon.BalloonAnimation
 import com.skydoves.balloon.BalloonSizeSpec
 import com.skydoves.balloon.compose.Balloon
@@ -647,93 +644,32 @@ fun DetailsScreenContent(
 
             //#region SIMILAR
             if (title.similar != null) {
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    SectionHeadline(
-                        label = stringResource(id = R.string.details_similar_label),
-                        modifier = Modifier.align(Alignment.CenterStart)
-                    )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Balloon(
-                        builder = balloonBuilder,
-                        balloonContent = {
-                            Text(
-                                text = stringResource(id = R.string.details_similar_help),
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        },
-                        modifier = Modifier.align(Alignment.CenterEnd)
-                    ) { balloonWindow ->
-                        IconButton(onClick = { balloonWindow.showAlignTop() }) {
-                            Icon(
-                                imageVector = Icons.Outlined.HelpOutline,
-                                contentDescription = stringResource(id = R.string.cd_similar_help_text),
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .alpha(0.66f),
-                            )
-                        }
-                    }
-                }
-
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                    items(
-                        /* Non-null assertion because we check for null before */
-                        key = { titleItemMinimal -> titleItemMinimal.mediaId },
-                        items = title.similar!!
-                    ) { titleItemMinimal: TitleItemMinimal ->
-                        TitleMinimalCard(
-                            titleItemMinimal = titleItemMinimal,
-                            placeholderPoster = placeholderPoster,
-                            onTitleClicked = onSimilarOrRecommendedTitleClicked
-                        )
-                    }
-                }
+                RecommendedOrSimilarSection(
+                    /* Non-null assertion because we already checked for null above */
+                    titleItemsMinimal = title.similar!!,
+                    placeholderPoster = placeholderPoster,
+                    onTitleClicked = onSimilarOrRecommendedTitleClicked,
+                    sectionLabel = stringResource(id = R.string.details_similar_label),
+                    balloonBuilder = balloonBuilder,
+                    tooltipText = stringResource(id = R.string.details_similar_help),
+                    helpButtonContentDescription = stringResource(id = R.string.cd_similar_help_text)
+                )
             }
             Spacer(modifier = Modifier.height(12.dp))
             //#endregion
 
             //#region RECOMMENDATIONS
             if (title.recommendations != null) {
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    SectionHeadline(
-                        label = stringResource(id = R.string.details_recommended_label),
-                        modifier = Modifier.align(Alignment.CenterStart)
-                    )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Balloon(
-                        builder = balloonBuilder,
-                        balloonContent = {
-                            Text(
-                                text = stringResource(id = R.string.details_recommended_help),
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        },
-                        modifier = Modifier.align(Alignment.CenterEnd)
-                    ) { balloonWindow ->
-                        IconButton(onClick = { balloonWindow.showAlignTop() }) {
-                            Icon(
-                                imageVector = Icons.Outlined.HelpOutline,
-                                contentDescription = stringResource(id = R.string.cd_recommended_help_text),
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .alpha(0.66f),
-                            )
-                        }
-                    }
-                }
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                    items(
-                        key = { titleItemMinimal -> titleItemMinimal.mediaId },
-                        /* Non-null assertion because we check for null before */
-                        items = title.recommendations!!
-                    ) { titleItemMinimal: TitleItemMinimal ->
-                        TitleMinimalCard(
-                            titleItemMinimal = titleItemMinimal,
-                            placeholderPoster = placeholderPoster,
-                            onTitleClicked = onSimilarOrRecommendedTitleClicked
-                        )
-                    }
-                }
+                RecommendedOrSimilarSection(
+                    /* Non-null assertion because we already checked for null above */
+                    titleItemsMinimal = title.recommendations!!,
+                    placeholderPoster = placeholderPoster,
+                    onTitleClicked = onSimilarOrRecommendedTitleClicked,
+                    sectionLabel = stringResource(id = R.string.details_recommended_label),
+                    balloonBuilder = balloonBuilder,
+                    tooltipText = stringResource(id = R.string.details_recommended_help),
+                    helpButtonContentDescription = stringResource(id = R.string.cd_recommended_help_text)
+                )
             }
             Spacer(modifier = Modifier.height(12.dp))
             //#endregion
@@ -807,126 +743,48 @@ fun DetailsInfoRow(
 }
 
 @Composable
-fun CastMemberCard(
-    castMember: CastMember,
-    placeHolderPortrait: Painter,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier
-            .size(width = 150.dp, height = 290.dp)
-            .padding(bottom = 5.dp),
-        shape = MaterialTheme.shapes.medium
-    ) {
-        AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(castMember.pictureLink)
-                .crossfade(true)
-                .build(),
-            placeholder = placeHolderPortrait,
-            fallback = placeHolderPortrait,
-            error = placeHolderPortrait,
-            contentDescription = null, //Decorative
-            contentScale = ContentScale.Crop,
-            alignment = Alignment.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(225.dp)
-        )
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
-            Text(
-                text = castMember.name,
-                style = MaterialTheme.typography.labelLarge,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(horizontal = 5.dp)
-            )
-            Spacer(modifier = Modifier.height(5.dp))
-            Text(
-                text = castMember.character,
-                style = MaterialTheme.typography.labelMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(horizontal = 5.dp)
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TitleMinimalCard(
-    titleItemMinimal: TitleItemMinimal,
+fun RecommendedOrSimilarSection(
+    titleItemsMinimal: List<TitleItemMinimal>,
     placeholderPoster: Painter,
     onTitleClicked: (TitleItemMinimal) -> Unit,
+    sectionLabel: String,
+    balloonBuilder: Balloon.Builder,
+    tooltipText: String,
+    helpButtonContentDescription: String,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier
-            .size(width = 150.dp, height = 300.dp)
-            .padding(bottom = 5.dp),
-        shape = MaterialTheme.shapes.medium,
-        onClick = { onTitleClicked(titleItemMinimal) }
-    ) {
-        AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(titleItemMinimal.posterLink)
-                .crossfade(true)
-                .build(),
-            placeholder = placeholderPoster,
-            fallback = placeholderPoster,
-            error = placeholderPoster,
-            contentDescription = null, //Decorative
-            contentScale = ContentScale.Crop,
-            alignment = Alignment.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(225.dp)
+    Box(modifier = modifier.fillMaxWidth()) {
+        SectionHeadline(
+            label = sectionLabel,
+            modifier = Modifier.align(Alignment.CenterStart)
         )
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(top = 3.dp, bottom = 3.dp),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = titleItemMinimal.name,
-                style = MaterialTheme.typography.labelLarge,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(horizontal = 5.dp)
-            )
-            Row(
-                modifier = Modifier.padding(horizontal = 5.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (titleItemMinimal.releaseDate != null) {
-                    Text(
-                        text = titleItemMinimal.releaseDate.year.toString(),
-                        style = MaterialTheme.typography.labelMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
-                    )
-                } else {
-                    Spacer(modifier = Modifier.weight(1f))
-                }
-                Icon(
-                    imageVector = Icons.Filled.Star,
-                    contentDescription = null,
-                    tint = IMDBOrange,
-                    modifier = Modifier
-                        .scale(0.8f)
-                        .padding(top = 2.dp)
-                )
+        Spacer(modifier = Modifier.width(10.dp))
+        Balloon(
+            builder = balloonBuilder,
+            balloonContent = {
                 Text(
-                    text = "%.1f".format(titleItemMinimal.voteAverage),
-                    style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier.padding(start = 2.dp)
+                    text = tooltipText,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            },
+            modifier = Modifier.align(Alignment.CenterEnd)
+        ) { balloonWindow ->
+            IconButton(onClick = { balloonWindow.showAlignTop() }) {
+                Icon(
+                    imageVector = Icons.Outlined.HelpOutline,
+                    contentDescription = helpButtonContentDescription,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .alpha(0.66f),
                 )
             }
         }
     }
+    TitleItemsMinimalLazyRow(
+        titleItemsMinimal = titleItemsMinimal,
+        placeholderPoster = placeholderPoster,
+        onTitleClicked = onTitleClicked
+    )
 }
 
 @Composable
@@ -937,7 +795,6 @@ fun SectionHeadline(label: String, modifier: Modifier = Modifier, bottomPadding:
         modifier = modifier.padding(bottom = bottomPadding)
     )
 }
-
 
 @Preview
 @Composable

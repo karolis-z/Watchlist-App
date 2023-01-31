@@ -25,8 +25,8 @@ The app should always be launchable and working in the *main* branch, but this i
 		- [ ]	Prepare screen for viewing full any type of list. 
 	- [ ]	Details Screen:
 		- [x] 	Add Videos section. :heavy_check_mark: (2023.01.27) 
-		- [ ]	Add Recommended Movies section
-		- [ ]	Add Similar Movies section
+		- [x]	Add Recommended Movies section. :heavy_check_mark: (2023.01.31)
+		- [x]	Add Similar Movies section. :heavy_check_mark: (2023.01.31)
 		- [ ]	Add Reviews section
 		- [ ] 	Add more Extra Details: budget, profit, languages. 
 - [ ] Adapt for different screen sizes. 
