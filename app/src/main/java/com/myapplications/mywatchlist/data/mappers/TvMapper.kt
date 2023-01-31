@@ -3,7 +3,7 @@ package com.myapplications.mywatchlist.data.mappers
 import com.myapplications.mywatchlist.data.datastore.ApiConfiguration
 import com.myapplications.mywatchlist.data.entities.TvApiModel
 import com.myapplications.mywatchlist.data.entities.TvEntity
-import com.myapplications.mywatchlist.data.entities.TvEntityWithGenresCastVideos
+import com.myapplications.mywatchlist.data.entities.TvEntityFull
 import com.myapplications.mywatchlist.domain.entities.Genre
 import com.myapplications.mywatchlist.domain.entities.TV
 import com.myapplications.mywatchlist.domain.entities.TitleItem
@@ -37,7 +37,9 @@ fun TvApiModel.toTv(allGenres: List<Genre>, apiConfiguration: ApiConfiguration):
         numberOfEpisodes = this.numberOfEpisodes,
         voteCount = this.voteCount,
         voteAverage = this.voteAverage,
-        isWatchlisted = false // Api model does not have this information and assumes False
+        isWatchlisted = false, // Api model does not have this information and assumes False
+        recommendations = this.recommendations?.toTitleItemsMinimal(apiConfiguration),
+        similar = this.similar?.toTitleItemsMinimal(apiConfiguration)
     )
 }
 
@@ -94,9 +96,9 @@ fun TV.toTvEntity(): TvEntity {
 }
 
 /**
- * Converts [TvEntityWithGenresCastVideos] to [TV]
+ * Converts [TvEntityFull] to [TV]
  */
-fun TvEntityWithGenresCastVideos.toTv(): TV {
+fun TvEntityFull.toTv(): TV {
     return TV(
         id = this.tv.id,
         name = this.tv.name,
@@ -114,6 +116,8 @@ fun TvEntityWithGenresCastVideos.toTv(): TV {
         numberOfEpisodes = this.tv.numberOfEpisodes,
         voteCount = this.tv.voteCount,
         voteAverage = this.tv.voteAverage,
-        isWatchlisted = this.tv.isWatchlisted
+        isWatchlisted = this.tv.isWatchlisted,
+        recommendations = this.recommendations,
+        similar = this.similar
     )
 }

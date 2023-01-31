@@ -3,10 +3,7 @@ package com.myapplications.mywatchlist.data.remote.api
 import android.util.Log
 import com.google.gson.*
 import com.myapplications.mywatchlist.core.util.Constants
-import com.myapplications.mywatchlist.data.entities.MovieApiModel
-import com.myapplications.mywatchlist.data.entities.TitleItemApiModel
-import com.myapplications.mywatchlist.data.entities.TitleTypeApiModel
-import com.myapplications.mywatchlist.data.entities.TvApiModel
+import com.myapplications.mywatchlist.data.entities.*
 import com.myapplications.mywatchlist.domain.entities.*
 import java.lang.reflect.Type
 import java.time.LocalDate
@@ -34,7 +31,7 @@ object MyGsonConverter {
                 val error = "Could not convert json to a JsonObject. Reason: $e"
                 Log.e(TAG, "deserialize: $error", e)
                 // Returning a response which should be checked for totalResults before proceeding
-                return emptyResponse()
+                return emptyTitleItemsResponse()
             }
 
             // Check if this is deserialization of Genres, Movie, Tv or Search/Trending
@@ -47,7 +44,10 @@ object MyGsonConverter {
             } else if (mJson.get("change_keys") != null) {
                 handleConfigurationResponse(mJson)
             } else {
-                handleSearchOrTrendingResponse(mJson)
+                handleAnyRequestReturningListOfTitleItems(
+                    mJson = mJson,
+                    requestType = TitleItemsRequest.SEARCH_OR_TRENDING
+                )
             }
         }
 
@@ -77,6 +77,26 @@ object MyGsonConverter {
         private fun handleMovieResponse(mJson: JsonObject): ApiResponse {
             val response = try {
                 val movie = try {
+                    val recommendations = try {
+                        handleAnyRequestReturningListOfTitleItems(
+                            mJson = mJson.get("recommendations").asJsonObject,
+                            requestType = TitleItemsRequest.RECOMMENDATIONS
+                        ) as ApiResponse.TitlesListMinimalResponse
+                    } catch (e: Exception) {
+                        val error = "Could not get recommendations for json object. Reason: $e. Json = $mJson"
+                        Log.d(TAG, "handleMovieResponse: $error", e)
+                        null
+                    }
+                    val similar = try {
+                        handleAnyRequestReturningListOfTitleItems(
+                            mJson = mJson.get("similar").asJsonObject,
+                            requestType = TitleItemsRequest.SIMILAR_MOVIES
+                        ) as ApiResponse.TitlesListMinimalResponse
+                    } catch (e: Exception) {
+                        val error = "Could not get similar titles for json object. Reason: $e. Json = $mJson"
+                        Log.d(TAG, "handleMovieResponse: $error", e)
+                        null
+                    }
                     MovieApiModel(
                         id = mJson.get("id").asLong,
                         name = mJson.get("title").asString,
@@ -97,7 +117,17 @@ object MyGsonConverter {
                         revenue = mJson.get("revenue").asLong,
                         runtime = getNullableIntProperty(mJson, "runtime"),
                         voteCount = mJson.get("vote_count").asLong,
-                        voteAverage = mJson.get("vote_average").asDouble
+                        voteAverage = mJson.get("vote_average").asDouble,
+                        recommendations = if (recommendations?.titleItems.isNullOrEmpty()) {
+                            null
+                        } else {
+                            recommendations?.titleItems
+                        },
+                        similar = if (similar?.titleItems.isNullOrEmpty()) {
+                            null
+                        } else {
+                            similar?.titleItems
+                        }
                     )
                 } catch (e: Exception) {
                     val error = "Could not parse the JsonObject into a MovieApiModel. Json = $mJson"
@@ -119,6 +149,26 @@ object MyGsonConverter {
         private fun handleTvResponse(mJson: JsonObject): ApiResponse {
             val response = try {
                 val tv = try {
+                    val recommendations = try {
+                        handleAnyRequestReturningListOfTitleItems(
+                            mJson = mJson.get("recommendations").asJsonObject,
+                            requestType = TitleItemsRequest.RECOMMENDATIONS
+                        ) as ApiResponse.TitlesListMinimalResponse
+                    } catch (e: Exception) {
+                        val error = "Could not get recommendations for json object. Reason: $e. Json = $mJson"
+                        Log.d(TAG, "handleTvResponse: $error", e)
+                        null
+                    }
+                    val similar = try {
+                        handleAnyRequestReturningListOfTitleItems(
+                            mJson = mJson.get("similar").asJsonObject,
+                            requestType = TitleItemsRequest.SIMILAR_TV
+                        ) as ApiResponse.TitlesListMinimalResponse
+                    } catch (e: Exception) {
+                        val error = "Could not get similar titles for json object. Reason: $e. Json = $mJson"
+                        Log.d(TAG, "handleTvResponse: $error", e)
+                        null
+                    }
                     TvApiModel(
                         id = mJson.get("id").asLong,
                         name = mJson.get("name").asString,
@@ -139,7 +189,17 @@ object MyGsonConverter {
                         numberOfSeasons = mJson.get("number_of_seasons").asInt,
                         numberOfEpisodes = mJson.get("number_of_episodes").asInt,
                         voteCount = mJson.get("vote_count").asLong,
-                        voteAverage = mJson.get("vote_average").asDouble
+                        voteAverage = mJson.get("vote_average").asDouble,
+                        recommendations = if (recommendations?.titleItems.isNullOrEmpty()) {
+                            null
+                        } else {
+                            recommendations?.titleItems
+                        },
+                        similar = if (similar?.titleItems.isNullOrEmpty()) {
+                            null
+                        } else {
+                            similar?.titleItems
+                        }
                     )
                 } catch (e: Exception) {
                     val error = "Could not parse the JsonObject into a TvApiModel. Json = $mJson"
@@ -194,44 +254,83 @@ object MyGsonConverter {
         }
 
         /**
-         * Handles the response if it is for the [TmdbApi.search] query.
+         * Handles the response if it is a list of Title items that must be returned.
          * @param mJson the root [JsonObject] received from the request.
-         * @return [ApiResponse.TitlesListResponse]
+         * @param requestType indicates which type of request the method should handle
+         * @return [ApiResponse.TitlesListResponse] or [ApiResponse.TitlesListMinimalResponse]
+         * dependening on which [requestType] was provided
          */
-        private fun handleSearchOrTrendingResponse(mJson: JsonObject): ApiResponse.TitlesListResponse {
+        private fun handleAnyRequestReturningListOfTitleItems(
+            mJson: JsonObject,
+            requestType: TitleItemsRequest
+        ): ApiResponse {
             val page = mJson.get("page").asInt
             val pageCount = mJson.get("total_pages").asInt
             val resultCount = mJson.get("total_results").asInt
             // If nothing found by the query, return an 'empty' response
             if (resultCount == 0) {
-                return emptyResponse()
+                return emptyTitleItemsResponse()
             }
 
-            val titleItems = mutableListOf<TitleItemApiModel>()
+            val titleItems = mutableListOf<ITitleItemApiModel>()
+            //val titleItems =
             val results = mJson.get("results").asJsonArray
-            Log.d(TAG, "deserialize: resultCount = $resultCount")
-            Log.d(TAG, "deserialize: results.size = ${results.size()}")
             results.forEachIndexed { index, jsonElement ->
                 try {
                     val resultJson = jsonElement.asJsonObject
-                    val mediaTypeString = resultJson.get("media_type").asString
-                    if (mediaTypeString == "movie" || mediaTypeString == "tv") {
-                        val titleItem = TitleItemApiModel(
-                            id = 0,
-                            name = getName(resultJson),
-                            type = getMediaType(resultJson),
-                            mediaId = resultJson.get("id").asLong,
-                            overview = getOverview(resultJson),
-                            posterLinkEnding = getImageLink(
-                                resultJsonObject = resultJson,
-                                propertyName = "poster_path"
-                            ),
-                            genres = resultJson.get("genre_ids").asJsonArray.map { it.asInt },
-                            releaseDate = getReleaseDate(resultJson),
-                            voteCount = resultJson.get("vote_count").asLong,
-                            voteAverage = resultJson.get("vote_average").asDouble
-                        )
-                        Log.d(TAG, "deserialize: titleItem = $titleItem")
+                    val mediaType = when (requestType) {
+                        TitleItemsRequest.SEARCH_OR_TRENDING, TitleItemsRequest.RECOMMENDATIONS -> {
+                            val mediaTypeString = resultJson.get("media_type").asString
+                            if (mediaTypeString == "movie" || mediaTypeString == "tv") {
+                                getMediaType(resultJson)
+                            } else {
+                                null
+                            }
+                        }
+                        TitleItemsRequest.SIMILAR_TV -> TitleTypeApiModel.TV
+                        TitleItemsRequest.SIMILAR_MOVIES -> TitleTypeApiModel.MOVIE
+                    }
+                    /* mediaType will only be null if it's a Search, Trending or Recommendations
+                    query where the found item was a Person which we are not handling. */
+                    if (mediaType != null) {
+                        val titleItem = when (requestType) {
+                            TitleItemsRequest.SEARCH_OR_TRENDING -> {
+                                TitleItemApiModel(
+                                    id = 0,
+                                    name = getName(resultJson),
+                                    type = mediaType,
+                                    mediaId = resultJson.get("id").asLong,
+                                    overview = getOverview(resultJson),
+                                    posterLinkEnding = getImageLink(
+                                        resultJsonObject = resultJson,
+                                        propertyName = "poster_path"
+                                    ),
+                                    genres = resultJson.get("genre_ids").asJsonArray.map { it.asInt },
+                                    releaseDate = getReleaseDate(resultJson),
+                                    voteCount = resultJson.get("vote_count").asLong,
+                                    voteAverage = resultJson.get("vote_average").asDouble
+                                )
+                            }
+                            TitleItemsRequest.SIMILAR_TV,
+                            TitleItemsRequest.SIMILAR_MOVIES,
+                            TitleItemsRequest.RECOMMENDATIONS -> {
+                                TitleItemMinimalApiModel(
+                                    id = 0,
+                                    name = getName(resultJson),
+                                    type = mediaType,
+                                    mediaId = resultJson.get("id").asLong,
+                                    overview = getOverview(resultJson),
+                                    posterLinkEnding = getImageLink(
+                                        resultJsonObject = resultJson,
+                                        propertyName = "poster_path"
+                                    ),
+                                    releaseDate = getReleaseDate(resultJson),
+                                    voteCount = resultJson.get("vote_count").asLong,
+                                    voteAverage = resultJson.get("vote_average").asDouble
+                                )
+                            }
+
+                        }
                         titleItems.add(titleItem)
                     }
                 } catch (e: Exception) {
@@ -241,15 +340,34 @@ object MyGsonConverter {
             }
 
             // If at least 1 result parsing did not fail - returning a non empty SearchApiResponse
-            return if (titleItems.isNotEmpty()){
-                ApiResponse.TitlesListResponse(
-                    page = page,
-                    titleItems = titleItems,
-                    totalPages = pageCount,
-                    totalResults = resultCount
-                )
+            return if (titleItems.isNotEmpty()) {
+                when (requestType) {
+                    TitleItemsRequest.SEARCH_OR_TRENDING -> {
+                        ApiResponse.TitlesListResponse(
+                            page = page,
+                            titleItems = titleItems.filterIsInstance<TitleItemApiModel>(),
+                            totalPages = pageCount,
+                            totalResults = resultCount
+                        )
+                    }
+                    TitleItemsRequest.SIMILAR_TV,
+                    TitleItemsRequest.SIMILAR_MOVIES,
+                    TitleItemsRequest.RECOMMENDATIONS -> {
+                        ApiResponse.TitlesListMinimalResponse(
+                            page = page,
+                            titleItems = titleItems.filterIsInstance<TitleItemMinimalApiModel>(),
+                            totalPages = pageCount,
+                            totalResults = resultCount
+                        )
+                    }
+                }
             } else {
-                emptyResponse()
+                when (requestType) {
+                    TitleItemsRequest.SEARCH_OR_TRENDING -> emptyTitleItemsResponse()
+                    TitleItemsRequest.SIMILAR_TV,
+                    TitleItemsRequest.SIMILAR_MOVIES,
+                    TitleItemsRequest.RECOMMENDATIONS -> emptyTitleItemsMinimalResponse()
+                }
             }
         }
 
@@ -540,7 +658,7 @@ object MyGsonConverter {
          * @return [ApiResponse.TitlesListResponse] with page, totalPages and totalResults equal to 0 and
          * titleItems set as null.
          */
-        private fun emptyResponse(): ApiResponse.TitlesListResponse {
+        private fun emptyTitleItemsResponse(): ApiResponse.TitlesListResponse {
             return ApiResponse.TitlesListResponse(
                 page = 0,
                 titleItems = null,
@@ -548,5 +666,27 @@ object MyGsonConverter {
                 totalResults = 0
             )
         }
+
+        /**
+         * Returns an empty [ApiResponse.TitlesListMinimalResponse] which indicates a successful api
+         * request, but with nothing found by the query.
+         * @return [ApiResponse.TitlesListMinimalResponse] with page, totalPages and totalResults
+         * equal to 0 and titleItems set as null.
+         */
+        private fun emptyTitleItemsMinimalResponse(): ApiResponse.TitlesListMinimalResponse {
+            return ApiResponse.TitlesListMinimalResponse(
+                page = 0,
+                titleItems = null,
+                totalPages = 0,
+                totalResults = 0
+            )
+        }
     }
+}
+
+enum class TitleItemsRequest {
+    SEARCH_OR_TRENDING,
+    SIMILAR_TV,
+    SIMILAR_MOVIES,
+    RECOMMENDATIONS
 }

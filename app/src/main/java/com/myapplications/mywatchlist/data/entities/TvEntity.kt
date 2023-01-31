@@ -78,7 +78,53 @@ data class YtVideoForTvEntity(
     val tvId: Long
 )
 
-data class TvEntityWithGenresCastVideos(
+@Entity(
+    primaryKeys = ["parentTvId", "mediaId"],
+    foreignKeys = [ForeignKey(
+        entity = TvEntity::class,
+        parentColumns = ["id"],
+        childColumns = ["parentTvId"],
+        onDelete = ForeignKey.CASCADE,
+        onUpdate = ForeignKey.CASCADE
+    )]
+)
+data class TitleItemRecommendedTvEntity(
+    val parentTvId: Long,
+    val name: String,
+    val type: TitleType,
+    val mediaId: Long,
+    val overview: String?,
+    val posterLink: String?,
+    val releaseDate: LocalDate?,
+    val voteCount: Long,
+    val voteAverage: Double,
+    val isWatchlisted: Boolean
+)
+
+@Entity(
+    primaryKeys = ["parentTvId", "mediaId"],
+    foreignKeys = [ForeignKey(
+        entity = TvEntity::class,
+        parentColumns = ["id"],
+        childColumns = ["parentTvId"],
+        onDelete = ForeignKey.CASCADE,
+        onUpdate = ForeignKey.CASCADE
+    )]
+)
+data class TitleItemSimilarTvEntity(
+    val parentTvId: Long,
+    val name: String,
+    val type: TitleType,
+    val mediaId: Long,
+    val overview: String?,
+    val posterLink: String?,
+    val releaseDate: LocalDate?,
+    val voteCount: Long,
+    val voteAverage: Double,
+    val isWatchlisted: Boolean
+)
+
+data class TvEntityFull(
     @Embedded val tv: TvEntity,
     @Relation(
         parentColumn = "id",
@@ -102,5 +148,21 @@ data class TvEntityWithGenresCastVideos(
         entity = YtVideoForTvEntity::class,
         projection = ["videoId","link", "name", "type"]
     )
-    val videos: List<YtVideo>
+    val videos: List<YtVideo>,
+
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "parentTvId",
+        entity = TitleItemRecommendedTvEntity::class,
+         projection = [ "name", "type", "mediaId", "overview", "posterLink", "releaseDate", "voteCount", "voteAverage", "isWatchlisted"]
+    )
+    val recommendations: List<TitleItemMinimal>,
+
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "parentTvId",
+        entity = TitleItemSimilarTvEntity::class,
+         projection = [ "name", "type", "mediaId", "overview", "posterLink", "releaseDate", "voteCount", "voteAverage", "isWatchlisted"]
+    )
+    val similar: List<TitleItemMinimal>
 )

@@ -2,10 +2,7 @@ package com.myapplications.mywatchlist.data.local.details
 
 import androidx.room.*
 import com.myapplications.mywatchlist.data.entities.*
-import com.myapplications.mywatchlist.data.mappers.toCastMembersForMovieEntity
-import com.myapplications.mywatchlist.data.mappers.toListOfGenreForMovieEntity
-import com.myapplications.mywatchlist.data.mappers.toListOfYtVideosForMovieEntity
-import com.myapplications.mywatchlist.data.mappers.toMovieEntity
+import com.myapplications.mywatchlist.data.mappers.*
 import com.myapplications.mywatchlist.domain.entities.Movie
 
 @Dao
@@ -26,12 +23,18 @@ interface MovieDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertYtVideosForMovieEntity(videos: List<YtVideoForMovieEntity>)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertRecommendedForMovieEntity(titleItems: List<TitleItemRecommendedMovieEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSimilarForMovieEntity(titleItems: List<TitleItemSimilarMovieEntity>)
+
     /** The CASCADE policy will delete associates Genres and CastMembers data */
     @Delete
     suspend fun deleteMovieEntity(movieEntity: MovieEntity)
 
     @Query("SELECT * FROM movieentity WHERE id=:movieId")
-    suspend fun getMovie(movieId: Long): MovieEntityWithGenresCastVideos
+    suspend fun getMovie(movieId: Long): MovieEntityFull
 
     @Transaction
     suspend fun insertMovie(movie: Movie) {
@@ -51,6 +54,20 @@ interface MovieDao {
         if (movie.videos != null) {
             val videosToInsert = movie.videos.toListOfYtVideosForMovieEntity(movie.id)
             insertYtVideosForMovieEntity(videosToInsert)
+        }
+
+        // Inserting recommended movies if move has them
+        if (movie.recommendations != null) {
+            val recommendedToInsert =
+                movie.recommendations.toTitleItemRecommendedMovieEntityList(movie.id)
+            insertRecommendedForMovieEntity(recommendedToInsert)
+        }
+
+        // Inserting recommended movies if move has them
+        if (movie.similar != null) {
+            val similarToInsert =
+                movie.similar.toTitleItemSimilarMovieEntityList(movie.id)
+            insertSimilarForMovieEntity(similarToInsert)
         }
     }
 }

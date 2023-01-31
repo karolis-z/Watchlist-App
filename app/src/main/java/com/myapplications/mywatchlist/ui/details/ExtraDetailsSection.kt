@@ -320,7 +320,9 @@ private fun getMovieForTesting(): Movie {
         runtime = 136,
         voteCount = 22622,
         voteAverage = 8.195,
-        isWatchlisted = false
+        isWatchlisted = false,
+        recommendations = null,
+        similar = null
     )
 }
 
@@ -402,6 +404,8 @@ private fun getTvForTesting(): TV {
         numberOfEpisodes = 9,
         voteCount = 97,
         voteAverage = 7.397,
-        isWatchlisted = true
+        isWatchlisted = true,
+        recommendations = null,
+        similar = null
     )
 }

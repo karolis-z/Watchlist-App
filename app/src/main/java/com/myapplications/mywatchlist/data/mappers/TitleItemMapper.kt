@@ -3,10 +3,8 @@ package com.myapplications.mywatchlist.data.mappers
 import com.myapplications.mywatchlist.data.datastore.ApiConfiguration
 import com.myapplications.mywatchlist.data.entities.TitleItemApiModel
 import com.myapplications.mywatchlist.data.entities.TitleItemEntity
-import com.myapplications.mywatchlist.data.entities.TitleTypeApiModel
 import com.myapplications.mywatchlist.domain.entities.Genre
 import com.myapplications.mywatchlist.domain.entities.TitleItem
-import com.myapplications.mywatchlist.domain.entities.TitleType
 
 /**
  * Converts a [TitleItemApiModel] to [TitleItem]
@@ -20,7 +18,7 @@ fun TitleItemApiModel.toTitleItem(
     return TitleItem(
         id = this.id,
         name = this.name,
-        type = titleTypeApiModelToTitleType(this.type),
+        type = this.type.toTitleType(),
         mediaId = this.mediaId,
         overview = this.overview,
         posterLink = apiConfiguration.baseImageUrl +
@@ -42,13 +40,6 @@ fun List<TitleItemApiModel>.toTitleItems(
     apiConfiguration: ApiConfiguration
 ): List<TitleItem> {
     return this.map { it.toTitleItem(allGenres, apiConfiguration) }
-}
-
-private fun titleTypeApiModelToTitleType(titleTypeApiModel: TitleTypeApiModel): TitleType {
-    return when (titleTypeApiModel) {
-        TitleTypeApiModel.MOVIE -> TitleType.MOVIE
-        TitleTypeApiModel.TV -> TitleType.TV
-    }
 }
 
 /**

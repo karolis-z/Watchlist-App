@@ -198,7 +198,12 @@ class MainActivity : ComponentActivity() {
                             DetailsScreen(
                                 placeHolderBackdrop = placeHolderBackdrop,
                                 placeHolderPortrait = placeHolderPortrait,
+                                placeholderPoster = placeholderPoster,
                                 onNavigateUp = { navController.navigateUp() },
+                                onSimilarOrRecommendedTitleClicked = { title ->
+                                    navController.navigate(route = OtherScreens.Details.route +
+                                            "/${title.mediaId}&${title.type.name}")
+                                },
                                 modifier = Modifier.padding(
                                     bottom = paddingValues.calculateBottomPadding()
                                 )

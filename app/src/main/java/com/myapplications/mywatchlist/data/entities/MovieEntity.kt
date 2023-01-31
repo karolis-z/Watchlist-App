@@ -78,7 +78,53 @@ data class YtVideoForMovieEntity(
     val movieId: Long
 )
 
-data class MovieEntityWithGenresCastVideos(
+@Entity(
+    primaryKeys = ["parentMovieId", "mediaId"],
+    foreignKeys = [ForeignKey(
+        entity = MovieEntity::class,
+        parentColumns = ["id"],
+        childColumns = ["parentMovieId"],
+        onDelete = ForeignKey.CASCADE,
+        onUpdate = ForeignKey.CASCADE
+    )]
+)
+data class TitleItemRecommendedMovieEntity(
+    val parentMovieId: Long,
+    val name: String,
+    val type: TitleType,
+    val mediaId: Long,
+    val overview: String?,
+    val posterLink: String?,
+    val releaseDate: LocalDate?,
+    val voteCount: Long,
+    val voteAverage: Double,
+    val isWatchlisted: Boolean
+)
+
+@Entity(
+    primaryKeys = ["parentMovieId", "mediaId"],
+    foreignKeys = [ForeignKey(
+        entity = MovieEntity::class,
+        parentColumns = ["id"],
+        childColumns = ["parentMovieId"],
+        onDelete = ForeignKey.CASCADE,
+        onUpdate = ForeignKey.CASCADE
+    )]
+)
+data class TitleItemSimilarMovieEntity(
+    val parentMovieId: Long,
+    val name: String,
+    val type: TitleType,
+    val mediaId: Long,
+    val overview: String?,
+    val posterLink: String?,
+    val releaseDate: LocalDate?,
+    val voteCount: Long,
+    val voteAverage: Double,
+    val isWatchlisted: Boolean
+)
+
+data class MovieEntityFull(
     @Embedded val movie: MovieEntity,
     @Relation(
         parentColumn = "id",
@@ -102,5 +148,22 @@ data class MovieEntityWithGenresCastVideos(
         entity = YtVideoForMovieEntity::class,
         projection = ["videoId","link", "name", "type"]
     )
-    val videos: List<YtVideo>
+    val videos: List<YtVideo>,
+
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "parentMovieId",
+        entity = TitleItemRecommendedMovieEntity::class,
+        projection = ["name", "type", "mediaId", "overview", "posterLink", "releaseDate", "voteCount", "voteAverage", "isWatchlisted"]
+    )
+    val recommendations: List<TitleItemMinimal>,
+
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "parentMovieId",
+        entity = TitleItemSimilarMovieEntity::class,
+         projection = ["name", "type", "mediaId", "overview", "posterLink", "releaseDate", "voteCount", "voteAverage", "isWatchlisted"]
+    )
+    val similar: List<TitleItemMinimal>
+
 )

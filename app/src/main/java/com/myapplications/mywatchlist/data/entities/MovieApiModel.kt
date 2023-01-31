@@ -21,5 +21,7 @@ data class MovieApiModel(
     val revenue: Long?,         // A Title can possibly not have revenue associated with it
     val runtime: Int?,          // A Title can possibly not have runtime associated with it
     val voteCount: Long,
-    val voteAverage: Double
+    val voteAverage: Double,
+    val recommendations: List<TitleItemMinimalApiModel>?,
+    val similar: List<TitleItemMinimalApiModel>?
 )

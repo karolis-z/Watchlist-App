@@ -15,9 +15,8 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Today
 import androidx.compose.material3.*
@@ -25,6 +24,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -57,13 +57,17 @@ import com.myapplications.mywatchlist.R
 import com.myapplications.mywatchlist.core.util.Constants
 import com.myapplications.mywatchlist.core.util.DateFormatter
 import com.myapplications.mywatchlist.domain.entities.*
-import com.myapplications.mywatchlist.ui.components.AnimatedWatchlistButton
-import com.myapplications.mywatchlist.ui.components.ErrorText
-import com.myapplications.mywatchlist.ui.components.GenreChip
-import com.myapplications.mywatchlist.ui.components.LoadingCircle
+import com.myapplications.mywatchlist.ui.components.*
 import com.myapplications.mywatchlist.ui.details.toolbarstate.ExitUntilCollapsedState
 import com.myapplications.mywatchlist.ui.details.toolbarstate.ToolbarState
 import com.myapplications.mywatchlist.ui.theme.IMDBOrange
+import com.skydoves.balloon.ArrowPositionRules
+import com.skydoves.balloon.Balloon
+import com.skydoves.balloon.BalloonAnimation
+import com.skydoves.balloon.BalloonSizeSpec
+import com.skydoves.balloon.compose.Balloon
+import com.skydoves.balloon.compose.rememberBalloonBuilder
+import com.skydoves.balloon.compose.setBackgroundColor
 import java.time.LocalDate
 import kotlin.math.roundToInt
 
@@ -88,7 +92,9 @@ private const val TAG = "DETAILS_SCREEN"
 fun DetailsScreen(
     placeHolderBackdrop: Painter,
     placeHolderPortrait: Painter,
+    placeholderPoster: Painter,
     onNavigateUp: () -> Unit,
+    onSimilarOrRecommendedTitleClicked: (TitleItemMinimal) -> Unit,
     modifier: Modifier = Modifier
 ) {
     // Calculating status bar height
@@ -199,7 +205,9 @@ fun DetailsScreen(
                     runtimeOrSeasonsString = runtimeOrSeasonsString,
                     placeHolderPortrait = placeHolderPortrait,
                     placeHolderBackdrop = placeHolderBackdrop,
+                    placeholderPoster = placeholderPoster,
                     onWatchlistClicked = { viewModel.onWatchlistClicked() },
+                    onSimilarOrRecommendedTitleClicked = onSimilarOrRecommendedTitleClicked,
                     playerState = playerState,
                     scrollState = scrollState,
                     contentPadding = PaddingValues(top = maxToolbarHeight),
@@ -464,7 +472,9 @@ fun DetailsScreenContent(
     runtimeOrSeasonsString: String,
     placeHolderPortrait: Painter,
     placeHolderBackdrop: Painter,
+    placeholderPoster: Painter,
     onWatchlistClicked: () -> Unit,
+    onSimilarOrRecommendedTitleClicked: (TitleItemMinimal) -> Unit,
     scrollState: ScrollState,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier
@@ -611,38 +621,55 @@ fun DetailsScreenContent(
             Spacer(modifier = Modifier.height(12.dp))
             //#enregion
 
-            //#region CAST
-            if (cast != null) {
-                SectionHeadline(label = stringResource(id = R.string.details_cast_label))
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                    items(
-                        key = { castMember -> castMember.id },
-                        items = cast
-                    ) { castMember: CastMember ->
-                        CastMemberCard(
-                            castMember = castMember,
-                            placeHolderPortrait = placeHolderPortrait
-                        )
-                    }
-                }
+            val backgroundColor = MaterialTheme.colorScheme.primaryContainer
+            val balloonBuilder = rememberBalloonBuilder {
+                setArrowSize(10)
+                setArrowPosition(0.5f)
+                setArrowPositionRules(ArrowPositionRules.ALIGN_ANCHOR)
+                setWidth(BalloonSizeSpec.WRAP)
+                setHeight(BalloonSizeSpec.WRAP)
+                setPadding(12)
+                setMarginHorizontal(12)
+                setCornerRadius(8f)
+                setBackgroundColor(backgroundColor)
+                setBalloonAnimation(BalloonAnimation.CIRCULAR)
+                setCircularDuration(300)
+                setDismissWhenTouchOutside(true)
+                setDismissWhenClicked(true)
+                setDismissWhenLifecycleOnPause(true)
+                setDismissWhenOverlayClicked(true)
+                setDismissWhenShowAgain(true)
+                setAutoDismissDuration(5000)
+            }
+
+            //#region SIMILAR
+            if (title.similar != null) {
+                RecommendedOrSimilarSection(
+                    /* Non-null assertion because we already checked for null above */
+                    titleItemsMinimal = title.similar!!,
+                    placeholderPoster = placeholderPoster,
+                    onTitleClicked = onSimilarOrRecommendedTitleClicked,
+                    sectionLabel = stringResource(id = R.string.details_similar_label),
+                    balloonBuilder = balloonBuilder,
+                    tooltipText = stringResource(id = R.string.details_similar_help),
+                    helpButtonContentDescription = stringResource(id = R.string.cd_similar_help_text)
+                )
             }
             Spacer(modifier = Modifier.height(12.dp))
             //#endregion
 
-            //#region CAST
-            if (cast != null) {
-                SectionHeadline(label = stringResource(id = R.string.details_cast_label))
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                    items(
-                        key = { castMember -> castMember.id },
-                        items = cast
-                    ) { castMember: CastMember ->
-                        CastMemberCard(
-                            castMember = castMember,
-                            placeHolderPortrait = placeHolderPortrait
-                        )
-                    }
-                }
+            //#region RECOMMENDATIONS
+            if (title.recommendations != null) {
+                RecommendedOrSimilarSection(
+                    /* Non-null assertion because we already checked for null above */
+                    titleItemsMinimal = title.recommendations!!,
+                    placeholderPoster = placeholderPoster,
+                    onTitleClicked = onSimilarOrRecommendedTitleClicked,
+                    sectionLabel = stringResource(id = R.string.details_recommended_label),
+                    balloonBuilder = balloonBuilder,
+                    tooltipText = stringResource(id = R.string.details_recommended_help),
+                    helpButtonContentDescription = stringResource(id = R.string.cd_recommended_help_text)
+                )
             }
             Spacer(modifier = Modifier.height(12.dp))
             //#endregion
@@ -716,50 +743,48 @@ fun DetailsInfoRow(
 }
 
 @Composable
-fun CastMemberCard(
-    castMember: CastMember,
-    placeHolderPortrait: Painter,
+fun RecommendedOrSimilarSection(
+    titleItemsMinimal: List<TitleItemMinimal>,
+    placeholderPoster: Painter,
+    onTitleClicked: (TitleItemMinimal) -> Unit,
+    sectionLabel: String,
+    balloonBuilder: Balloon.Builder,
+    tooltipText: String,
+    helpButtonContentDescription: String,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier
-            .size(width = 150.dp, height = 290.dp)
-            .padding(bottom = 5.dp),
-        shape = MaterialTheme.shapes.medium
-    ) {
-        AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(castMember.pictureLink)
-                .crossfade(true)
-                .build(),
-            placeholder = placeHolderPortrait,
-            fallback = placeHolderPortrait,
-            error = placeHolderPortrait,
-            contentDescription = null, //Decorative
-            contentScale = ContentScale.Crop,
-            alignment = Alignment.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(225.dp)
+    Box(modifier = modifier.fillMaxWidth()) {
+        SectionHeadline(
+            label = sectionLabel,
+            modifier = Modifier.align(Alignment.CenterStart)
         )
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
-            Text(
-                text = castMember.name,
-                style = MaterialTheme.typography.labelLarge,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(horizontal = 5.dp)
-            )
-            Spacer(modifier = Modifier.height(5.dp))
-            Text(
-                text = castMember.character,
-                style = MaterialTheme.typography.labelMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(horizontal = 5.dp)
-            )
+        Spacer(modifier = Modifier.width(10.dp))
+        Balloon(
+            builder = balloonBuilder,
+            balloonContent = {
+                Text(
+                    text = tooltipText,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            },
+            modifier = Modifier.align(Alignment.CenterEnd)
+        ) { balloonWindow ->
+            IconButton(onClick = { balloonWindow.showAlignTop() }) {
+                Icon(
+                    imageVector = Icons.Outlined.HelpOutline,
+                    contentDescription = helpButtonContentDescription,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .alpha(0.66f),
+                )
+            }
         }
     }
+    TitleItemsMinimalLazyRow(
+        titleItemsMinimal = titleItemsMinimal,
+        placeholderPoster = placeholderPoster,
+        onTitleClicked = onTitleClicked
+    )
 }
 
 @Composable
@@ -770,7 +795,6 @@ fun SectionHeadline(label: String, modifier: Modifier = Modifier, bottomPadding:
         modifier = modifier.padding(bottom = bottomPadding)
     )
 }
-
 
 @Preview
 @Composable
@@ -834,7 +858,9 @@ private fun getMovieForTesting(): Movie {
         runtime = 136,
         voteCount = 22622,
         voteAverage = 8.195,
-        isWatchlisted = false
+        isWatchlisted = false,
+        recommendations = null,
+        similar = null
     )
 }
 
@@ -916,7 +942,9 @@ private fun getTvForTesting(): TV {
         numberOfEpisodes = 9,
         voteCount = 97,
         voteAverage = 7.397,
-        isWatchlisted = true
+        isWatchlisted = true,
+        recommendations = null,
+        similar = null
     )
 }
 

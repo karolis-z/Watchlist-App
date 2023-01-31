@@ -22,4 +22,6 @@ data class TvApiModel(
     val numberOfEpisodes: Int,
     val voteCount: Long,
     val voteAverage: Double,
+    val recommendations: List<TitleItemMinimalApiModel>?,
+    val similar: List<TitleItemMinimalApiModel>?
 )
