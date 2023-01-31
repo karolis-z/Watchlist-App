@@ -37,13 +37,13 @@ import com.myapplications.mywatchlist.R
 import com.myapplications.mywatchlist.core.util.Constants
 import com.myapplications.mywatchlist.core.util.CurrencyFormatter
 import com.myapplications.mywatchlist.domain.entities.*
-import java.time.LocalDate
 
 private const val TAG = "EXTRA_DETAILS_SECTION"
 
 @Composable
 fun ExtraDetailsSection(
     title: Title,
+    spokenLanguagesString: String?,
     modifier: Modifier = Modifier
 ) {
     val categoryStyle = MaterialTheme.typography.bodyLarge
@@ -88,6 +88,7 @@ fun ExtraDetailsSection(
         ) {
             Column(modifier = modifier.fillMaxWidth()) {
 
+                //#region STATUS
                 if (status.isNotEmpty()) {
                     Row(modifier = modifier.fillMaxWidth()) {
                         Text(
@@ -99,6 +100,9 @@ fun ExtraDetailsSection(
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                 }
+                //#endregion
+
+                //#region TAGLINE
                 val tagline = title.tagline
                 if (tagline != null) {
                     Row(modifier = modifier.fillMaxWidth()) {
@@ -111,6 +115,9 @@ fun ExtraDetailsSection(
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                 }
+                //#endregion
+
+                //#region VOTE COUNT
                 Row(modifier = modifier.fillMaxWidth()) {
                     Text(
                         text = stringResource(id = R.string.details_vote_count),
@@ -128,9 +135,29 @@ fun ExtraDetailsSection(
                     )
                 }
                 Spacer(modifier = Modifier.height(8.dp))
+                //#endregion
+
+                //#region SPOKEN LANGUAGES
+                if (spokenLanguagesString != null) {
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = stringResource(id = R.string.details_spoken_languages),
+                            modifier = Modifier.weight(0.4f),
+                            style = categoryStyle
+                        )
+                        Text(
+                            text = spokenLanguagesString,
+                            modifier = Modifier.weight(0.6f),
+                            style = infoStyle
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                //#endregion
 
                 when (title) {
                     is Movie -> {
+                        //#region REVENUE
                         val revenue = title.revenue
                         if (revenue != null) {
                             Row(modifier = modifier.fillMaxWidth()) {
@@ -147,6 +174,52 @@ fun ExtraDetailsSection(
                             }
                             Spacer(modifier = Modifier.height(8.dp))
                         }
+                        //#endregion
+
+                        //#region BUDGET
+                        val budget = title.budget
+                        if (budget != null) {
+                            Row(modifier = modifier.fillMaxWidth()) {
+                                Text(
+                                    text = stringResource(id = R.string.details_budget),
+                                    modifier = Modifier.weight(0.4f),
+                                    style = categoryStyle
+                                )
+                                Text(
+                                    text =
+                                        CurrencyFormatter.getUsdAmountInLocalCurrencyFormat(budget),
+                                    modifier = Modifier.weight(0.6f),
+                                    style = infoStyle
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                        //#endregion
+
+                        //#region PROFIT
+                        /* Both budget and revenue must be non-null and not equal to 0 to be able
+                        to calculated a meaningful profit. If one parameter is 0, it means the data
+                        is not available */
+                        if (budget != null && revenue != null && budget != 0L && revenue != 0L) {
+                            Row(modifier = modifier.fillMaxWidth()) {
+                                Text(
+                                    text = stringResource(id = R.string.details_profit),
+                                    modifier = Modifier.weight(0.4f),
+                                    style = categoryStyle
+                                )
+                                Text(
+                                    text = CurrencyFormatter.getUsdAmountInLocalCurrencyFormat(
+                                        amount = revenue-budget
+                                    ),
+                                    modifier = Modifier.weight(0.6f),
+                                    style = infoStyle
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                        //#endregion
+
+                        //#region IMDB
                         val imdbId = title.imdbId
                         if (imdbId != null) {
                             val context = LocalContext.current
@@ -177,8 +250,10 @@ fun ExtraDetailsSection(
                             }
                             Spacer(modifier = Modifier.height(8.dp))
                         }
+                        //#endregion
                     }
                     is TV -> {
+                        //#region EPISODE COUNT
                         Row(modifier = modifier.fillMaxWidth()) {
                             Text(
                                 text = stringResource(id = R.string.details_number_of_episodes),
@@ -195,6 +270,7 @@ fun ExtraDetailsSection(
                                 style = infoStyle
                             )
                         }
+                        //#endregion
                     }
                 }
             }
@@ -260,152 +336,5 @@ fun getStatusString(title: Title): String {
 @Preview
 @Composable
 fun ExtraDetailsSectionPreview() {
-    ExtraDetailsSection(
-        title = getMovieForTesting(),
 
-        )
-}
-
-
-//TODO: Remove once not needed anymore
-private fun getMovieForTesting(): Movie {
-    val genres = listOf(Genre(0, "Action"), Genre(1, "Science Fiction"), Genre(2, "Adventure"))
-    val cast = listOf(
-        CastMember(0, "Keanu Reaves", "Neo", null),
-        CastMember(1, "Laurence Fishburne", "Morpheus", null),
-        CastMember(2, "Carrie-Anne Moss", "Trinity", null),
-        CastMember(3, "Hugo Weaving", "Agent Smith", null),
-        CastMember(4, "Joe Pantoliano", "Cypher", null),
-    )
-    val videos = listOf(
-        YtVideo(
-            videoId = "nUEQNVV3Gfs",
-            link = "https://www.youtube.com/watch?v=nUEQNVV3Gfs",
-            name = "",
-            type = YtVideoType.Trailer
-        ),
-        YtVideo(
-            videoId = "RZ-MXBjvA38",
-            link = "https://www.youtube.com/watch?v=RZ-MXBjvA38",
-            name = "",
-            type = YtVideoType.Teaser
-        ),
-        YtVideo(
-            videoId = "L0fw0WzFaBM",
-            link = "https://www.youtube.com/watch?v=L0fw0WzFaBM",
-            name = "",
-            type = YtVideoType.BehindTheScenes
-        ),
-        YtVideo(
-            videoId = "m8e-FF8MsqU",
-            link = "https://www.youtube.com/watch?v=m8e-FF8MsqU",
-            name = "",
-            type = YtVideoType.Featurette
-        )
-    )
-    return Movie(
-        id = 603,
-        name = "The Matrix",
-        imdbId = "tt0133093",
-        overview = "Set in the 22nd century, The Matrix tells the story of a computer hacker who joins a group of underground insurgents fighting the vast and powerful computers who now rule the earth.",
-        tagline = "Welcome to the Real World.",
-        posterLink = "https://image.tmdb.org/t/p/w500/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg",
-        backdropLink = "https://image.tmdb.org/t/p/w500/l4QHerTSbMI7qgvasqxP36pqjN6.jpg",
-        genres = genres,
-        cast = cast,
-        videos = videos,
-        status = MovieStatus.Released,
-        releaseDate = LocalDate.parse("1999-03-30"),
-        revenue = 463517383,
-        runtime = 136,
-        voteCount = 22622,
-        voteAverage = 8.195,
-        isWatchlisted = false,
-        recommendations = null,
-        similar = null
-    )
-}
-
-//TODO: Remove once not needed anymore
-private fun getTvForTesting(): TV {
-    val genres = listOf(Genre(0, "Crime"), Genre(1, "Drama"))
-    val cast = listOf(
-        CastMember(
-            0,
-            "Giancarlo Esposito",
-            "Leo Pap",
-            "https://image.tmdb.org/t/p/w500/lBvDQZjxhIGMbH61iHnqerpbqHc.jpg"
-        ),
-        CastMember(
-            1,
-            "Paz Vega",
-            "Ava Mercer",
-            "https://image.tmdb.org/t/p/w500/fNLlJysFd5f0Q8Lj20EZpU8BiRN.jpg"
-        ),
-        CastMember(
-            2,
-            "Rufus Sewell",
-            "Roger Salas",
-            "https://image.tmdb.org/t/p/w500/yc2EWyg45GO03YqDttaEhjvegiE.jpg"
-        ),
-        CastMember(
-            3,
-            "Tati Gabrielle",
-            "Hannah Kim",
-            "https://image.tmdb.org/t/p/w500/zDtHNX7vXfhRmN2U5Ffmd9mLlo0.jpg"
-        ),
-        CastMember(
-            4,
-            "Peter Mark Kendall",
-            "Stan Loomis",
-            "https://image.tmdb.org/t/p/w500/9Cj5ySZ6znkNcASB5CZeibuDGsd.jpg"
-        ),
-    )
-    val videos = listOf(
-        YtVideo(
-            videoId = "nUEQNVV3Gfs",
-            link = "https://www.youtube.com/watch?v=nUEQNVV3Gfs",
-            name = "",
-            type = YtVideoType.Trailer
-        ),
-        YtVideo(
-            videoId = "RZ-MXBjvA38",
-            link = "https://www.youtube.com/watch?v=RZ-MXBjvA38",
-            name = "",
-            type = YtVideoType.Teaser
-        ),
-        YtVideo(
-            videoId = "L0fw0WzFaBM",
-            link = "https://www.youtube.com/watch?v=L0fw0WzFaBM",
-            name = "",
-            type = YtVideoType.BehindTheScenes
-        ),
-        YtVideo(
-            videoId = "m8e-FF8MsqU",
-            link = "https://www.youtube.com/watch?v=m8e-FF8MsqU",
-            name = "",
-            type = YtVideoType.Featurette
-        )
-    )
-    return TV(
-        id = 156902,
-        name = "Kaleidoscope",
-        overview = "A master criminal and his crew hatch an elaborate scheme to break into a secure vault, but are forced to pivot when things don't go according to plan.",
-        tagline = "There are 7 billion ways to solve a crime.",
-        posterLink = "https://image.tmdb.org/t/p/w500/2nXJoSB5Y6R9ne7pjqL7Cs3zqY1.jpg",
-        backdropLink = "https://image.tmdb.org/t/p/w500/kSqEenES71d1ApF2rRWxp5X0en5.jpg",
-        genres = genres,
-        cast = cast,
-        videos = videos,
-        status = TvStatus.Ended,
-        releaseDate = LocalDate.parse("2023-01-01"),
-        lastAirDate = LocalDate.parse("2023-01-01"),
-        numberOfSeasons = 1,
-        numberOfEpisodes = 9,
-        voteCount = 97,
-        voteAverage = 7.397,
-        isWatchlisted = true,
-        recommendations = null,
-        similar = null
-    )
 }

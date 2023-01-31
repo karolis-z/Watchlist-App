@@ -16,6 +16,8 @@ data class Movie(
     val status: MovieStatus,
     override val releaseDate: LocalDate?,// A Title can possibly not have a release date associated with it
     val revenue: Long?,         // A Title can possibly not have revenue associated with it
+    val budget: Long?,
+    override val spokenLanguages: List<String>?,
     val runtime: Int?,          // A Title can possibly not have runtime associated with it
     override val voteCount: Long,
     override val voteAverage: Double,

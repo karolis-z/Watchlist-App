@@ -20,6 +20,7 @@ data class TvApiModel(
     val lastAirDate: LocalDate?,
     val numberOfSeasons: Int,
     val numberOfEpisodes: Int,
+    val spokenLanguages: List<String>?,
     val voteCount: Long,
     val voteAverage: Double,
     val recommendations: List<TitleItemMinimalApiModel>?,

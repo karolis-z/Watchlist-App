@@ -28,7 +28,7 @@ The app should always be launchable and working in the *main* branch, but this i
 		- [x]	Add Recommended Movies section. :heavy_check_mark: (2023.01.31)
 		- [x]	Add Similar Movies section. :heavy_check_mark: (2023.01.31)
 		- [ ]	Add Reviews section
-		- [ ] 	Add more Extra Details: budget, profit, languages. 
+		- [x] 	Add more Extra Details: budget, profit, languages. 
 - [ ] Adapt for different screen sizes. 
 - [ ] Better and more appropriate transitions between screens
 - [ ] Caching of Search and Trending data and getting that data via flows.

@@ -42,6 +42,9 @@
         <item quantity="one">%d vote</item>
         <item quantity="other">%d votes</item>
     </plurals>
+    <string name="details_spoken_languages">Spoken languages</string>
+    <string name="details_budget">Budget</string>
+    <string name="details_profit">Profit</string>
     <string name="details_number_of_episodes">Episode count</string>
     <plurals name="details_episodes">
         <item quantity="one">%d episode</item>

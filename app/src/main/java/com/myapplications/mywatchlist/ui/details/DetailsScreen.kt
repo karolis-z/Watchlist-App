@@ -15,7 +15,9 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Today
@@ -203,6 +205,7 @@ fun DetailsScreen(
                     player = viewModel.player,
                     onVideoSelected = { viewModel.onVideoSelected(it) } ,
                     runtimeOrSeasonsString = runtimeOrSeasonsString,
+                    spokenLanguagesString = viewModel.getSpokenLanguagesString(),
                     placeHolderPortrait = placeHolderPortrait,
                     placeHolderBackdrop = placeHolderBackdrop,
                     placeholderPoster = placeholderPoster,
@@ -470,6 +473,7 @@ fun DetailsScreenContent(
     onVideoSelected: (YtVideoUiModel) -> Unit,
     playerState: Int,
     runtimeOrSeasonsString: String,
+    spokenLanguagesString: String?,
     placeHolderPortrait: Painter,
     placeHolderBackdrop: Painter,
     placeholderPoster: Painter,
@@ -574,7 +578,7 @@ fun DetailsScreenContent(
             //#endregion
 
             //#region EXTRA DETAILS - the headline label is within the ExtraDetailsSection composable
-            ExtraDetailsSection(title = title)
+            ExtraDetailsSection(title = title, spokenLanguagesString = spokenLanguagesString)
             Spacer(modifier = Modifier.height(12.dp))
             //#endregion
 
@@ -855,6 +859,8 @@ private fun getMovieForTesting(): Movie {
         status = MovieStatus.Released,
         releaseDate = LocalDate.parse("1999-03-30"),
         revenue = 463517383,
+        budget = 123456,
+        spokenLanguages = null,
         runtime = 136,
         voteCount = 22622,
         voteAverage = 8.195,
@@ -940,6 +946,7 @@ private fun getTvForTesting(): TV {
         lastAirDate = LocalDate.parse("2023-01-01"),
         numberOfSeasons = 1,
         numberOfEpisodes = 9,
+        spokenLanguages = null,
         voteCount = 97,
         voteAverage = 7.397,
         isWatchlisted = true,
