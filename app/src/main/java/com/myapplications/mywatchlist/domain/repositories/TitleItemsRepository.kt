@@ -44,4 +44,9 @@ interface TitleItemsRepository {
      * @return a list of [TitleItemFull]s that are trending
      */
     suspend fun getTrendingTitles(): ResultOf<List<TitleItemFull>>
+
+    /**
+     * @return a list of [TitleItemFull]s that are popular
+     */
+    suspend fun getPopularTitles(): ResultOf<List<TitleItemFull>>
 }

@@ -58,7 +58,7 @@ fun List<TvApiModel>.toTvList(
 /**
  * Converts a [TV] to a [TitleItemFull]
  */
-fun TV.toTitleItem(): TitleItemFull {
+fun TV.toTitleItemFull(): TitleItemFull {
     return TitleItemFull(
         id = 0,
         name = this.name,

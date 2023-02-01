@@ -59,7 +59,7 @@ fun List<MovieApiModel>.toMovies(
 /**
  * Converts a [Movie] to a [TitleItemFull]
  */
-fun Movie.toTitleItem(): TitleItemFull {
+fun Movie.toTitleItemFull(): TitleItemFull {
     return TitleItemFull(
         id = 0,
         name = this.name,

@@ -1,7 +1,7 @@
 package com.myapplications.mywatchlist.data.local.titles
 
 import com.myapplications.mywatchlist.core.di.IoDispatcher
-import com.myapplications.mywatchlist.data.mappers.toTitleItems
+import com.myapplications.mywatchlist.data.mappers.toTitleItemsFull
 import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -77,12 +77,12 @@ class TitlesLocalDataSourceImpl @Inject constructor(
 
     override suspend fun getAllBookmarkedTitles(): List<TitleItemFull>? = withContext(dispatcher) {
         val allTitleItemEntities = titlesDao.getAllTitleItems()
-        return@withContext allTitleItemEntities?.toTitleItems()
+        return@withContext allTitleItemEntities?.toTitleItemsFull()
     }
 
     override fun allWatchlistedTitlesFlow(): Flow<List<TitleItemFull>> {
         return titlesDao.allWatchlistedTitleItems().map {
-            it.toTitleItems()
+            it.toTitleItemsFull()
         }
     }
 

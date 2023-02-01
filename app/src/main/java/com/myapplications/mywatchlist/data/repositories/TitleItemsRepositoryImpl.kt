@@ -26,15 +26,9 @@ class TitleItemsRepositoryImpl @Inject constructor(
 
     override suspend fun searchTitles(query: String): ResultOf<List<TitleItemFull>> =
         withContext(dispatcher) {
-            if (!networkStatusManager.isOnline()){
-                return@withContext ResultOf.Failure(
-                    message = null,
-                    throwable = ApiGetTitleItemsExceptions.NoConnectionException(null, null)
-                )
-            }
-            val genresList = genresRepository.getAvailableGenres()
-            val result = remoteDataSource.searchTitles(query = query, allGenres = genresList)
-            return@withContext parseTitlesListResult(result)
+            return@withContext getTitleItemsFullResult(
+                requestType = TitleItemsRequestType.SearchQuery(query)
+            )
         }
 
     override suspend fun bookmarkTitleItem(titleItemFull: TitleItemFull) = withContext(dispatcher) {
@@ -54,6 +48,25 @@ class TitleItemsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getTrendingTitles(): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        return@withContext getTitleItemsFullResult(
+            requestType = TitleItemsRequestType.TrendingMoviesAndTV
+        )
+    }
+
+    override suspend fun getPopularTitles(): ResultOf<List<TitleItemFull>> =
+        withContext(dispatcher) {
+            return@withContext getTitleItemsFullResult(
+                requestType = TitleItemsRequestType.PopularMoviesAndTV
+            )
+        }
+
+    /**
+     * General function to get a result from remote data source
+     * @param requestType of type [TitleItemsRequestType] determines what type of request will be made
+     */
+    private suspend fun getTitleItemsFullResult(
+        requestType: TitleItemsRequestType
+    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
         if (!networkStatusManager.isOnline()){
             return@withContext ResultOf.Failure(
                 message = null,
@@ -61,7 +74,16 @@ class TitleItemsRepositoryImpl @Inject constructor(
             )
         }
         val genresList = genresRepository.getAvailableGenres()
-        val result = remoteDataSource.getTrendingTitles(allGenres = genresList)
+        val result = when (requestType) {
+            TitleItemsRequestType.PopularMoviesAndTV ->
+                remoteDataSource.getPopularTitles(allGenres = genresList)
+            is TitleItemsRequestType.SearchQuery -> remoteDataSource.searchTitles(
+                query = requestType.query,
+                allGenres = genresList
+            )
+            TitleItemsRequestType.TrendingMoviesAndTV ->
+                remoteDataSource.getTrendingTitles(allGenres = genresList)
+        }
         return@withContext parseTitlesListResult(result)
     }
 
@@ -90,4 +112,10 @@ class TitleItemsRepositoryImpl @Inject constructor(
                 }
             }
         }
+
+    private sealed class TitleItemsRequestType {
+        object TrendingMoviesAndTV : TitleItemsRequestType()
+        object PopularMoviesAndTV : TitleItemsRequestType()
+        data class SearchQuery(val query: String): TitleItemsRequestType()
+    }
 }
