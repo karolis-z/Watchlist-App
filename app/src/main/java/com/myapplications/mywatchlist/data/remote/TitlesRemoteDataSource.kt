@@ -35,12 +35,28 @@ interface TitlesRemoteDataSource {
     suspend fun getTrendingTitles(allGenres: List<Genre>): ResultOf<List<TitleItemFull>>
 
     /**
-     * Retrieves to titles that are popular today from TMDB
+     * Retrieves titles that are popular today from TMDB
      * @return [ResultOf.Success] containing List of [TitleItemFull] if successful and [ResultOf.Failure]
      * @param allGenres required to map genre ids received from API to to a list of [Genre] used in
      * [TitleItemFull]
      */
     suspend fun getPopularTitles(allGenres: List<Genre>): ResultOf<List<TitleItemFull>>
+
+    /**
+     * Retrieves titles that are top rated from TMDB
+     * @return [ResultOf.Success] containing List of [TitleItemFull] if successful and [ResultOf.Failure]
+     * @param allGenres required to map genre ids received from API to to a list of [Genre] used in
+     * [TitleItemFull]
+     */
+    suspend fun getTopRatedTitles(allGenres: List<Genre>): ResultOf<List<TitleItemFull>>
+
+    /**
+     * Retrieves titles that are upcoming movies from TMDB
+     * @return [ResultOf.Success] containing List of [TitleItemFull] if successful and [ResultOf.Failure]
+     * @param allGenres required to map genre ids received from API to to a list of [Genre] used in
+     * [TitleItemFull]
+     */
+    suspend fun getUpcomingMovies(allGenres: List<Genre>): ResultOf<List<TitleItemFull>>
 }
 
 private const val TAG = "TITLES_REMOTE_DATASRC"
@@ -78,6 +94,22 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
             )
         }
 
+    override suspend fun getTopRatedTitles(allGenres: List<Genre>): ResultOf<List<TitleItemFull>> =
+        withContext(dispatcher) {
+            return@withContext getTitleItemsFullResult(
+                requestType = TitleItemsRequestType.TopRatedMoviesAndTV,
+                allGenres = allGenres
+            )
+        }
+
+    override suspend fun getUpcomingMovies(allGenres: List<Genre>): ResultOf<List<TitleItemFull>> =
+        withContext(dispatcher) {
+            return@withContext getTitleItemsFullResult(
+                requestType = TitleItemsRequestType.UpcomingMovies,
+                allGenres = allGenres
+            )
+        }
+
     private suspend fun getTitleItemsFullResult(
         requestType: TitleItemsRequestType,
         allGenres: List<Genre>
@@ -93,6 +125,13 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
                 }
                 is TitleItemsRequestType.SearchQuery -> {
                     apiResponses.add(api.search(requestType.query))
+                }
+                TitleItemsRequestType.TopRatedMoviesAndTV -> {
+                    apiResponses.add(api.getTopRatedTV())
+                    apiResponses.add(api.getTopRatedMovies())
+                }
+                TitleItemsRequestType.UpcomingMovies -> {
+                    apiResponses.add(api.getUpcomingMovies())
                 }
             }
         } catch (e: Exception) {
@@ -173,6 +212,8 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
     private sealed class TitleItemsRequestType {
         object TrendingMoviesAndTV : TitleItemsRequestType()
         object PopularMoviesAndTV : TitleItemsRequestType()
+        object UpcomingMovies : TitleItemsRequestType()
+        object TopRatedMoviesAndTV : TitleItemsRequestType()
         data class SearchQuery(val query: String): TitleItemsRequestType()
     }
 }

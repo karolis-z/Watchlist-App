@@ -84,6 +84,14 @@ class TitlesManagerImpl @Inject constructor(
         titleItemsRepository.getPopularTitles()
     }
 
+    override suspend fun getTopRatedTitles(): ResultOf<List<TitleItemFull>> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getUpcomingMovies(): ResultOf<List<TitleItemFull>> {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun getTitle(mediaId: Long, type: TitleType): ResultOf<Title> =
         withContext(dispatcher) {
             detailsRepository.getTitle(mediaId = mediaId, type = type)
