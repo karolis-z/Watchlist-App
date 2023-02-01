@@ -52,14 +52,14 @@ fun HomeScreen(
                                     stringResource(id = R.string.error_no_internet_connection)
                                 ErrorText(
                                     errorMessage = errorMessage,
-                                    onButtonRetryClick = { viewModel.retryGetTrending() })
+                                    onButtonRetryClick = { viewModel.retryGetData() })
                             }
                             HomeError.FAILED_API_REQUEST -> {
                                 val errorMessage =
                                     stringResource(id = R.string.error_something_went_wrong)
                                 ErrorText(
                                     errorMessage = errorMessage,
-                                    onButtonRetryClick = { viewModel.retryGetTrending() })
+                                    onButtonRetryClick = { viewModel.retryGetData() })
                             }
                             HomeError.NO_TITLES -> {
                                 val errorMessage =
