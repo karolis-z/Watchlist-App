@@ -11,7 +11,9 @@ import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 sealed class HomeUiState {
     data class Ready(
         val trendingItems: List<TitleItemFull>,
-        val popularItems: List<TitleItemFull>
+        val popularItems: List<TitleItemFull>,
+        val upcomingItems: List<TitleItemFull>,
+        val topRatedItems: List<TitleItemFull>
     ) : HomeUiState()
     data class Error(val error: HomeError) : HomeUiState()
     object Loading : HomeUiState()

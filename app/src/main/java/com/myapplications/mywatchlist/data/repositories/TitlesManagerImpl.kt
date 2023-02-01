@@ -76,21 +76,25 @@ class TitlesManagerImpl @Inject constructor(
         return titleItemsRepository.allWatchlistedTitleItems()
     }
 
-    override suspend fun getTrendingTitles(): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
-        titleItemsRepository.getTrendingTitles()
-    }
+    override suspend fun getTrendingTitles(): ResultOf<List<TitleItemFull>> =
+        withContext(dispatcher) {
+            titleItemsRepository.getTrendingTitles()
+        }
 
-    override suspend fun getPopularTitles(): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
-        titleItemsRepository.getPopularTitles()
-    }
+    override suspend fun getPopularTitles(): ResultOf<List<TitleItemFull>> =
+        withContext(dispatcher) {
+            titleItemsRepository.getPopularTitles()
+        }
 
-    override suspend fun getTopRatedTitles(): ResultOf<List<TitleItemFull>> {
-        TODO("Not yet implemented")
-    }
+    override suspend fun getTopRatedTitles(): ResultOf<List<TitleItemFull>> =
+        withContext(dispatcher) {
+            titleItemsRepository.getTopRatedTitles()
+        }
 
-    override suspend fun getUpcomingMovies(): ResultOf<List<TitleItemFull>> {
-        TODO("Not yet implemented")
-    }
+    override suspend fun getUpcomingMovies(): ResultOf<List<TitleItemFull>> =
+        withContext(dispatcher) {
+            titleItemsRepository.getUpcomingMovies()
+        }
 
     override suspend fun getTitle(mediaId: Long, type: TitleType): ResultOf<Title> =
         withContext(dispatcher) {

@@ -102,6 +102,32 @@ fun HomeScreen(
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         //#endregion
+
+                        //#region UPCOMING MOVIES
+                        SectionHeadlineWithSeeAll(
+                            label = stringResource(id = R.string.home_upcoming_label),
+                            onSeeAllClicked = { /* TODO: Navigate to full list screen */ }
+                        )
+                        TitleItemsLazyRow(
+                            titleItemsFull = uiState.upcomingItems,
+                            placeholderPoster = placeholderPoster,
+                            onTitleClicked = onTitleClicked
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        //#endregion
+
+                        //#region TOPRATED TITLES
+                        SectionHeadlineWithSeeAll(
+                            label = stringResource(id = R.string.home_top_rated_label),
+                            onSeeAllClicked = { /* TODO: Navigate to full list screen */ }
+                        )
+                        TitleItemsLazyRow(
+                            titleItemsFull = uiState.topRatedItems,
+                            placeholderPoster = placeholderPoster,
+                            onTitleClicked = onTitleClicked
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        //#endregion
                     }
                 }
             }

@@ -11,10 +11,10 @@ The app should always be launchable and working in the *main* branch, but this i
 - [x] Download images configuration periodically from Api using WorkManager. :heavy_check_mark: (2023.01.22) 
 - [ ] Structural Changes:
 	- [x]	Change first Top destination to “Home”, second to “Discover” and third to “Watchlist”. :heavy_check_mark: (2023.01.31)
-	- [ ]	Home screen:
+	- [x]	Home screen: :heavy_check_mark: (2023.02.01)
 		- [x]	Add Trending TV + Movies. :heavy_check_mark: (2023.01.31)
-		- [ ]	Add Upcoming Movies
-		- [ ]	Add Top Rated Movies
+		- [x]	Add Upcoming Movies. :heavy_check_mark: (2023.02.01)
+		- [x]	Add Top Rated Movies. :heavy_check_mark: (2023.02.01)
 		- [x]	Add Popular Movies + TV. :heavy_check_mark: (2023.02.01)
 	- [ ]	Discover screen:
 		- [ ]	Add Filter (Genres, Years, Score, Movie/TV)
