@@ -14,6 +14,7 @@ data class TitleItemEntity(
     val type: TitleType,
     val mediaId: Long,
     val overview: String?,  // A Title can possibly not have an overview text
+    val popularity: Double?,
     val posterLink: String?,// A Title can possibly not have a poster associated with it
     val releaseDate: LocalDate?,
     val voteCount: Long,

@@ -13,6 +13,7 @@ fun TitleItemWithGenres.toTitleItemFull(): TitleItemFull {
         type = this.titleItem.type,
         mediaId = this.titleItem.mediaId,
         overview = this.titleItem.overview,
+        popularity = this.titleItem.popularity,
         posterLink = this.titleItem.posterLink,
         genres = this.genres,
         releaseDate = this.titleItem.releaseDate,

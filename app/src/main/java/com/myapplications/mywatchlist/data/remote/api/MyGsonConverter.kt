@@ -104,6 +104,7 @@ object MyGsonConverter {
                         overview = getNullableStringProperty(mJson, "overview").takeIf {
                             it?.isNotEmpty() == true
                         },
+                        popularity = getNullableDoubleProperty(mJson, "popularity"),
                         tagline = getNullableStringProperty(mJson, "tagline").takeIf {
                             it?.isNotEmpty() == true
                         },
@@ -177,6 +178,7 @@ object MyGsonConverter {
                         overview = getNullableStringProperty(mJson, "overview").takeIf {
                             it?.isNotEmpty() == true
                         },
+                        popularity = getNullableDoubleProperty(mJson, "popularity"),
                         tagline = getNullableStringProperty(mJson, "tagline").takeIf {
                             it?.isNotEmpty() == true
                         },
@@ -304,6 +306,10 @@ object MyGsonConverter {
                                     type = mediaType,
                                     mediaId = resultJson.get("id").asLong,
                                     overview = getOverview(resultJson),
+                                    popularity = getNullableDoubleProperty(
+                                        resultJsonObject = resultJson,
+                                        propertyName = "popularity"
+                                    ),
                                     posterLinkEnding = getImageLink(
                                         resultJsonObject = resultJson,
                                         propertyName = "poster_path"
@@ -486,6 +492,24 @@ object MyGsonConverter {
                 null
             } else {
                 jsonObject.asLong
+            }
+        }
+
+        /**
+         * Returns an [Double] value from provided [resultJsonObject]'s [propertyName]
+         * or null if not found.
+         */
+        private fun getNullableDoubleProperty(
+            resultJsonObject: JsonObject,
+            propertyName: String
+        ): Double? {
+            val jsonObject = resultJsonObject.get(propertyName)
+            Log.d(TAG, "getNullableDoubleProperty method could not get property $propertyName" +
+                    "from JsonObject and returned null. JsonObject: $resultJsonObject ")
+            return if (jsonObject.isJsonNull) {
+                null
+            } else {
+                jsonObject.asDouble
             }
         }
 

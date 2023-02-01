@@ -21,6 +21,7 @@ fun TitleItemApiModel.toTitleItemFull(
         type = this.type.toTitleType(),
         mediaId = this.mediaId,
         overview = this.overview,
+        popularity = this.popularity,
         posterLink = apiConfiguration.baseImageUrl +
                 apiConfiguration.posterDefaultSize + this.posterLinkEnding,
         genres = allGenres.filter { it.id in setOfGenreIds },
@@ -51,6 +52,7 @@ fun TitleItemFull.toTitleItemEntity(): TitleItemEntity {
         type = this.type,
         mediaId = this.mediaId,
         overview = this.overview,
+        popularity = this.popularity,
         posterLink = this.posterLink,
         releaseDate = this.releaseDate,
         voteCount = this.voteCount,
