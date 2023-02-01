@@ -25,6 +25,8 @@
     <string name="home_no_data">No data available…</string>
     <string name="home_trending_label">Trending</string>
     <string name="home_popular_label">Popular</string>
+    <string name="home_top_rated_label">Top Rated</string>
+    <string name="home_upcoming_label">Upcoming Movies</string>
 
     <!-- DETAILS SCREEN -->
     <string name="details_summary_label">Summary</string>

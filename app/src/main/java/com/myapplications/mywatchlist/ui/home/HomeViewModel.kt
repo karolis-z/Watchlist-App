@@ -20,23 +20,41 @@ class HomeViewModel @Inject constructor(
 
     private val trendingState: MutableStateFlow<TitleItemsState> =
         MutableStateFlow(TitleItemsState.Loading)
-
     private val popularState: MutableStateFlow<TitleItemsState> =
         MutableStateFlow(TitleItemsState.Loading)
+    private val upcomingState: MutableStateFlow<TitleItemsState> =
+        MutableStateFlow(TitleItemsState.Loading)
+    private val topRatedState: MutableStateFlow<TitleItemsState> =
+        MutableStateFlow(TitleItemsState.Loading)
 
-    val uiState = combine(trendingState, popularState) { trending, popular ->
-        if (trending is TitleItemsState.Loading || popular is TitleItemsState.Loading) {
+    val uiState = combine(
+        trendingState,
+        popularState,
+        upcomingState,
+        topRatedState
+    ) { trending, popular, upcoming, topRated ->
+        if (trending is TitleItemsState.Loading ||
+            popular is TitleItemsState.Loading ||
+            upcoming is TitleItemsState.Loading ||
+            topRated is TitleItemsState.Loading
+        ) {
             HomeUiState.Loading
         }
         /* At this stage the logic is to show an error even if only one of the requests' responses
         were Failures. In that case, simply prioritize "NO_INTERNET" error, or show the first error */
-        else if (trending is TitleItemsState.Error || popular is TitleItemsState.Error) {
+        else if (trending is TitleItemsState.Error ||
+            popular is TitleItemsState.Error ||
+            upcoming is TitleItemsState.Error ||
+            topRated is TitleItemsState.Error
+        ) {
             val statesList = listOf(trending, popular)
             HomeUiState.Error(error = determineUiStateError(statesList))
         } else {
             HomeUiState.Ready(
                 trendingItems = (trending as TitleItemsState.Ready).titleItems,
-                popularItems = (popular as TitleItemsState.Ready).titleItems.sortedBy { it.popularity }
+                popularItems = (popular as TitleItemsState.Ready).titleItems.sortedBy { it.popularity },
+                upcomingItems = (upcoming as TitleItemsState.Ready).titleItems.sortedBy { it.releaseDate },
+                topRatedItems = (topRated as TitleItemsState.Ready).titleItems .sortedByDescending { it.voteAverage }
             )
         }
     }.stateIn(
@@ -54,18 +72,26 @@ class HomeViewModel @Inject constructor(
         getTitleItemsList(requestType = TitleItemsRequestType.TrendingTitles)
         // Get Popular titles
         getTitleItemsList(requestType = TitleItemsRequestType.PopularTitles)
+        // Get Upcoming Movies
+        getTitleItemsList(requestType = TitleItemsRequestType.UpcomingMovies)
+        // Get Top rated titles
+        getTitleItemsList(requestType = TitleItemsRequestType.TopRatedTitles)
     }
 
     private fun getTitleItemsList(requestType: TitleItemsRequestType) {
         val stateToUpdate = when (requestType) {
             TitleItemsRequestType.PopularTitles -> popularState
             TitleItemsRequestType.TrendingTitles -> trendingState
+            TitleItemsRequestType.TopRatedTitles -> topRatedState
+            TitleItemsRequestType.UpcomingMovies -> upcomingState
         }
         viewModelScope.launch {
             stateToUpdate.update { TitleItemsState.Loading }
             val response = when (requestType) {
                 TitleItemsRequestType.PopularTitles -> titlesManager.getPopularTitles()
                 TitleItemsRequestType.TrendingTitles -> titlesManager.getTrendingTitles()
+                TitleItemsRequestType.TopRatedTitles -> titlesManager.getTopRatedTitles()
+                TitleItemsRequestType.UpcomingMovies -> titlesManager.getUpcomingMovies()
             }
             when (response) {
                 is ResultOf.Success -> {
@@ -134,5 +160,7 @@ class HomeViewModel @Inject constructor(
     private sealed class TitleItemsRequestType {
         object TrendingTitles : TitleItemsRequestType()
         object PopularTitles : TitleItemsRequestType()
+        object TopRatedTitles : TitleItemsRequestType()
+        object UpcomingMovies : TitleItemsRequestType()
     }
 }

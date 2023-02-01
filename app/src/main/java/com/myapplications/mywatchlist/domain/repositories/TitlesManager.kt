@@ -46,6 +46,16 @@ interface TitlesManager {
     suspend fun getPopularTitles(): ResultOf<List<TitleItemFull>>
 
     /**
+     * @return a list of [TitleItemFull]s that are top rated
+     */
+    suspend fun getTopRatedTitles(): ResultOf<List<TitleItemFull>>
+
+    /**
+     * @return a list of [TitleItemFull]s that are upcoming movies
+     */
+    suspend fun getUpcomingMovies(): ResultOf<List<TitleItemFull>>
+
+    /**
      * Retrieves a [Title]
      */
     suspend fun getTitle(mediaId: Long, type: TitleType): ResultOf<Title>

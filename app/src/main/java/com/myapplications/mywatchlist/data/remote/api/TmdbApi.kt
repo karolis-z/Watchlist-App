@@ -28,6 +28,15 @@ interface TmdbApi {
     @GET("tv/popular?api_key=$apiKey")
     suspend fun getPopularTV(): Response<ApiResponse>
 
+    @GET("movie/top_rated?api_key=$apiKey")
+    suspend fun getTopRatedMovies(): Response<ApiResponse>
+
+    @GET("tv/top_rated?api_key=$apiKey")
+    suspend fun getTopRatedTV(): Response<ApiResponse>
+
+    @GET("movie/upcoming?api_key=$apiKey")
+    suspend fun getUpcomingMovies(): Response<ApiResponse>
+
     @GET("movie/{titleId}?api_key=$apiKey&append_to_response=credits,videos,recommendations,similar")
     suspend fun getMovie(@Path("titleId") titleId: Long): Response<ApiResponse>
 

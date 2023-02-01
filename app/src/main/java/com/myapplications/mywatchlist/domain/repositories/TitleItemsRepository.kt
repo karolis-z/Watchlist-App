@@ -49,4 +49,14 @@ interface TitleItemsRepository {
      * @return a list of [TitleItemFull]s that are popular
      */
     suspend fun getPopularTitles(): ResultOf<List<TitleItemFull>>
+
+    /**
+     * @return a list of [TitleItemFull]s that are top rated
+     */
+    suspend fun getTopRatedTitles(): ResultOf<List<TitleItemFull>>
+
+    /**
+     * @return a list of [TitleItemFull]s that are upcoming movies
+     */
+    suspend fun getUpcomingMovies(): ResultOf<List<TitleItemFull>>
 }

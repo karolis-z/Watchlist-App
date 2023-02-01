@@ -60,6 +60,20 @@ class TitleItemsRepositoryImpl @Inject constructor(
             )
         }
 
+    override suspend fun getTopRatedTitles(): ResultOf<List<TitleItemFull>> =
+        withContext(dispatcher) {
+            return@withContext getTitleItemsFullResult(
+                requestType = TitleItemsRequestType.TopRatedMoviesAndTV
+            )
+        }
+
+    override suspend fun getUpcomingMovies(): ResultOf<List<TitleItemFull>> =
+        withContext(dispatcher) {
+            return@withContext getTitleItemsFullResult(
+                requestType = TitleItemsRequestType.UpcomingMovies
+            )
+        }
+
     /**
      * General function to get a result from remote data source
      * @param requestType of type [TitleItemsRequestType] determines what type of request will be made
@@ -83,6 +97,10 @@ class TitleItemsRepositoryImpl @Inject constructor(
             )
             TitleItemsRequestType.TrendingMoviesAndTV ->
                 remoteDataSource.getTrendingTitles(allGenres = genresList)
+            TitleItemsRequestType.TopRatedMoviesAndTV ->
+                remoteDataSource.getTopRatedTitles(allGenres = genresList)
+            TitleItemsRequestType.UpcomingMovies ->
+                remoteDataSource.getUpcomingMovies(allGenres = genresList)
         }
         return@withContext parseTitlesListResult(result)
     }
@@ -116,6 +134,8 @@ class TitleItemsRepositoryImpl @Inject constructor(
     private sealed class TitleItemsRequestType {
         object TrendingMoviesAndTV : TitleItemsRequestType()
         object PopularMoviesAndTV : TitleItemsRequestType()
+        object UpcomingMovies : TitleItemsRequestType()
+        object TopRatedMoviesAndTV : TitleItemsRequestType()
         data class SearchQuery(val query: String): TitleItemsRequestType()
     }
 }
