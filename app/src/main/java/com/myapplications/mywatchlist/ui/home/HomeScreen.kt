@@ -2,6 +2,8 @@ package com.myapplications.mywatchlist.ui.home
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -70,7 +72,11 @@ fun HomeScreen(
                     }
                 }
                 is HomeUiState.Ready -> {
-                    Column(modifier = Modifier.fillMaxSize()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                    ) {
                         //#region TRENDING TITLES
                         SectionHeadlineWithSeeAll(
                             label = stringResource(id = R.string.home_trending_label),
@@ -78,6 +84,19 @@ fun HomeScreen(
                         )
                         TitleItemsLazyRow(
                             titleItemsFull = uiState.trendingItems,
+                            placeholderPoster = placeholderPoster,
+                            onTitleClicked = onTitleClicked
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        //#endregion
+
+                        //#region POPULAR TITLES
+                        SectionHeadlineWithSeeAll(
+                            label = stringResource(id = R.string.home_popular_label),
+                            onSeeAllClicked = { /* TODO: Navigate to full list screen */ }
+                        )
+                        TitleItemsLazyRow(
+                            titleItemsFull = uiState.popularItems,
                             placeholderPoster = placeholderPoster,
                             onTitleClicked = onTitleClicked
                         )

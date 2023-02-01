@@ -15,7 +15,7 @@ The app should always be launchable and working in the *main* branch, but this i
 		- [x]	Add Trending TV + Movies. :heavy_check_mark: (2023.01.31)
 		- [ ]	Add Upcoming Movies
 		- [ ]	Add Top Rated Movies
-		- [ ]	Add Popular Movies + TV
+		- [x]	Add Popular Movies + TV. :heavy_check_mark: (2023.02.01)
 	- [ ]	Discover screen:
 		- [ ]	Add Filter (Genres, Years, Score, Movie/TV)
 		- [ ]	Add pre-search content: e.g. recent searches, popular by genre etc. Content still TBD
