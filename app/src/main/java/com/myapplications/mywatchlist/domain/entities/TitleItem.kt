@@ -23,6 +23,7 @@ data class TitleItemFull(
     override val type: TitleType,
     override val mediaId: Long,
     override val overview: String?,  // A Title can possibly not have an overview text
+    val popularity: Double?,
     override val posterLink: String?,// A Title can possibly not have a poster associated with it
     val genres: List<Genre>,
     override val releaseDate: LocalDate?,

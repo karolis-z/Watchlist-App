@@ -10,7 +10,7 @@ import com.myapplications.mywatchlist.domain.entities.TitleItemFull
  * Converts a [TitleItemApiModel] to [TitleItemFull]
  * @param allGenres a list of [Genre] from the database to map the genre ids received from api.
  */
-fun TitleItemApiModel.toTitleItem(
+fun TitleItemApiModel.toTitleItemFull(
     allGenres: List<Genre>,
     apiConfiguration: ApiConfiguration
 ): TitleItemFull {
@@ -21,6 +21,7 @@ fun TitleItemApiModel.toTitleItem(
         type = this.type.toTitleType(),
         mediaId = this.mediaId,
         overview = this.overview,
+        popularity = this.popularity,
         posterLink = apiConfiguration.baseImageUrl +
                 apiConfiguration.posterDefaultSize + this.posterLinkEnding,
         genres = allGenres.filter { it.id in setOfGenreIds },
@@ -35,11 +36,11 @@ fun TitleItemApiModel.toTitleItem(
  * Converts a list of [TitleItemApiModel] to a list of [TitleItemFull]
  * @param allGenres a list of [Genre] from the database to map the genre ids received from api.
  */
-fun List<TitleItemApiModel>.toTitleItems(
+fun List<TitleItemApiModel>.toTitleItemsFull(
     allGenres: List<Genre>,
     apiConfiguration: ApiConfiguration
 ): List<TitleItemFull> {
-    return this.map { it.toTitleItem(allGenres, apiConfiguration) }
+    return this.map { it.toTitleItemFull(allGenres, apiConfiguration) }
 }
 
 /**
@@ -51,6 +52,7 @@ fun TitleItemFull.toTitleItemEntity(): TitleItemEntity {
         type = this.type,
         mediaId = this.mediaId,
         overview = this.overview,
+        popularity = this.popularity,
         posterLink = this.posterLink,
         releaseDate = this.releaseDate,
         voteCount = this.voteCount,

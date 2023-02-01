@@ -19,6 +19,7 @@ fun TvApiModel.toTv(allGenres: List<Genre>, apiConfiguration: ApiConfiguration):
         id = this.id,
         name = this.name,
         overview = this.overview,
+        popularity = this.popularity,
         tagline = this.tagline,
         posterLink = apiConfiguration.baseImageUrl
                 + apiConfiguration.posterDefaultSize + this.posterLinkEnding,
@@ -58,13 +59,14 @@ fun List<TvApiModel>.toTvList(
 /**
  * Converts a [TV] to a [TitleItemFull]
  */
-fun TV.toTitleItem(): TitleItemFull {
+fun TV.toTitleItemFull(): TitleItemFull {
     return TitleItemFull(
         id = 0,
         name = this.name,
         type = TitleType.TV,
         mediaId = this.id,
         overview = this.overview,
+        popularity = this.popularity,
         posterLink = this.posterLink,
         genres = this.genres,
         releaseDate = this.releaseDate,
@@ -82,6 +84,7 @@ fun TV.toTvEntity(): TvEntity {
         id = this.id,
         name = this.name,
         overview = this.overview,
+        popularity = this.popularity,
         tagline = this.tagline,
         posterLink = this.posterLink,
         backdropLink = this.backdropLink,
@@ -105,6 +108,7 @@ fun TvEntityFull.toTv(): TV {
         id = this.tv.id,
         name = this.tv.name,
         overview = this.tv.overview,
+        popularity = this.tv.popularity,
         tagline = this.tv.tagline,
         posterLink = this.tv.posterLink,
         backdropLink = this.tv.backdropLink,

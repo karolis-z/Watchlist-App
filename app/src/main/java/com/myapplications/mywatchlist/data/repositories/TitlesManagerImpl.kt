@@ -2,7 +2,7 @@ package com.myapplications.mywatchlist.data.repositories
 
 import android.util.Log
 import com.myapplications.mywatchlist.core.di.IoDispatcher
-import com.myapplications.mywatchlist.data.mappers.toTitleItem
+import com.myapplications.mywatchlist.data.mappers.toTitleItemFull
 import com.myapplications.mywatchlist.domain.entities.*
 import com.myapplications.mywatchlist.domain.repositories.DetailsRepository
 import com.myapplications.mywatchlist.domain.repositories.TitleItemsRepository
@@ -80,6 +80,10 @@ class TitlesManagerImpl @Inject constructor(
         titleItemsRepository.getTrendingTitles()
     }
 
+    override suspend fun getPopularTitles(): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        titleItemsRepository.getPopularTitles()
+    }
+
     override suspend fun getTitle(mediaId: Long, type: TitleType): ResultOf<Title> =
         withContext(dispatcher) {
             detailsRepository.getTitle(mediaId = mediaId, type = type)
@@ -88,16 +92,16 @@ class TitlesManagerImpl @Inject constructor(
     override suspend fun bookmarkTitle(title: Title) = withContext(dispatcher) {
         detailsRepository.bookmarkTitle(title)
         when (title) {
-            is Movie -> titleItemsRepository.bookmarkTitleItem(title.toTitleItem())
-            is TV -> titleItemsRepository.bookmarkTitleItem(title.toTitleItem())
+            is Movie -> titleItemsRepository.bookmarkTitleItem(title.toTitleItemFull())
+            is TV -> titleItemsRepository.bookmarkTitleItem(title.toTitleItemFull())
         }
     }
 
     override suspend fun unBookmarkTitle(title: Title) = withContext(dispatcher) {
         detailsRepository.unBookmarkTitle(title)
         when (title) {
-            is Movie -> titleItemsRepository.unBookmarkTitleItem(title.toTitleItem())
-            is TV -> titleItemsRepository.unBookmarkTitleItem(title.toTitleItem())
+            is Movie -> titleItemsRepository.unBookmarkTitleItem(title.toTitleItemFull())
+            is TV -> titleItemsRepository.unBookmarkTitleItem(title.toTitleItemFull())
         }
     }
 }

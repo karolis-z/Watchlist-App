@@ -6,13 +6,14 @@ import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 /**
  * Converts a [TitleItemWithGenres] to a [TitleItemFull]
  */
-fun TitleItemWithGenres.toTitleItem(): TitleItemFull {
+fun TitleItemWithGenres.toTitleItemFull(): TitleItemFull {
     return TitleItemFull(
         id = this.titleItem.id,
         name = this.titleItem.name,
         type = this.titleItem.type,
         mediaId = this.titleItem.mediaId,
         overview = this.titleItem.overview,
+        popularity = this.titleItem.popularity,
         posterLink = this.titleItem.posterLink,
         genres = this.genres,
         releaseDate = this.titleItem.releaseDate,
@@ -25,6 +26,6 @@ fun TitleItemWithGenres.toTitleItem(): TitleItemFull {
 /**
  * Converts a list of [TitleItemWithGenres] to a list of [TitleItemFull]
  */
-fun List<TitleItemWithGenres>.toTitleItems(): List<TitleItemFull> {
-    return this.map { it.toTitleItem() }
+fun List<TitleItemWithGenres>.toTitleItemsFull(): List<TitleItemFull> {
+    return this.map { it.toTitleItemFull() }
 }

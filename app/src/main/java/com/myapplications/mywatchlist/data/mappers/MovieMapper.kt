@@ -20,6 +20,7 @@ fun MovieApiModel.toMovie(allGenres: List<Genre>, apiConfiguration: ApiConfigura
         name = this.name,
         imdbId = this.imdbId,
         overview = this.overview,
+        popularity = this.popularity,
         tagline = this.tagline,
         posterLink = apiConfiguration.baseImageUrl +
                 apiConfiguration.posterDefaultSize + this.posterLinkEnding,
@@ -59,13 +60,14 @@ fun List<MovieApiModel>.toMovies(
 /**
  * Converts a [Movie] to a [TitleItemFull]
  */
-fun Movie.toTitleItem(): TitleItemFull {
+fun Movie.toTitleItemFull(): TitleItemFull {
     return TitleItemFull(
         id = 0,
         name = this.name,
         type = TitleType.MOVIE,
         mediaId = this.id,
         overview = this.overview,
+        popularity = this.popularity,
         posterLink = this.posterLink,
         genres = this.genres,
         releaseDate = this.releaseDate,
@@ -84,6 +86,7 @@ fun Movie.toMovieEntity(): MovieEntity {
         name = this.name,
         imdbId = this.imdbId,
         overview = this.overview,
+        popularity = this.popularity,
         tagline = this.tagline,
         posterLink = this.posterLink,
         backdropLink = this.backdropLink,
@@ -108,6 +111,7 @@ fun MovieEntityFull.toMovie(): Movie {
         name = this.movie.name,
         imdbId = this.movie.imdbId,
         overview = this.movie.overview,
+        popularity = this.movie.popularity,
         tagline = this.movie.tagline,
         posterLink = this.movie.posterLink,
         backdropLink = this.movie.backdropLink,

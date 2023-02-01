@@ -11,6 +11,7 @@ data class MovieEntity(
     val name: String,
     val imdbId: String?,        // A Title can possibly not have an Imdb Id.
     val overview: String?,      // A Title can possibly not have an overview text
+    val popularity: Double?,
     val tagline: String?,       // A Title can possibly not have a tagline text
     val posterLink: String?,    // A Title can possibly not have a poster associated with it
     val backdropLink: String?,  // A Title can possibly not have a backdrop associated with it

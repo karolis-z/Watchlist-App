@@ -20,6 +20,7 @@ data class TitleItemApiModel(
     override val type: TitleTypeApiModel,
     override val mediaId: Long,
     override val overview: String?,
+    val popularity: Double?,
     override val posterLinkEnding: String?,
     val genres: List<Int>,
     override val releaseDate: LocalDate?,

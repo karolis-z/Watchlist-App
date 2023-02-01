@@ -46,7 +46,7 @@ object MyGsonConverter {
             } else {
                 handleAnyRequestReturningListOfTitleItems(
                     mJson = mJson,
-                    requestType = TitleItemsRequest.SEARCH_OR_TRENDING
+                    requestType = TitleItemsRequest.GENERAL_TITLE_ITEMS_FULL
                 )
             }
         }
@@ -104,6 +104,7 @@ object MyGsonConverter {
                         overview = getNullableStringProperty(mJson, "overview").takeIf {
                             it?.isNotEmpty() == true
                         },
+                        popularity = getNullableDoubleProperty(mJson, "popularity"),
                         tagline = getNullableStringProperty(mJson, "tagline").takeIf {
                             it?.isNotEmpty() == true
                         },
@@ -177,6 +178,7 @@ object MyGsonConverter {
                         overview = getNullableStringProperty(mJson, "overview").takeIf {
                             it?.isNotEmpty() == true
                         },
+                        popularity = getNullableDoubleProperty(mJson, "popularity"),
                         tagline = getNullableStringProperty(mJson, "tagline").takeIf {
                             it?.isNotEmpty() == true
                         },
@@ -282,13 +284,8 @@ object MyGsonConverter {
                 try {
                     val resultJson = jsonElement.asJsonObject
                     val mediaType = when (requestType) {
-                        TitleItemsRequest.SEARCH_OR_TRENDING, TitleItemsRequest.RECOMMENDATIONS -> {
-                            val mediaTypeString = resultJson.get("media_type").asString
-                            if (mediaTypeString == "movie" || mediaTypeString == "tv") {
-                                getMediaType(resultJson)
-                            } else {
-                                null
-                            }
+                        TitleItemsRequest.GENERAL_TITLE_ITEMS_FULL, TitleItemsRequest.RECOMMENDATIONS -> {
+                            determineMediaType(resultJson)
                         }
                         TitleItemsRequest.SIMILAR_TV -> TitleTypeApiModel.TV
                         TitleItemsRequest.SIMILAR_MOVIES -> TitleTypeApiModel.MOVIE
@@ -297,13 +294,17 @@ object MyGsonConverter {
                     query where the found item was a Person which we are not handling. */
                     if (mediaType != null) {
                         val titleItem = when (requestType) {
-                            TitleItemsRequest.SEARCH_OR_TRENDING -> {
+                            TitleItemsRequest.GENERAL_TITLE_ITEMS_FULL -> {
                                 TitleItemApiModel(
                                     id = 0,
                                     name = getName(resultJson),
                                     type = mediaType,
                                     mediaId = resultJson.get("id").asLong,
                                     overview = getOverview(resultJson),
+                                    popularity = getNullableDoubleProperty(
+                                        resultJsonObject = resultJson,
+                                        propertyName = "popularity"
+                                    ),
                                     posterLinkEnding = getImageLink(
                                         resultJsonObject = resultJson,
                                         propertyName = "poster_path"
@@ -345,7 +346,7 @@ object MyGsonConverter {
             // If at least 1 result parsing did not fail - returning a non empty SearchApiResponse
             return if (titleItems.isNotEmpty()) {
                 when (requestType) {
-                    TitleItemsRequest.SEARCH_OR_TRENDING -> {
+                    TitleItemsRequest.GENERAL_TITLE_ITEMS_FULL -> {
                         ApiResponse.TitlesListResponse(
                             page = page,
                             titleItems = titleItems.filterIsInstance<TitleItemApiModel>(),
@@ -366,11 +367,38 @@ object MyGsonConverter {
                 }
             } else {
                 when (requestType) {
-                    TitleItemsRequest.SEARCH_OR_TRENDING -> emptyTitleItemsResponse()
+                    TitleItemsRequest.GENERAL_TITLE_ITEMS_FULL -> emptyTitleItemsResponse()
                     TitleItemsRequest.SIMILAR_TV,
                     TitleItemsRequest.SIMILAR_MOVIES,
                     TitleItemsRequest.RECOMMENDATIONS -> emptyTitleItemsMinimalResponse()
                 }
+            }
+        }
+
+        // TODO: Temporary solution to determine media type. But should find a better solution. Using interceptors?
+        /** Determines the [TitleTypeApiModel] or returns null if neither TV nor Movie (e.g. person) */
+        private fun determineMediaType(resultJsonObject: JsonObject): TitleTypeApiModel? {
+            val mediaTypeString = try {
+                resultJsonObject.get("media_type").asString
+            } catch (e: Exception) {
+                /* Checking by existence of 'title' property exist. 'title' exists for Movie,
+                'name' exists for TV */
+                val titleExists = try {
+                    resultJsonObject.get("title").asString
+                    true
+                } catch (e: Exception) {
+                    false
+                }
+                return if (titleExists) {
+                    TitleTypeApiModel.MOVIE
+                } else {
+                    TitleTypeApiModel.TV
+                }
+            }
+            return if (mediaTypeString == "movie" || mediaTypeString == "tv") {
+                getMediaType(resultJsonObject)
+            } else {
+                null
             }
         }
 
@@ -462,9 +490,9 @@ object MyGsonConverter {
             propertyName: String
         ): Int? {
             val jsonObject = resultJsonObject.get(propertyName)
-            Log.d(TAG, "getNullableIntProperty. JsonObject did not have a property " +
-                    "$propertyName and returned null. Json Object: $resultJsonObject")
             return if (jsonObject.isJsonNull) {
+                Log.d(TAG, "getNullableIntProperty. JsonObject did not have a property " +
+                        "$propertyName and returned null. Json Object: $resultJsonObject")
                 null
             } else {
                 jsonObject.asInt
@@ -480,12 +508,30 @@ object MyGsonConverter {
             propertyName: String
         ): Long? {
             val jsonObject = resultJsonObject.get(propertyName)
-            Log.d(TAG, "getNullableIntProperty. JsonObject: $resultJsonObject " +
-                    "did not have a property $propertyName and returned null.")
             return if (jsonObject.isJsonNull) {
+                Log.d(TAG, "getNullableLongProperty. JsonObject: $resultJsonObject " +
+                        "did not have a property $propertyName and returned null.")
                 null
             } else {
                 jsonObject.asLong
+            }
+        }
+
+        /**
+         * Returns an [Double] value from provided [resultJsonObject]'s [propertyName]
+         * or null if not found.
+         */
+        private fun getNullableDoubleProperty(
+            resultJsonObject: JsonObject,
+            propertyName: String
+        ): Double? {
+            val jsonObject = resultJsonObject.get(propertyName)
+            return if (jsonObject.isJsonNull) {
+                Log.d(TAG, "getNullableDoubleProperty method could not get property $propertyName" +
+                        " from JsonObject and returned null. JsonObject: $resultJsonObject ")
+                null
+            } else {
+                jsonObject.asDouble
             }
         }
 
@@ -734,7 +780,7 @@ object MyGsonConverter {
 }
 
 enum class TitleItemsRequest {
-    SEARCH_OR_TRENDING,
+    GENERAL_TITLE_ITEMS_FULL,
     SIMILAR_TV,
     SIMILAR_MOVIES,
     RECOMMENDATIONS

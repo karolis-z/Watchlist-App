@@ -9,6 +9,7 @@ data class TvApiModel(
     val id: Long,               //This represents the mediaId (could match Id of TV)
     val name: String,
     val overview: String?,      // A Title can possibly not have an overview text
+    val popularity: Double?,
     val tagline: String?,       // A Title can possibly not have a tagline text
     val posterLinkEnding: String?,    // A Title can possibly not have a poster associated with it
     val backdropLinkEnding: String?,  // A Title can possibly not have a backdrop associated with it

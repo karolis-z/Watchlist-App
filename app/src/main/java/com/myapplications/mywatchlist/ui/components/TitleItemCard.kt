@@ -219,6 +219,7 @@ fun TitleItemCardPreview() {
             type = TitleType.MOVIE,
             mediaId = 0,
             overview = "Plagued by strange memories, Neo's life takes an unexpected turn when he finds himself back inside the Matrix",
+            popularity = null,
             posterLink = null,
             genres = listOf(Genre(0, "Action"), Genre(1, "Science Fiction"), Genre(2, "Adventure")),
             releaseDate = LocalDate.now(),

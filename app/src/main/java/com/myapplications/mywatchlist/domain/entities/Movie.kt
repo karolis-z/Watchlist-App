@@ -7,6 +7,7 @@ data class Movie(
     override val name: String,
     val imdbId: String?,        // A Title can possibly not have an Imdb Id.
     override val overview: String?,      // A Title can possibly not have an overview text
+    override val popularity: Double?,
     override val tagline: String?,       // A Title can possibly not have a tagline text
     override val posterLink: String?,    // A Title can possibly not have a poster associated with it
     override val backdropLink: String?,  // A Title can possibly not have a backdrop associated with it

@@ -6,6 +6,7 @@ interface Title {
     val id: Long
     val name: String
     val overview: String?
+    val popularity: Double?
     val tagline: String?
     val posterLink: String?
     val backdropLink: String?

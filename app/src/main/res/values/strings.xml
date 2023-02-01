@@ -24,6 +24,7 @@
     <!-- HOME SCREEN -->
     <string name="home_no_data">No data available…</string>
     <string name="home_trending_label">Trending</string>
+    <string name="home_popular_label">Popular</string>
 
     <!-- DETAILS SCREEN -->
     <string name="details_summary_label">Summary</string>
