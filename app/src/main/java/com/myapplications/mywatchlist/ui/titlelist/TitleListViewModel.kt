@@ -9,6 +9,7 @@ import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 import com.myapplications.mywatchlist.domain.repositories.TitlesManager
 import com.myapplications.mywatchlist.domain.result.ResultOf
 import com.myapplications.mywatchlist.ui.NavigationArgument
+import com.myapplications.mywatchlist.ui.entities.TitleListType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -107,11 +108,4 @@ class TitleListViewModel @Inject constructor(
     fun retryGetData(){
         getTitleList()
     }
-}
-
-enum class TitleListType {
-    Trending,
-    Popular,
-    TopRated,
-    UpcomingMovies
 }

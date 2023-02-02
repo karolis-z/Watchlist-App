@@ -9,9 +9,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Bookmarks
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Bookmarks
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material3.*
@@ -34,8 +32,10 @@ import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.myapplications.mywatchlist.R
 import com.myapplications.mywatchlist.ui.details.DetailsScreen
 import com.myapplications.mywatchlist.ui.discover.DiscoverScreen
+import com.myapplications.mywatchlist.ui.entities.TitleListType
 import com.myapplications.mywatchlist.ui.home.HomeScreen
 import com.myapplications.mywatchlist.ui.theme.MyWatchlistTheme
+import com.myapplications.mywatchlist.ui.titlelist.TitleListScreen
 import com.myapplications.mywatchlist.ui.watchlist.WatchlistScreen
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -49,11 +49,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val topLevelScreens = listOf(TopLevelScreens.Home, TopLevelScreens.Discover, TopLevelScreens.Watchlist)
-        val allTopLevelScreens = listOf(TopLevelScreens.Home, TopLevelScreens.Discover, TopLevelScreens.Watchlist)
 
         setContent {
 
             val showTopAppBar = rememberSaveable { (mutableStateOf(false)) }
+            val showUpButton = rememberSaveable { (mutableStateOf(false)) }
 
             WindowCompat.setDecorFitsSystemWindows(window, false)
 
@@ -62,13 +62,40 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberAnimatedNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
-                val currentScreenTitleResId =
-                    allTopLevelScreens.find { it.route == currentDestination?.route }?.titleResId
 
-                when(currentDestination?.route?.contains(OtherScreens.Details.route)){
-                    true -> showTopAppBar.value = false
-                    false -> showTopAppBar.value = true
-                    else -> Unit
+                val mTitleListType = remember { mutableStateOf<TitleListType?>(null) }
+
+                // Determined which TopAppBar title to show
+                val topBarTitle =
+                    if (currentDestination?.route?.contains(OtherScreens.Details.route) == true) {
+                        ""
+                    } else if (currentDestination?.route?.contains(OtherScreens.TitleList.route) == true) {
+                        when (mTitleListType.value) {
+                            TitleListType.Trending ->
+                                stringResource(id = R.string.titlelist_screen_title_trending)
+                            TitleListType.Popular ->
+                                stringResource(id = R.string.titlelist_screen_title_popular)
+                            TitleListType.TopRated ->
+                                stringResource(id = R.string.titlelist_screen_title_toprated)
+                            TitleListType.UpcomingMovies ->
+                                stringResource(id = R.string.titlelist_screen_title_upcoming_movies)
+                            null -> ""
+                        }
+                    } else {
+                        val stringResId =
+                            topLevelScreens.find { it.route == currentDestination?.route }?.titleResId
+                        if (stringResId == null) "" else stringResource(id = stringResId)
+                    }
+
+                if (currentDestination?.route?.contains(OtherScreens.Details.route) == true) {
+                    showTopAppBar.value = false
+                    showUpButton.value = false
+                } else if (currentDestination?.route?.contains(OtherScreens.TitleList.route) == true) {
+                    showTopAppBar.value = true
+                    showUpButton.value = true
+                } else {
+                    showTopAppBar.value = true
+                    showUpButton.value = false
                 }
 
                 val placeholderPoster = if (isSystemInDarkTheme()) {
@@ -93,12 +120,10 @@ class MainActivity : ComponentActivity() {
                 Scaffold(
                     topBar = {
                         MyTopAppBar(
-                            title = if (currentScreenTitleResId == null) {
-                                "" // This works also for the Details Screen
-                            } else {
-                                stringResource(currentScreenTitleResId)
-                            },
-                            showTopAppBar = showTopAppBar
+                            title = topBarTitle,
+                            showTopAppBar = showTopAppBar,
+                            showUpButton = showUpButton,
+                            onNavigateUp = { navController.navigateUp() }
                         )
                     },
                     snackbarHost = {
@@ -157,7 +182,14 @@ class MainActivity : ComponentActivity() {
                                 placeholderPoster = placeholderPoster,
                                 onTitleClicked = { title ->
                                     navController.navigate(
-                                        route = OtherScreens.Details.route + "/${title.mediaId}&${title.type.name}"
+                                        route = OtherScreens.Details.route +
+                                                "/${title.mediaId}&${title.type.name}"
+                                    )
+                                },
+                                onSeeAllClicked = { titleListType ->
+                                    mTitleListType.value = titleListType
+                                    navController.navigate(route =
+                                        OtherScreens.TitleList.route + "/${titleListType.name}"
                                     )
                                 },
                                 modifier = Modifier.padding(paddingValues)
@@ -171,7 +203,8 @@ class MainActivity : ComponentActivity() {
                             DiscoverScreen(
                                 placeholderImage = placeholderPoster,
                                 onTitleClicked = { title ->
-                                    navController.navigate(route = OtherScreens.Details.route + "/${title.mediaId}&${title.type.name}")
+                                    navController.navigate(route = OtherScreens.Details.route +
+                                            "/${title.mediaId}&${title.type.name}")
                                 },
                                 modifier = Modifier.padding(paddingValues)
                             )
@@ -184,7 +217,8 @@ class MainActivity : ComponentActivity() {
                             WatchlistScreen(
                                 placeholderImage = placeholderPoster,
                                 onTitleClicked = { title ->
-                                    navController.navigate(route = OtherScreens.Details.route + "/${title.mediaId}&${title.type.name}")
+                                    navController.navigate(route = OtherScreens.Details.route +
+                                            "/${title.mediaId}&${title.type.name}")
                                 },
                                 onShowSnackbar = {
                                     scope.launch { snackbarHostState.showSnackbar(it) }
@@ -221,6 +255,26 @@ class MainActivity : ComponentActivity() {
                                 )
                             )
                         }
+                        composable(
+                            route = OtherScreens.TitleList.route
+                                    + "/{${NavigationArgument.TITLE_LIST_TYPE.value}}",
+                            arguments = listOf(
+                                navArgument(NavigationArgument.TITLE_LIST_TYPE.value) {
+                                    type = NavType.StringType
+                                }
+                            ),
+                            enterTransition = { EnterTransition.None },
+                            exitTransition = { ExitTransition.None }
+                        ) {
+                            TitleListScreen(
+                                placeholderPoster = placeholderPoster,
+                                onTitleClicked = { title ->
+                                    navController.navigate(route = OtherScreens.Details.route +
+                                            "/${title.mediaId}&${title.type.name}")
+                                },
+                                modifier = Modifier.padding(paddingValues)
+                            )
+                        }
                     }
                 }
             }
@@ -233,11 +287,23 @@ class MainActivity : ComponentActivity() {
 fun MyTopAppBar(
     title: String,
     showTopAppBar: MutableState<Boolean>,
+    showUpButton: MutableState<Boolean>,
+    onNavigateUp: () -> Unit,
     modifier: Modifier = Modifier
 ){
     if (showTopAppBar.value) {
         TopAppBar(
             title = { Text(text = title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+            navigationIcon = {
+                if (showUpButton.value) {
+                    IconButton(onClick = onNavigateUp) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = stringResource(id = R.string.cd_back_arrow)
+                        )
+                    }
+                }
+            },
             modifier = modifier
         )
     } else {
@@ -280,9 +346,11 @@ sealed class TopLevelScreens(
 
 sealed class OtherScreens(val route: String) {
     object Details : OtherScreens(route = "details")
+    object TitleList : OtherScreens(route = "title_list")
 }
 
 enum class NavigationArgument(val value: String) {
     MEDIA_ID("mediaId"),
-    TITLE_TYPE("titleType")
+    TITLE_TYPE("titleType"),
+    TITLE_LIST_TYPE("titleListType")
 }

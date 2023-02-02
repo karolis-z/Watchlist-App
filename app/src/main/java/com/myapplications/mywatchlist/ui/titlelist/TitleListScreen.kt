@@ -75,7 +75,8 @@ fun TitleListScreen(
                             titleItemsFull = uiState.titleItems,
                             placeholderImage = placeholderPoster,
                             onWatchlistClicked = viewModel::onWatchlistClicked,
-                            onTitleClicked = onTitleClicked
+                            onTitleClicked = onTitleClicked,
+                            contentPadding = PaddingValues(vertical = 10.dp)
                         )
                     }
                 }

@@ -19,11 +19,13 @@ import com.myapplications.mywatchlist.ui.components.ErrorText
 import com.myapplications.mywatchlist.ui.components.LoadingCircle
 import com.myapplications.mywatchlist.ui.components.SectionHeadlineWithSeeAll
 import com.myapplications.mywatchlist.ui.components.TitleItemsLazyRow
+import com.myapplications.mywatchlist.ui.entities.TitleListType
 
 @Composable
 fun HomeScreen(
     placeholderPoster: Painter,
     onTitleClicked: (TitleItemFull) -> Unit,
+    onSeeAllClicked: (TitleListType) -> Unit,
     modifier: Modifier
 ) {
     val viewModel = hiltViewModel<HomeViewModel>()
@@ -80,7 +82,7 @@ fun HomeScreen(
                         //#region TRENDING TITLES
                         SectionHeadlineWithSeeAll(
                             label = stringResource(id = R.string.home_trending_label),
-                            onSeeAllClicked = { /* TODO: Navigate to full list screen */ }
+                            onSeeAllClicked = { onSeeAllClicked(TitleListType.Trending) }
                         )
                         TitleItemsLazyRow(
                             titleItemsFull = uiState.trendingItems,
@@ -93,7 +95,7 @@ fun HomeScreen(
                         //#region POPULAR TITLES
                         SectionHeadlineWithSeeAll(
                             label = stringResource(id = R.string.home_popular_label),
-                            onSeeAllClicked = { /* TODO: Navigate to full list screen */ }
+                            onSeeAllClicked = { onSeeAllClicked(TitleListType.Popular) }
                         )
                         TitleItemsLazyRow(
                             titleItemsFull = uiState.popularItems,
@@ -106,7 +108,7 @@ fun HomeScreen(
                         //#region UPCOMING MOVIES
                         SectionHeadlineWithSeeAll(
                             label = stringResource(id = R.string.home_upcoming_label),
-                            onSeeAllClicked = { /* TODO: Navigate to full list screen */ }
+                            onSeeAllClicked = { onSeeAllClicked(TitleListType.UpcomingMovies) }
                         )
                         TitleItemsLazyRow(
                             titleItemsFull = uiState.upcomingItems,
@@ -119,7 +121,7 @@ fun HomeScreen(
                         //#region TOPRATED TITLES
                         SectionHeadlineWithSeeAll(
                             label = stringResource(id = R.string.home_top_rated_label),
-                            onSeeAllClicked = { /* TODO: Navigate to full list screen */ }
+                            onSeeAllClicked = { onSeeAllClicked(TitleListType.TopRated) }
                         )
                         TitleItemsLazyRow(
                             titleItemsFull = uiState.topRatedItems,
