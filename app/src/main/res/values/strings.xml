@@ -5,7 +5,6 @@
     <string name="title_home">Home</string>
     <string name="title_discover">Discover</string>
     <string name="title_watchlist">Watchlist</string>
-    <string name="title_details">Details</string>
 
     <!-- TITLE LIST ITEM -->
     <string name="title_item_vote_score">%s / 10</string>
@@ -27,6 +26,13 @@
     <string name="home_popular_label">Popular</string>
     <string name="home_top_rated_label">Top Rated</string>
     <string name="home_upcoming_label">Upcoming Movies</string>
+
+    <!-- TITLE LIST SCREEN-->
+    <string name="titlelist_screen_title_trending">Trending Movies &amp; TV</string>
+    <string name="titlelist_screen_title_popular">Popular Movies &amp; TV</string>
+    <string name="titlelist_screen_title_upcoming_movies">Upcoming Movies</string>
+    <string name="titlelist_screen_title_toprated">Top Rated Movies &amp; TV</string>
+    <string name="titlelist_no_data">No data available…</string>
 
     <!-- DETAILS SCREEN -->
     <string name="details_summary_label">Summary</string>

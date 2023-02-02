@@ -21,8 +21,8 @@ The app should always be launchable and working in the *main* branch, but this i
 		- [ ]	Add pre-search content: e.g. recent searches, popular by genre etc. Content still TBD
 	- [ ]	Watchlist Screen: 
 		- [ ]	Add Filter (Genres, Years, Score, Movie/TV)
-	- [ ]	Title List Screen:
-		- [ ]	Prepare screen for viewing full any type of list. 
+	- [x]	Title List Screen: :heavy_check_mark: (2023.02.02)
+		- [x]	Prepare screen for viewing full any type of list. :heavy_check_mark: (2023.02.02)
 	- [ ]	Details Screen:
 		- [x] 	Add Videos section. :heavy_check_mark: (2023.01.27) 
 		- [x]	Add Recommended Movies section. :heavy_check_mark: (2023.01.31)
