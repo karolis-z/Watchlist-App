@@ -119,12 +119,13 @@ class MainActivity : ComponentActivity() {
 
                 Scaffold(
                     topBar = {
-                        MyTopAppBar(
-                            title = topBarTitle,
-                            showTopAppBar = showTopAppBar,
-                            showUpButton = showUpButton,
-                            onNavigateUp = { navController.navigateUp() }
-                        )
+                        if (showTopAppBar.value) {
+                            MyTopAppBar(
+                                title = topBarTitle,
+                                showUpButton = showUpButton.value,
+                                onNavigateUp = { navController.navigateUp() }
+                            )
+                        }
                     },
                     snackbarHost = {
                         SnackbarHost(snackbarHostState)
@@ -286,29 +287,24 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MyTopAppBar(
     title: String,
-    showTopAppBar: MutableState<Boolean>,
-    showUpButton: MutableState<Boolean>,
+    showUpButton: Boolean,
     onNavigateUp: () -> Unit,
     modifier: Modifier = Modifier
-){
-    if (showTopAppBar.value) {
-        TopAppBar(
-            title = { Text(text = title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-            navigationIcon = {
-                if (showUpButton.value) {
-                    IconButton(onClick = onNavigateUp) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = stringResource(id = R.string.cd_back_arrow)
-                        )
-                    }
+) {
+    TopAppBar(
+        title = { Text(text = title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        navigationIcon = {
+            if (showUpButton) {
+                IconButton(onClick = onNavigateUp) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = stringResource(id = R.string.cd_back_arrow)
+                    )
                 }
-            },
-            modifier = modifier
-        )
-    } else {
-        return
-    }
+            }
+        },
+        modifier = modifier
+    )
 }
 
 // TODO: Consider to add required icons as drawables to avoid the heavy extended icons library

@@ -152,12 +152,36 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
         }
 
         // Returning the parsed result
-        return@withContext parseTitleItemsFullApiResponse(
+        val parsedResult = parseTitleItemsFullApiResponse(
             /* Filtering not null to not have an error, but we already checked for null in the
             loop above and if the method reached this point, all responseBodies will be non-null */
             responseBodies = responseBodies.filterNotNull(),
             allGenres = allGenres
         )
+        return@withContext when (parsedResult) {
+            is ResultOf.Failure -> parsedResult
+            is ResultOf.Success -> {
+                when (requestType) {
+                    TitleItemsRequestType.PopularMoviesAndTV -> parsedResult.copy(
+                        data = parsedResult.data.sortedByDescending { it.popularity }
+                    )
+                    /* Sorting top rated by voteAverage but also by vote count to list titles higher
+                    with same vote average but higher vote count */
+                    TitleItemsRequestType.TopRatedMoviesAndTV -> parsedResult.copy(
+                        data = parsedResult.data.sortedWith(
+                            compareBy(
+                                { -it.voteAverage },
+                                { -it.voteCount })
+                        )
+                    )
+                    is TitleItemsRequestType.SearchQuery,
+                    TitleItemsRequestType.TrendingMoviesAndTV,
+                    TitleItemsRequestType.UpcomingMovies -> parsedResult.copy(
+                        data = parsedResult.data.sortedBy { it.releaseDate }
+                    )
+                }
+            }
+        }
     }
 
     /**

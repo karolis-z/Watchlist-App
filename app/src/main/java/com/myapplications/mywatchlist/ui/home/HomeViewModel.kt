@@ -52,9 +52,9 @@ class HomeViewModel @Inject constructor(
         } else {
             HomeUiState.Ready(
                 trendingItems = (trending as TitleItemsState.Ready).titleItems,
-                popularItems = (popular as TitleItemsState.Ready).titleItems.sortedBy { it.popularity },
-                upcomingItems = (upcoming as TitleItemsState.Ready).titleItems.sortedBy { it.releaseDate },
-                topRatedItems = (topRated as TitleItemsState.Ready).titleItems .sortedByDescending { it.voteAverage }
+                popularItems = (popular as TitleItemsState.Ready).titleItems,
+                upcomingItems = (upcoming as TitleItemsState.Ready).titleItems,
+                topRatedItems = (topRated as TitleItemsState.Ready).titleItems
             )
         }
     }.stateIn(
