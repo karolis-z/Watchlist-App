@@ -5,7 +5,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.myapplications.mywatchlist.data.ApiGetDetailsException
+import com.myapplications.mywatchlist.domain.entities.Genre
 import com.myapplications.mywatchlist.domain.entities.TitleItemFull
+import com.myapplications.mywatchlist.domain.repositories.GenresRepository
 import com.myapplications.mywatchlist.domain.repositories.TitlesManager
 import com.myapplications.mywatchlist.domain.result.ResultOf
 import com.myapplications.mywatchlist.ui.NavigationArgument
@@ -22,13 +24,14 @@ private const val TAG = "TITLE_LIST_VIEWMODEL"
 @HiltViewModel
 class TitleListViewModel @Inject constructor(
     private val titlesManager: TitlesManager,
+    private val genresRepository: GenresRepository,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
 
     private val titleListState: MutableStateFlow<TitleListUiState> =
         MutableStateFlow(TitleListUiState.Loading)
-    private val filterState: MutableStateFlow<TitleListFilter> = MutableStateFlow(TitleListFilter())
+    val filterState: MutableStateFlow<TitleListFilter> = MutableStateFlow(TitleListFilter())
 
     val uiState: StateFlow<TitleListUiState> =
         combine(titleListState, filterState) { titleListState, filter ->
@@ -51,10 +54,14 @@ class TitleListViewModel @Inject constructor(
         )
 
     private var titleListType: TitleListType? = null
+    private var allGenres: List<Genre>? = null
 
     init {
         getTitleListType()
         getTitleList()
+        viewModelScope.launch {
+            allGenres = genresRepository.getAvailableGenres()
+        }
     }
 
     private fun applyFilter(
@@ -180,6 +187,20 @@ class TitleListViewModel @Inject constructor(
                 titlesManager.bookmarkTitleItem(title)
             }
         }
+    }
+
+    /**
+     * Returns a list of all available [Genre]s for both TV and Movies
+     */
+    fun getAllGenres(): List<Genre> {
+        return allGenres ?: emptyList()
+    }
+
+    /**
+     * Updates the [filterState] with newly selected filter.
+     */
+    fun setFilter(filter: TitleListFilter) {
+        filterState.update { filter }
     }
 
     fun retryGetData(){

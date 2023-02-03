@@ -18,13 +18,13 @@ import com.myapplications.mywatchlist.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FilterChipGroup(
-    onFilterSelected: (TitleListFilter) -> Unit,
+    onFilterSelected: (TitleTypeFilter) -> Unit,
     modifier: Modifier = Modifier,
     horizontalArrangement: Arrangement.Horizontal = Arrangement.spacedBy(5.dp),
-    filter: TitleListFilter = TitleListFilter.All
+    filter: TitleTypeFilter = TitleTypeFilter.All
 ) {
 
-    val filters = TitleListFilter.values().toList()
+    val filters = TitleTypeFilter.values().toList()
     var selected by remember { mutableStateOf(filters.indexOf(filter)) }
 
     Row(
@@ -60,15 +60,15 @@ fun FilterChipGroup(
 }
 
 @Composable
-fun getFilterLabel(titleFilter: TitleListFilter): String {
+fun getFilterLabel(titleFilter: TitleTypeFilter): String {
     return when(titleFilter){
-        TitleListFilter.All -> stringResource(id = R.string.filter_all)
-        TitleListFilter.Movies -> stringResource(id = R.string.filter_movies)
-        TitleListFilter.TV -> stringResource(id = R.string.filter_tv)
+        TitleTypeFilter.All -> stringResource(id = R.string.filter_all)
+        TitleTypeFilter.Movies -> stringResource(id = R.string.filter_movies)
+        TitleTypeFilter.TV -> stringResource(id = R.string.filter_tv)
     }
 }
 
-enum class TitleListFilter {
+enum class TitleTypeFilter {
     All,
     Movies,
     TV
