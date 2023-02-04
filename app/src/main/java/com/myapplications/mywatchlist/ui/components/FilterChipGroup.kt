@@ -2,10 +2,9 @@ package com.myapplications.mywatchlist.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.size
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.*
@@ -34,11 +33,20 @@ fun FilterChipGroup(
     ) {
         filters.forEach { titleTypeFilter ->
             FilterChip(
-                label = { Text(text = getFilterLabel(titleTypeFilter = titleTypeFilter)) },
+                label = {
+                    Text(
+                        text = getFilterLabel(titleTypeFilter = titleTypeFilter),
+                        modifier = Modifier.padding(bottom = 2.dp)
+                    )
+                },
                 selected = titleTypeFilter == filter,
                 onClick = { onFilterSelected(titleTypeFilter) },
                 leadingIcon = {
-                    AnimatedVisibility(visible = titleTypeFilter == filter) {
+                    AnimatedVisibility(
+                        visible = titleTypeFilter == filter,
+                        enter = expandHorizontally(expandFrom = Alignment.End),
+                        exit = shrinkHorizontally(shrinkTowards = Alignment.End)
+                    ) {
                         Icon(
                             imageVector = Icons.Filled.Done,
                             contentDescription = stringResource(
@@ -57,7 +65,7 @@ fun FilterChipGroup(
 
 @Composable
 fun getFilterLabel(titleTypeFilter: TitleTypeFilter): String {
-    return when(titleTypeFilter){
+    return when (titleTypeFilter) {
         TitleTypeFilter.All -> stringResource(id = R.string.filter_all)
         TitleTypeFilter.Movies -> stringResource(id = R.string.filter_movies)
         TitleTypeFilter.TV -> stringResource(id = R.string.filter_tv)

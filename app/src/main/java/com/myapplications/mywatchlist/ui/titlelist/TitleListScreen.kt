@@ -248,7 +248,10 @@ fun FilterSection(
             ) {
                 allGenres.forEach { genre ->
                     FilterChip(
-                        label = { Text(text = genre.name) },
+                        label = { Text(
+                            text = genre.name,
+                            modifier = Modifier.padding(bottom = 2.dp)
+                        ) },
                         selected = selectedGenres.contains(genre),
                         onClick = {
                             if (selectedGenres.contains(genre)) {
@@ -259,7 +262,7 @@ fun FilterSection(
                         },
                         modifier = Modifier
                             .animateContentSize()
-                            .padding(horizontal = 3.dp)
+                            .padding(horizontal = 3.dp),
                     )
                 }
             }
