@@ -40,7 +40,7 @@ class TitleListViewModel @Inject constructor(
                 TitleListUiState.Loading -> titleListState
                 is TitleListUiState.Ready -> {
                     TitleListUiState.Ready(
-                        titleItems = applyFilter(
+                        titleItems = filterTitles(
                             titles = titleListState.titleItems,
                             filter = filter
                         )
@@ -60,60 +60,62 @@ class TitleListViewModel @Inject constructor(
         getTitleListType()
         getTitleList()
         viewModelScope.launch {
-            allGenres = genresRepository.getAvailableGenres()
+            allGenres = genresRepository.getAvailableGenres().sortedBy { it.name }
         }
     }
 
-    private fun applyFilter(
+    /**
+     * Filters the given list of [TitleItemFull] by given [TitleListFilter]
+     */
+    private fun filterTitles(
         titles: List<TitleItemFull>,
         filter: TitleListFilter
     ): List<TitleItemFull> {
-        var titlesList = titles.apply {
-            // Apply TitleType filter
-            if (filter.titleType != null) this.filter { it.type == filter.titleType }
-            // Apply score range filter
-            if (filter.scoreRange != Pair(0, 10)) this.filter {
+
+        var titlesList = titles
+
+        // Apply TitleType filer
+        if (filter.titleType != null) {
+            titlesList = titlesList.filter { it.type == filter.titleType }
+        }
+
+        // Apply score range filter
+        if (filter.scoreRange != Pair(0, 10)) {
+            titlesList = titlesList.filter {
                 (it.voteAverage >= filter.scoreRange.first) &&
-                        (it.voteAverage <= filter.scoreRange.second)
+                (it.voteAverage <= filter.scoreRange.second)
             }
         }
+
         // Apply years range filter
         if (filter.yearsRange != Pair(1900, LocalDate.now().year)) {
-            val showFutureTitles = filter.scoreRange.second == LocalDate.now().year
-
+            val showFutureTitles = filter.yearsRange.second == LocalDate.now().year
             val titlesWithNoReleaseDate = titlesList.filter { it.releaseDate == null }
-            val titlesWithReleaseDate = if (titlesWithNoReleaseDate.isNotEmpty()) {
+            var titlesWithReleaseDate = if (titlesWithNoReleaseDate.isNotEmpty()) {
                 titlesList.minus(titlesWithNoReleaseDate.toSet())
             } else {
                 titlesList
-            }.filter {
+            }
+            titlesWithReleaseDate = titlesWithReleaseDate.filter {
                 /* Non-null assertion here because we already filtered out items with
                 null release date */
                 if (showFutureTitles) {
-                    it.releaseDate!!.year >= filter.scoreRange.first
+                    it.releaseDate!!.year >= filter.yearsRange.first
                 } else {
-                    (it.releaseDate!!.year >= filter.scoreRange.first) &&
-                            (it.releaseDate.year <= filter.scoreRange.second)
+                    (it.releaseDate!!.year >= filter.yearsRange.first) &&
+                    (it.releaseDate.year <= filter.yearsRange.second)
                 }
             }
             titlesList = titlesWithReleaseDate + titlesWithNoReleaseDate
         }
 
-        // TODO: Test this filter
-        // titlesList = titlesList.filter { title -> filter.genres.any { genre -> title.genres.contains(genre) }}
-
+        // Apply genres filter
         if (filter.genres.isNotEmpty()) {
-            val filteredTitles = mutableListOf<TitleItemFull>()
-            titlesList.forEach outer@{ title ->
-                title.genres.forEach inner@{ genre ->
-                    if (filter.genres.contains(genre)) {
-                        filteredTitles.add(title)
-                        return@outer
-                    }
-                }
+            titlesList = titlesList.filter { title ->
+                title.genres.any { filter.genres.contains(it) }
             }
-            titlesList = filteredTitles
         }
+
         return titlesList
     }
 
