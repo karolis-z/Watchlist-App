@@ -33,6 +33,13 @@
     <string name="titlelist_screen_title_upcoming_movies">Upcoming Movies</string>
     <string name="titlelist_screen_title_toprated">Top Rated Movies &amp; TV</string>
     <string name="titlelist_no_data">No data available…</string>
+    <string name="titlelist_filter_button_cancel">Cancel</string>
+    <string name="titlelist_filter_button_apply">Apply Filter</string>
+    <string name="titlelist_filter_button_clear">Clear Filter</string>
+    <string name="titlelist_filter_label_genres">Genres</string>
+    <string name="titlelist_filter_label_score">Score</string>
+    <string name="titlelist_filter_label_release_year">Release Year</string>
+    <string name="titlelist_filter_label_type">Type</string>
 
     <!-- DETAILS SCREEN -->
     <string name="details_summary_label">Summary</string>
@@ -104,6 +111,7 @@
     <!-- CONTENT DESCRIPTIONS -->
     <string name="cd_home_icon">Home</string>
     <string name="cd_discover_icon">Discover</string>
+    <string name="cd_filter_icon">Filter</string>
     <string name="cd_watchlist_icon">Watchlist</string>
     <string name="cd_clear_field">Clear Field</string>
     <string name="cd_watchlist_button_watchlist">Put title in watchlist</string>

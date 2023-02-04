@@ -1,24 +1,33 @@
 package com.myapplications.mywatchlist.ui.titlelist
 
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.*
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.myapplications.mywatchlist.R
+import com.myapplications.mywatchlist.core.util.extensions.isScrollingUp
 import com.myapplications.mywatchlist.domain.entities.Genre
 import com.myapplications.mywatchlist.domain.entities.TitleItemFull
-import com.myapplications.mywatchlist.ui.components.ErrorText
-import com.myapplications.mywatchlist.ui.components.LoadingCircle
-import com.myapplications.mywatchlist.ui.components.TitleItemsList
+import com.myapplications.mywatchlist.domain.entities.TitleType
+import com.myapplications.mywatchlist.ui.components.*
 import com.myapplications.mywatchlist.ui.entities.TitleListFilter
 import kotlin.math.roundToInt
 
@@ -33,75 +42,116 @@ fun TitleListScreen(
     val titleListUiState by viewModel.uiState.collectAsState()
     val filterState by viewModel.filterState.collectAsState()
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp)
-    )  {
-        Crossfade(targetState = titleListUiState) { uiState ->
-            when (uiState) {
-                TitleListUiState.Loading -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        LoadingCircle()
+    val listState = rememberLazyListState()
+    var showFilter by remember { mutableStateOf(false) }
+
+    Box(
+        modifier = modifier.fillMaxSize()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp)
+        ) {
+            Crossfade(targetState = titleListUiState) { uiState ->
+                when (uiState) {
+                    TitleListUiState.Loading -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            LoadingCircle()
+                        }
                     }
-                }
-                is TitleListUiState.Error -> {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        when (uiState.error) {
-                            TitleListError.NO_INTERNET -> {
-                                ErrorText(
-                                    errorMessage =
+                    is TitleListUiState.Error -> {
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            when (uiState.error) {
+                                TitleListError.NO_INTERNET -> {
+                                    ErrorText(
+                                        errorMessage =
                                         stringResource(id = R.string.error_no_internet_connection),
-                                    onButtonRetryClick = { viewModel.retryGetData() }
-                                )
-                            }
-                            TitleListError.FAILED_API_REQUEST,
-                            TitleListError.UNKNOWN -> {
-                                ErrorText(
-                                    errorMessage =
+                                        onButtonRetryClick = { viewModel.retryGetData() }
+                                    )
+                                }
+                                TitleListError.FAILED_API_REQUEST,
+                                TitleListError.UNKNOWN -> {
+                                    ErrorText(
+                                        errorMessage =
                                         stringResource(id = R.string.error_something_went_wrong),
-                                    onButtonRetryClick = { viewModel.retryGetData() }
-                                )
-                            }
-                            TitleListError.NO_TITLES -> {
-                                ErrorText(
-                                    errorMessage = stringResource(id = R.string.titlelist_no_data)
-                                )
+                                        onButtonRetryClick = { viewModel.retryGetData() }
+                                    )
+                                }
+                                TitleListError.NO_TITLES -> {
+                                    ErrorText(
+                                        errorMessage = stringResource(id = R.string.titlelist_no_data)
+                                    )
+                                }
                             }
                         }
                     }
-                }
-                is TitleListUiState.Ready -> {
-                    Column(modifier = Modifier.fillMaxSize()){
-                        //#region FILTERS SECTION. WILL BE UPDATED WHEN DESIGNED FINISHES THE UI/UX
-                        val defaultFilter = TitleListFilter()
-                        FilterSection(
-                            filter = filterState,
-                            defaultScoreRange = defaultFilter.scoreRange.first.toFloat()..defaultFilter.scoreRange.second.toFloat(),
-                            defaultYearsRange = defaultFilter.yearsRange.first.toFloat()..defaultFilter.yearsRange.second.toFloat(),
-                            allGenres = viewModel.getAllGenres(),
-                            onFilterApplied = viewModel::setFilter
-                        )
-                        //#endregion
+                    is TitleListUiState.Ready -> {
+                        Column(
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            //#region FILTERS SECTION. WILL BE UPDATED WHEN DESIGNED FINISHES THE UI/UX
+                            val defaultFilter = TitleListFilter()
+                            AnimatedVisibility(
+                                visible = showFilter,
+                                enter = expandVertically(
+                                    expandFrom = Alignment.Top,
+                                    animationSpec = tween(
+                                        durationMillis = 300,
+                                        easing = FastOutSlowInEasing
+                                    )
+                                ),
+                                exit = shrinkVertically(
+                                    shrinkTowards = Alignment.Top,
+                                    animationSpec = tween(
+                                        durationMillis = 300,
+                                        easing = LinearOutSlowInEasing
+                                    )
+                                )
+                            ) {
+                                FilterSection(
+                                    filter = filterState,
+                                    defaultScoreRange = defaultFilter.scoreRange.first.toFloat()..defaultFilter.scoreRange.second.toFloat(),
+                                    defaultYearsRange = defaultFilter.yearsRange.first.toFloat()..defaultFilter.yearsRange.second.toFloat(),
+                                    allGenres = viewModel.getAllGenres(),
+                                    onFilterApplied = {
+                                        viewModel.setFilter(it)
+                                        showFilter = false
+                                    },
+                                    onCancelClicked = { showFilter = false }
+                                )
+                            }
+                            //#endregion
 
-
-                        //#region TITLE ITEMS LIST
-                        TitleItemsList(
-                            titleItemsFull = uiState.titleItems,
-                            placeholderImage = placeholderPoster,
-                            onWatchlistClicked = viewModel::onWatchlistClicked,
-                            onTitleClicked = onTitleClicked,
-                            contentPadding = PaddingValues(vertical = 10.dp)
-                        )
-                        //#endregion
+                            //#region TITLE ITEMS LIST
+                            TitleItemsList(
+                                titleItemsFull = uiState.titleItems,
+                                placeholderImage = placeholderPoster,
+                                onWatchlistClicked = viewModel::onWatchlistClicked,
+                                onTitleClicked = onTitleClicked,
+                                contentPadding = PaddingValues(vertical = 10.dp),
+                                state = listState
+                            )
+                            //#endregion
+                        }
                     }
                 }
             }
         }
+        FilterFAB(
+            isFabVisible = listState.isScrollingUp(),
+            onFabClicked = { showFilter = !showFilter },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 20.dp, end = 20.dp)
+        )
     }
 }
 
@@ -113,67 +163,81 @@ fun FilterSection(
     defaultYearsRange: ClosedFloatingPointRange<Float>,
     allGenres: List<Genre>,
     onFilterApplied: (TitleListFilter) -> Unit,
+    onCancelClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-
+    var titleTypeFilterSelected by remember { mutableStateOf(filter.titleType) }
     var scoreRange by remember {
         mutableStateOf(filter.scoreRange.first.toFloat()..filter.scoreRange.second.toFloat())
     }
     var yearsRange by remember {
         mutableStateOf(filter.yearsRange.first.toFloat()..filter.yearsRange.second.toFloat())
     }
-    val selectedGenres = remember { mutableStateListOf<Genre>().apply {
-        addAll(filter.genres)
-    } }
-    val scoreFromText by remember { derivedStateOf { "From: ${scoreRange.start.roundToInt()}" } }
-    val scoreToText by remember { derivedStateOf { "To: ${scoreRange.endInclusive.roundToInt()}" } }
-    val yearFromText by remember { derivedStateOf { "From: ${yearsRange.start.roundToInt()}" } }
-    val yearToText by remember { derivedStateOf { "To: ${yearsRange.endInclusive.roundToInt()}" } }
+    val selectedGenres = remember {
+        mutableStateListOf<Genre>().apply {
+            addAll(filter.genres)
+        }
+    }
+    val scoreRangeText by remember {
+        derivedStateOf {
+            "${scoreRange.start.roundToInt()} - ${scoreRange.endInclusive.roundToInt()}"
+        }
+    }
+    val yearsRangeText by remember {
+        derivedStateOf {
+            "${yearsRange.start.roundToInt()} - ${yearsRange.endInclusive.roundToInt()}"
+        }
+    }
 
     Column(modifier = modifier.fillMaxWidth()) {
-        Spacer(modifier = Modifier.height(10.dp))
 
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
-            Text(text = "Type", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(start = 5.dp, end = 10.dp))
-            // TODO: Add type of title
-        }
+        // Type Filter
+        FilterLabel(label = stringResource(id = R.string.titlelist_filter_label_type))
+        FilterChipGroup(
+            onFilterSelected = { titleTypeFilter ->
+                titleTypeFilterSelected = when (titleTypeFilter) {
+                    TitleTypeFilter.All -> null
+                    TitleTypeFilter.Movies -> TitleType.MOVIE
+                    TitleTypeFilter.TV -> TitleType.TV
+                }
+            },
+            modifier = Modifier,
+            filter = when (titleTypeFilterSelected) {
+                TitleType.MOVIE -> TitleTypeFilter.Movies
+                TitleType.TV -> TitleTypeFilter.TV
+                null -> TitleTypeFilter.All
+            },
+        )
+        FilterSectionDivider()
 
         // Score Slider
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
-            Text(text = "Score", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(start = 5.dp, end = 10.dp))
-            Text(text = scoreFromText, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(end = 10.dp))
-            Text(text = scoreToText, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(end = 10.dp))
-        }
+        FilterLabel(
+            label = stringResource(id = R.string.titlelist_filter_label_score),
+            rangeText = { scoreRangeText }
+        )
         RangeSlider(
             value = scoreRange,
-            onValueChange = {
-                scoreRange = it
-            },
+            onValueChange = { scoreRange = it },
             valueRange = defaultScoreRange,
             modifier = Modifier.fillMaxWidth()
         )
-        Spacer(modifier = Modifier.height(10.dp))
+        FilterSectionDivider()
 
         // Years Slider
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
-            Text(text = "Release Year", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(start = 5.dp, end = 10.dp))
-            Text(text = yearFromText, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(end = 10.dp))
-            Text(text = yearToText, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(end = 10.dp))
-        }
+        FilterLabel(
+            label = stringResource(id = R.string.titlelist_filter_label_release_year),
+            rangeText = { yearsRangeText }
+        )
         RangeSlider(
             value = yearsRange,
-            onValueChange = {
-                yearsRange = it
-            },
+            onValueChange = { yearsRange = it },
             valueRange = defaultYearsRange,
             modifier = Modifier.fillMaxWidth()
         )
-        Spacer(modifier = Modifier.height(10.dp))
-        
+        FilterSectionDivider()
+
         // Genres Flow
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
-            Text(text = "Genres", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(start = 5.dp, end = 10.dp))
-        }
+        FilterLabel(label = stringResource(id = R.string.titlelist_filter_label_genres))
         BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
             FlowRow(
                 modifier = Modifier
@@ -182,8 +246,7 @@ fun FilterSection(
                 maxItemsInEachRow = (allGenres.count() / 3f).roundToInt(),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                allGenres.forEachIndexed { index, genre ->
-                    //val isSelected = selectedGenres.contains(genre)
+                allGenres.forEach { genre ->
                     FilterChip(
                         label = { Text(text = genre.name) },
                         selected = selectedGenres.contains(genre),
@@ -202,16 +265,129 @@ fun FilterSection(
             }
         }
 
-        // Apply Filters button
-        Button(onClick = { onFilterApplied(
-            TitleListFilter(
-                genres = selectedGenres,
-                scoreRange = Pair(scoreRange.start.roundToInt(), scoreRange.endInclusive.roundToInt()),
-                titleType = null,
-                yearsRange = Pair(yearsRange.start.roundToInt(), yearsRange.endInclusive.roundToInt())
+        FilterSectionDivider()
+
+        // Buttons
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+            OutlinedButton(
+                onClick = onCancelClicked,
+                modifier = Modifier.widthIn(min = 60.dp)
+            ) {
+                Text(text = stringResource(id = R.string.titlelist_filter_button_cancel))
+            }
+            FilledTonalButton(
+                onClick = {
+                    scoreRange = defaultScoreRange
+                    yearsRange = defaultYearsRange
+                    selectedGenres.removeAll(selectedGenres)
+                    titleTypeFilterSelected = null
+                },
+                modifier = Modifier.widthIn(min = 60.dp)
+            ) {
+                Text(text = stringResource(id = R.string.titlelist_filter_button_clear))
+            }
+            Button(
+                onClick = {
+                    onFilterApplied(
+                        TitleListFilter(
+                            genres = selectedGenres,
+                            scoreRange = Pair(
+                                scoreRange.start.roundToInt(),
+                                scoreRange.endInclusive.roundToInt()
+                            ),
+                            titleType = titleTypeFilterSelected,
+                            yearsRange = Pair(
+                                yearsRange.start.roundToInt(),
+                                yearsRange.endInclusive.roundToInt()
+                            )
+                        )
+                    )
+                },
+                modifier = Modifier.widthIn(min = 60.dp)
+            ) {
+                Text(text = stringResource(id = R.string.titlelist_filter_button_apply))
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+    }
+}
+
+@Composable
+fun FilterLabel(
+    label: String,
+    modifier: Modifier = Modifier,
+    labelStyle: TextStyle = MaterialTheme.typography.bodyLarge,
+    paddingValues: PaddingValues = PaddingValues(0.dp)
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(paddingValues),
+        verticalAlignment = Alignment.Bottom
+    ) {
+        Text(text = label, style = labelStyle)
+    }
+}
+
+@Composable
+fun FilterLabel(
+    label: String,
+    rangeText: () -> String,
+    modifier: Modifier = Modifier,
+    labelStyle: TextStyle = MaterialTheme.typography.bodyLarge,
+    paddingValues: PaddingValues = PaddingValues(0.dp)
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(paddingValues),
+        verticalAlignment = Alignment.Bottom
+    ) {
+        Text(text = label, style = labelStyle)
+        Spacer(modifier = Modifier.weight(1f))
+        Text(
+            text = rangeText(),
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(0.dp)
+        )
+    }
+}
+
+@Composable
+fun FilterSectionDivider(
+    modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    thickness: Dp = Dp.Hairline,
+    paddingValues: PaddingValues = PaddingValues(vertical = 5.dp)
+) {
+    Divider(modifier = modifier.padding(paddingValues), thickness = thickness, color = color)
+}
+
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+fun FilterFAB(
+    isFabVisible: Boolean,
+    onFabClicked: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    AnimatedVisibility(
+        visible = isFabVisible,
+        modifier = modifier,
+        enter = scaleIn(
+            animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
+            transformOrigin = TransformOrigin(1f, 1f)
+        ),
+        exit = scaleOut(
+            animationSpec = tween(durationMillis = 300, easing = LinearOutSlowInEasing),
+            transformOrigin = TransformOrigin(1f, 1f)
+        )
+    ) {
+        SmallFloatingActionButton(onClick = onFabClicked) {
+            Icon(
+                imageVector = Icons.Default.Tune,
+                contentDescription = stringResource(id = R.string.cd_filter_icon)
             )
-        ) }) {
-            Text(text = "Apply Filter")
         }
     }
 }

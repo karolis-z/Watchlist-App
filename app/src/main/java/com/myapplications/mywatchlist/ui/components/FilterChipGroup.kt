@@ -1,5 +1,6 @@
 package com.myapplications.mywatchlist.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -25,29 +26,24 @@ fun FilterChipGroup(
 ) {
 
     val filters = TitleTypeFilter.values().toList()
-    var selected by remember { mutableStateOf(filters.indexOf(filter)) }
 
     Row(
         horizontalArrangement = horizontalArrangement,
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier.defaultMinSize(minWidth = 30.dp)
     ) {
-        for (index in filters.indices){
-            val isSelected = index == selected
+        filters.forEach { titleTypeFilter ->
             FilterChip(
-                label = { Text(text = getFilterLabel(titleFilter = filters[index])) },
-                selected = isSelected,
-                onClick = {
-                    selected = index
-                    onFilterSelected(filters[index])
-                },
+                label = { Text(text = getFilterLabel(titleTypeFilter = titleTypeFilter)) },
+                selected = titleTypeFilter == filter,
+                onClick = { onFilterSelected(titleTypeFilter) },
                 leadingIcon = {
-                    if (isSelected) {
+                    AnimatedVisibility(visible = titleTypeFilter == filter) {
                         Icon(
                             imageVector = Icons.Filled.Done,
                             contentDescription = stringResource(
                                 id = R.string.cd_selected_filter_chip,
-                                getFilterLabel(titleFilter = filters[index])
+                                getFilterLabel(titleTypeFilter = titleTypeFilter)
                             ),
                             modifier = Modifier.size(FilterChipDefaults.IconSize)
                         )
@@ -60,8 +56,8 @@ fun FilterChipGroup(
 }
 
 @Composable
-fun getFilterLabel(titleFilter: TitleTypeFilter): String {
-    return when(titleFilter){
+fun getFilterLabel(titleTypeFilter: TitleTypeFilter): String {
+    return when(titleTypeFilter){
         TitleTypeFilter.All -> stringResource(id = R.string.filter_all)
         TitleTypeFilter.Movies -> stringResource(id = R.string.filter_movies)
         TitleTypeFilter.TV -> stringResource(id = R.string.filter_tv)
