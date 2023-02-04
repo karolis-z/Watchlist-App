@@ -11,7 +11,7 @@ import com.myapplications.mywatchlist.domain.entities.TitleType
 import com.myapplications.mywatchlist.domain.repositories.GenresRepository
 import com.myapplications.mywatchlist.domain.repositories.TitlesManager
 import com.myapplications.mywatchlist.domain.result.BasicResult
-import com.myapplications.mywatchlist.ui.components.TitleListFilter
+import com.myapplications.mywatchlist.ui.components.TitleTypeFilter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -27,16 +27,16 @@ class WatchlistViewModel @Inject constructor(
     private val workManager: WorkManager
 ): ViewModel() {
 
-    private val titleFilter = MutableStateFlow(TitleListFilter.All)
+    private val titleFilter = MutableStateFlow(TitleTypeFilter.All)
     private val titleItemsFlow = titlesManager.allWatchlistedTitleItems()
     private val showSnackbarType = MutableStateFlow<WatchlistSnackbarType?>(null)
 
     val uiState = combine(titleItemsFlow, titleFilter, showSnackbarType) { titleItems, titleFilter, showSnackbarType ->
         if (titleItems.isNotEmpty()) {
             val filteredList = when (titleFilter) {
-                TitleListFilter.All -> titleItems
-                TitleListFilter.Movies -> titleItems.filter { it.type == TitleType.MOVIE }
-                TitleListFilter.TV -> titleItems.filter { it.type == TitleType.TV }
+                TitleTypeFilter.All -> titleItems
+                TitleTypeFilter.Movies -> titleItems.filter { it.type == TitleType.MOVIE }
+                TitleTypeFilter.TV -> titleItems.filter { it.type == TitleType.TV }
             }
             if (filteredList.isEmpty()) {
                 WatchlistUiState(
@@ -111,8 +111,8 @@ class WatchlistViewModel @Inject constructor(
     /**
      * Applies the user's chosen filter on the Trending list of Titles.
      */
-    fun onTitleFilterChosen(titleListFilter: TitleListFilter){
-        titleFilter.update { titleListFilter }
+    fun onTitleFilterChosen(titleTypeFilter: TitleTypeFilter){
+        titleFilter.update { titleTypeFilter }
     }
 
     /**
