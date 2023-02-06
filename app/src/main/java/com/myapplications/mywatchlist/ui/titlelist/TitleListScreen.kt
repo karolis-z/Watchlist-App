@@ -4,10 +4,9 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.*
@@ -31,10 +30,12 @@ import com.myapplications.mywatchlist.ui.components.*
 import com.myapplications.mywatchlist.ui.entities.TitleListFilter
 import kotlin.math.roundToInt
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TitleListScreen(
     placeholderPoster: Painter,
     onTitleClicked: (TitleItemFull) -> Unit,
+    contentPadding: PaddingValues,
     modifier: Modifier = Modifier
 ) {
 
@@ -45,15 +46,37 @@ fun TitleListScreen(
     val listState = rememberLazyListState()
     var showFilter by remember { mutableStateOf(false) }
 
-    Box(
-        modifier = modifier.fillMaxSize()
-    ) {
-        Column(
+    val navigationBarPadding = contentPadding.calculateBottomPadding()
+    val topAppBarPadding = contentPadding.calculateTopPadding()
+    
+    Button(onClick = { /*TODO*/ }) {
+        Text(text = "LOLLOLOLOLOLOLOL")
+    }
+    
+    ModalNavigationDrawer(drawerContent = { /*TODO*/ }) {
+        
+    }
+
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        floatingActionButton = {
+            FilterFAB(
+                isFabVisible = listState.isScrollingUp(),
+                onFabClicked = { showFilter = !showFilter },
+                modifier = Modifier.padding(bottom = navigationBarPadding, top = topAppBarPadding)
+            )
+        }
+    ) { paddingValues ->
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 16.dp)
+                .padding(bottom = navigationBarPadding)
         ) {
-            Crossfade(targetState = titleListUiState) { uiState ->
+            Crossfade(
+                targetState = titleListUiState,
+                modifier = Modifier.padding(top = topAppBarPadding)
+            ) { uiState ->
                 when (uiState) {
                     TitleListUiState.Loading -> {
                         Box(
@@ -98,37 +121,37 @@ fun TitleListScreen(
                             modifier = Modifier.fillMaxSize()
                         ) {
                             //#region FILTERS SECTION. WILL BE UPDATED WHEN DESIGNED FINISHES THE UI/UX
-                            val defaultFilter = TitleListFilter()
-                            AnimatedVisibility(
-                                visible = showFilter,
-                                enter = expandVertically(
-                                    expandFrom = Alignment.Top,
-                                    animationSpec = tween(
-                                        durationMillis = 300,
-                                        easing = FastOutSlowInEasing
-                                    )
-                                ),
-                                exit = shrinkVertically(
-                                    shrinkTowards = Alignment.Top,
-                                    animationSpec = tween(
-                                        durationMillis = 300,
-                                        easing = LinearOutSlowInEasing
-                                    )
-                                )
-                            ) {
-                                FilterSection(
-                                    filter = filterState,
-                                    defaultScoreRange = defaultFilter.scoreRange.first.toFloat()..defaultFilter.scoreRange.second.toFloat(),
-                                    defaultYearsRange = defaultFilter.yearsRange.first.toFloat()..defaultFilter.yearsRange.second.toFloat(),
-                                    allGenres = viewModel.getAllGenres(),
-                                    onFilterApplied = {
-                                        viewModel.setFilter(it)
-                                        showFilter = false
-                                    },
-                                    onCancelClicked = { showFilter = false }
-                                )
-                            }
-                            //#endregion
+//                            val defaultFilter = TitleListFilter()
+//                            AnimatedVisibility(
+//                                visible = showFilter,
+//                                enter = expandVertically(
+//                                    expandFrom = Alignment.Top,
+//                                    animationSpec = tween(
+//                                        durationMillis = 300,
+//                                        easing = FastOutSlowInEasing
+//                                    )
+//                                ),
+//                                exit = shrinkVertically(
+//                                    shrinkTowards = Alignment.Top,
+//                                    animationSpec = tween(
+//                                        durationMillis = 300,
+//                                        easing = LinearOutSlowInEasing
+//                                    )
+//                                )
+//                            ) {
+//                                FilterSection(
+//                                    filter = filterState,
+//                                    defaultScoreRange = defaultFilter.scoreRange.first.toFloat()..defaultFilter.scoreRange.second.toFloat(),
+//                                    defaultYearsRange = defaultFilter.yearsRange.first.toFloat()..defaultFilter.yearsRange.second.toFloat(),
+//                                    allGenres = viewModel.getAllGenres(),
+//                                    onFilterApplied = {
+//                                        viewModel.setFilter(it)
+//                                        showFilter = false
+//                                    },
+//                                    onCancelClicked = { showFilter = false }
+//                                )
+//                            }
+//                            //#endregion
 
                             //#region TITLE ITEMS LIST
                             TitleItemsList(
@@ -144,15 +167,155 @@ fun TitleListScreen(
                     }
                 }
             }
+            if (showFilter) {
+                Box(
+                    modifier = Modifier
+                        .size(maxWidth / 3 * 2, height = maxHeight)
+                        .offset(x = maxWidth / 3)
+                ) {
+                    FilterSideSheet()
+                }
+            }
         }
-        FilterFAB(
-            isFabVisible = listState.isScrollingUp(),
-            onFabClicked = { showFilter = !showFilter },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(bottom = 20.dp, end = 20.dp)
-        )
     }
+
+//    Box(
+//        modifier = modifier.fillMaxSize()
+//    ) {
+//        Column(
+//            modifier = Modifier
+//                .fillMaxSize()
+//                .padding(horizontal = 16.dp)
+//        ) {
+//            Crossfade(targetState = titleListUiState) { uiState ->
+//                when (uiState) {
+//                    TitleListUiState.Loading -> {
+//                        Box(
+//                            modifier = Modifier.fillMaxSize(),
+//                            contentAlignment = Alignment.Center
+//                        ) {
+//                            LoadingCircle()
+//                        }
+//                    }
+//                    is TitleListUiState.Error -> {
+//                        Column(
+//                            modifier = Modifier.fillMaxSize(),
+//                            horizontalAlignment = Alignment.CenterHorizontally,
+//                            verticalArrangement = Arrangement.Center
+//                        ) {
+//                            when (uiState.error) {
+//                                TitleListError.NO_INTERNET -> {
+//                                    ErrorText(
+//                                        errorMessage =
+//                                        stringResource(id = R.string.error_no_internet_connection),
+//                                        onButtonRetryClick = { viewModel.retryGetData() }
+//                                    )
+//                                }
+//                                TitleListError.FAILED_API_REQUEST,
+//                                TitleListError.UNKNOWN -> {
+//                                    ErrorText(
+//                                        errorMessage =
+//                                        stringResource(id = R.string.error_something_went_wrong),
+//                                        onButtonRetryClick = { viewModel.retryGetData() }
+//                                    )
+//                                }
+//                                TitleListError.NO_TITLES -> {
+//                                    ErrorText(
+//                                        errorMessage = stringResource(id = R.string.titlelist_no_data)
+//                                    )
+//                                }
+//                            }
+//                        }
+//                    }
+//                    is TitleListUiState.Ready -> {
+//                        Column(
+//                            modifier = Modifier.fillMaxSize()
+//                        ) {
+//                            //#region FILTERS SECTION. WILL BE UPDATED WHEN DESIGNED FINISHES THE UI/UX
+//                            val defaultFilter = TitleListFilter()
+//                            AnimatedVisibility(
+//                                visible = showFilter,
+//                                enter = expandVertically(
+//                                    expandFrom = Alignment.Top,
+//                                    animationSpec = tween(
+//                                        durationMillis = 300,
+//                                        easing = FastOutSlowInEasing
+//                                    )
+//                                ),
+//                                exit = shrinkVertically(
+//                                    shrinkTowards = Alignment.Top,
+//                                    animationSpec = tween(
+//                                        durationMillis = 300,
+//                                        easing = LinearOutSlowInEasing
+//                                    )
+//                                )
+//                            ) {
+//                                FilterSection(
+//                                    filter = filterState,
+//                                    defaultScoreRange = defaultFilter.scoreRange.first.toFloat()..defaultFilter.scoreRange.second.toFloat(),
+//                                    defaultYearsRange = defaultFilter.yearsRange.first.toFloat()..defaultFilter.yearsRange.second.toFloat(),
+//                                    allGenres = viewModel.getAllGenres(),
+//                                    onFilterApplied = {
+//                                        viewModel.setFilter(it)
+//                                        showFilter = false
+//                                    },
+//                                    onCancelClicked = { showFilter = false }
+//                                )
+//                            }
+//                            //#endregion
+//
+//                            //#region TITLE ITEMS LIST
+//                            TitleItemsList(
+//                                titleItemsFull = uiState.titleItems,
+//                                placeholderImage = placeholderPoster,
+//                                onWatchlistClicked = viewModel::onWatchlistClicked,
+//                                onTitleClicked = onTitleClicked,
+//                                contentPadding = PaddingValues(vertical = 10.dp),
+//                                state = listState
+//                            )
+//                            //#endregion
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//        FilterFAB(
+//            isFabVisible = listState.isScrollingUp(),
+//            onFabClicked = { showFilter = !showFilter },
+//            modifier = Modifier
+//                .align(Alignment.BottomEnd)
+//                .padding(bottom = 20.dp, end = 20.dp)
+//        )
+//    }
+}
+
+@Composable
+fun FilterSideSheet(
+    modifier: Modifier = Modifier
+) {
+    //#region CONTENT
+    Column(
+        modifier = modifier
+            .fillMaxHeight()
+            .background(MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp))
+            .padding(horizontal = 5.dp, vertical = 10.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.Start,
+        verticalArrangement = Arrangement.Top
+    ) {
+        repeat(16) {
+            // Score Slider
+            FilterLabel(label = stringResource(id = R.string.titlelist_filter_label_score), rangeText = { "Score 0 - 10" })
+            FilterSectionDivider()
+
+            // Years Slider
+            FilterLabel(label = stringResource(id = R.string.titlelist_filter_label_release_year), rangeText = { "Years 1960 - 2023 " })
+            FilterSectionDivider()
+            Spacer(modifier = Modifier.height(10.dp))
+        }
+
+    }
+    //#endregion
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)

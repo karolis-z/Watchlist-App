@@ -273,7 +273,7 @@ class MainActivity : ComponentActivity() {
                                     navController.navigate(route = OtherScreens.Details.route +
                                             "/${title.mediaId}&${title.type.name}")
                                 },
-                                modifier = Modifier.padding(paddingValues)
+                                contentPadding = paddingValues
                             )
                         }
                     }
