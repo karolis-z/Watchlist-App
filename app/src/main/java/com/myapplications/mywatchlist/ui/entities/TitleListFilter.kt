@@ -17,4 +17,12 @@ data class TitleListFilter(
     val scoreRange: Pair<Int, Int> = Pair(0,10),
     val titleType: TitleType? = null,
     val yearsRange: Pair<Int, Int> = Pair(1900, LocalDate.now().year)
-)
+) {
+    fun getScoreRange(): ClosedFloatingPointRange<Float> {
+        return scoreRange.first.toFloat()..scoreRange.second.toFloat()
+    }
+
+    fun getYearsRange(): ClosedFloatingPointRange<Float> {
+        return yearsRange.first.toFloat()..yearsRange.second.toFloat()
+    }
+}
