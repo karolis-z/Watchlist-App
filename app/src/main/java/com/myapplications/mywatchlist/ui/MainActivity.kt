@@ -91,8 +91,8 @@ class MainActivity : ComponentActivity() {
                     showTopAppBar.value = false
                     showUpButton.value = false
                 } else if (currentDestination?.route?.contains(OtherScreens.TitleList.route) == true) {
-                    showTopAppBar.value = true
-                    showUpButton.value = true
+                    showTopAppBar.value = false
+                    showUpButton.value = false
                 } else {
                     showTopAppBar.value = true
                     showUpButton.value = false
@@ -268,12 +268,14 @@ class MainActivity : ComponentActivity() {
                             exitTransition = { ExitTransition.None }
                         ) {
                             TitleListScreen(
+                                screenTitle = topBarTitle,
                                 placeholderPoster = placeholderPoster,
                                 onTitleClicked = { title ->
                                     navController.navigate(route = OtherScreens.Details.route +
                                             "/${title.mediaId}&${title.type.name}")
                                 },
-                                modifier = Modifier.padding(paddingValues)
+                                onNavigateUp = { navController.navigateUp() },
+                                contentPadding = paddingValues
                             )
                         }
                     }

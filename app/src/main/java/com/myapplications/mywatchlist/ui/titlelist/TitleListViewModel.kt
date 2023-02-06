@@ -202,7 +202,14 @@ class TitleListViewModel @Inject constructor(
      * Updates the [filterState] with newly selected filter.
      */
     fun setFilter(filter: TitleListFilter) {
-        filterState.update { filter }
+        filterState.update {
+            it.copy(
+                genres = filter.genres.toList(),
+                scoreRange = filter.scoreRange,
+                titleType = filter.titleType,
+                yearsRange = filter.yearsRange
+            )
+        }
     }
 
     fun retryGetData(){
