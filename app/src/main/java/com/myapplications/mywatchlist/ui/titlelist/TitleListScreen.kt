@@ -26,6 +26,7 @@ import com.myapplications.mywatchlist.domain.entities.TitleType
 import com.myapplications.mywatchlist.ui.MyTopAppBar
 import com.myapplications.mywatchlist.ui.components.*
 import com.myapplications.mywatchlist.ui.entities.TitleListFilter
+import com.myapplications.mywatchlist.ui.entities.TitleListType
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -34,7 +35,6 @@ private const val TAG = "TITLE_LIST_SCREEN"
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TitleListScreen(
-    screenTitle: String,
     placeholderPoster: Painter,
     onTitleClicked: (TitleItemFull) -> Unit,
     onNavigateUp: () -> Unit,
@@ -44,6 +44,7 @@ fun TitleListScreen(
     val scope = rememberCoroutineScope()
 
     val viewModel = hiltViewModel<TitleListViewModel>()
+    val screenTitle by viewModel.screenTitle.collectAsState()
     val titleListUiState by viewModel.uiState.collectAsState()
     val filterState by viewModel.filterState.collectAsState()
 
@@ -59,26 +60,31 @@ fun TitleListScreen(
                 CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
                     BoxWithConstraints {
                         val defaultFilter = TitleListFilter()
-                        FilterSection(
-                            modifier = Modifier
-                                .width((maxWidth.value * 0.7).dp)
-                                .statusBarsPadding(),
-                            filterState = filterState,
-                            defaultScoreRange = defaultFilter.getScoreRange(),
-                            defaultYearsRange = defaultFilter.getYearsRange(),
-                            allGenres = viewModel.getAllGenres(),
-                            onFilterApplied = {
-                                viewModel.setFilter(it)
-                                scope.launch {
-                                    showFilterState.close()
+                        /* Need to have the FilterSection invisible when it's closed because during
+                        * transition of 'sliding to the left' it is briefly visible because it
+                        * actually exists on the right side of this screen when closed */
+                        if (showFilterState.isAnimationRunning || showFilterState.isOpen) {
+                            FilterSection(
+                                modifier = Modifier
+                                    .width((maxWidth.value * 0.7).dp)
+                                    .statusBarsPadding(),
+                                filterState = filterState,
+                                defaultScoreRange = defaultFilter.getScoreRange(),
+                                defaultYearsRange = defaultFilter.getYearsRange(),
+                                allGenres = viewModel.getAllGenres(),
+                                onFilterApplied = {
+                                    viewModel.setFilter(it)
+                                    scope.launch {
+                                        showFilterState.close()
+                                    }
+                                },
+                                onCloseClicked = {
+                                    scope.launch {
+                                        showFilterState.close()
+                                    }
                                 }
-                            },
-                            onCloseClicked = {
-                                scope.launch {
-                                    showFilterState.close()
-                                }
-                            }
-                        )
+                            )
+                        }
                     }
                 }
             }
@@ -87,7 +93,7 @@ fun TitleListScreen(
                 Scaffold(
                     topBar = {
                         MyTopAppBar(
-                            title = screenTitle, showUpButton = true, onNavigateUp = onNavigateUp
+                            title = getScreenTitle(screenTitle), showUpButton = true, onNavigateUp = onNavigateUp
                         )
                     }
                 ) { paddingValues ->
@@ -492,5 +498,20 @@ fun FilterSectionDivider(
     paddingValues: PaddingValues = PaddingValues(vertical = 5.dp)
 ) {
     Divider(modifier = modifier.padding(paddingValues), thickness = thickness, color = color)
+}
+
+@Composable
+fun getScreenTitle(titleListType: TitleListType?): String {
+    return when (titleListType) {
+        TitleListType.Trending ->
+            stringResource(id = R.string.titlelist_screen_title_trending)
+        TitleListType.Popular ->
+            stringResource(id = R.string.titlelist_screen_title_popular)
+        TitleListType.TopRated ->
+            stringResource(id = R.string.titlelist_screen_title_toprated)
+        TitleListType.UpcomingMovies ->
+            stringResource(id = R.string.titlelist_screen_title_upcoming_movies)
+        null -> ""
+    }
 }
 

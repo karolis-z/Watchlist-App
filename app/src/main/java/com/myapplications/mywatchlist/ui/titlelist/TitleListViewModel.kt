@@ -28,10 +28,13 @@ class TitleListViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
+    private val _screenTitle: MutableStateFlow<TitleListType?> = MutableStateFlow(null)
+    val screenTitle: StateFlow<TitleListType?> = _screenTitle.asStateFlow()
 
     private val titleListState: MutableStateFlow<TitleListUiState> =
         MutableStateFlow(TitleListUiState.Loading)
-    val filterState: MutableStateFlow<TitleListFilter> = MutableStateFlow(TitleListFilter())
+    private val _filterState: MutableStateFlow<TitleListFilter> = MutableStateFlow(TitleListFilter())
+    val filterState = _filterState.asStateFlow()
 
     val uiState: StateFlow<TitleListUiState> =
         combine(titleListState, filterState) { titleListState, filter ->
@@ -64,61 +67,6 @@ class TitleListViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Filters the given list of [TitleItemFull] by given [TitleListFilter]
-     */
-    private fun filterTitles(
-        titles: List<TitleItemFull>,
-        filter: TitleListFilter
-    ): List<TitleItemFull> {
-
-        var titlesList = titles
-
-        // Apply TitleType filer
-        if (filter.titleType != null) {
-            titlesList = titlesList.filter { it.type == filter.titleType }
-        }
-
-        // Apply score range filter
-        if (filter.scoreRange != Pair(0, 10)) {
-            titlesList = titlesList.filter {
-                (it.voteAverage >= filter.scoreRange.first) &&
-                (it.voteAverage <= filter.scoreRange.second)
-            }
-        }
-
-        // Apply years range filter
-        if (filter.yearsRange != Pair(1900, LocalDate.now().year)) {
-            val showFutureTitles = filter.yearsRange.second == LocalDate.now().year
-            val titlesWithNoReleaseDate = titlesList.filter { it.releaseDate == null }
-            var titlesWithReleaseDate = if (titlesWithNoReleaseDate.isNotEmpty()) {
-                titlesList.minus(titlesWithNoReleaseDate.toSet())
-            } else {
-                titlesList
-            }
-            titlesWithReleaseDate = titlesWithReleaseDate.filter {
-                /* Non-null assertion here because we already filtered out items with
-                null release date */
-                if (showFutureTitles) {
-                    it.releaseDate!!.year >= filter.yearsRange.first
-                } else {
-                    (it.releaseDate!!.year >= filter.yearsRange.first) &&
-                    (it.releaseDate.year <= filter.yearsRange.second)
-                }
-            }
-            titlesList = titlesWithReleaseDate + titlesWithNoReleaseDate
-        }
-
-        // Apply genres filter
-        if (filter.genres.isNotEmpty()) {
-            titlesList = titlesList.filter { title ->
-                title.genres.any { filter.genres.contains(it) }
-            }
-        }
-
-        return titlesList
-    }
-
     private fun getTitleListType(){
         titleListState.update { TitleListUiState.Loading }
         try {
@@ -129,6 +77,7 @@ class TitleListViewModel @Inject constructor(
                 return
             } else {
                 titleListType = TitleListType.valueOf(titleListTypeString)
+                _screenTitle.update { titleListType }
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to get TitleListType from savedStateHandle. Reason: $e", e)
@@ -181,6 +130,61 @@ class TitleListViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Filters the given list of [TitleItemFull] by given [TitleListFilter]
+     */
+    private fun filterTitles(
+        titles: List<TitleItemFull>,
+        filter: TitleListFilter
+    ): List<TitleItemFull> {
+
+        var titlesList = titles
+
+        // Apply TitleType filer
+        if (filter.titleType != null) {
+            titlesList = titlesList.filter { it.type == filter.titleType }
+        }
+
+        // Apply score range filter
+        if (filter.scoreRange != Pair(0, 10)) {
+            titlesList = titlesList.filter {
+                (it.voteAverage >= filter.scoreRange.first) &&
+                        (it.voteAverage <= filter.scoreRange.second)
+            }
+        }
+
+        // Apply years range filter
+        if (filter.yearsRange != Pair(1900, LocalDate.now().year)) {
+            val showFutureTitles = filter.yearsRange.second == LocalDate.now().year
+            val titlesWithNoReleaseDate = titlesList.filter { it.releaseDate == null }
+            var titlesWithReleaseDate = if (titlesWithNoReleaseDate.isNotEmpty()) {
+                titlesList.minus(titlesWithNoReleaseDate.toSet())
+            } else {
+                titlesList
+            }
+            titlesWithReleaseDate = titlesWithReleaseDate.filter {
+                /* Non-null assertion here because we already filtered out items with
+                null release date */
+                if (showFutureTitles) {
+                    it.releaseDate!!.year >= filter.yearsRange.first
+                } else {
+                    (it.releaseDate!!.year >= filter.yearsRange.first) &&
+                            (it.releaseDate.year <= filter.yearsRange.second)
+                }
+            }
+            titlesList = titlesWithReleaseDate + titlesWithNoReleaseDate
+        }
+
+        // Apply genres filter
+        if (filter.genres.isNotEmpty()) {
+            titlesList = titlesList.filter { title ->
+                title.genres.any { filter.genres.contains(it) }
+            }
+        }
+
+        return titlesList
+    }
+
     fun onWatchlistClicked(title: TitleItemFull) {
         viewModelScope.launch {
             if (title.isWatchlisted){
@@ -199,10 +203,10 @@ class TitleListViewModel @Inject constructor(
     }
 
     /**
-     * Updates the [filterState] with newly selected filter.
+     * Updates the [_filterState] with newly selected filter.
      */
     fun setFilter(filter: TitleListFilter) {
-        filterState.update {
+        _filterState.update {
             it.copy(
                 genres = filter.genres.toList(),
                 scoreRange = filter.scoreRange,

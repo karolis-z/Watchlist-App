@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.StringRes
 import androidx.compose.animation.*
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -21,6 +21,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.core.view.WindowCompat
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
@@ -41,14 +42,19 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
 private const val TAG = "MAIN_ACTIVITY"
+private const val TRANSITION_DURATION = 400
+private val TRANSITION_EASING = FastOutSlowInEasing
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    private val topLevelScreens =
+        listOf(TopLevelScreens.Home, TopLevelScreens.Discover, TopLevelScreens.Watchlist)
+    private val otherScreens = listOf(OtherScreens.TitleList, OtherScreens.Details)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val topLevelScreens = listOf(TopLevelScreens.Home, TopLevelScreens.Discover, TopLevelScreens.Watchlist)
 
         setContent {
 
@@ -65,22 +71,22 @@ class MainActivity : ComponentActivity() {
 
                 val mTitleListType = remember { mutableStateOf<TitleListType?>(null) }
 
-                // Determined which TopAppBar title to show
+                // Determine which TopAppBar title to show
+                /* TODO: Consider a better and more robust structure for the future. When new
+                    screens are being introduced it will always require manual adjustment and / or
+                    custom TopBar implementation in those new screens */
                 val topBarTitle =
-                    if (currentDestination?.route?.contains(OtherScreens.Details.route) == true) {
-                        ""
-                    } else if (currentDestination?.route?.contains(OtherScreens.TitleList.route) == true) {
-                        when (mTitleListType.value) {
-                            TitleListType.Trending ->
-                                stringResource(id = R.string.titlelist_screen_title_trending)
-                            TitleListType.Popular ->
-                                stringResource(id = R.string.titlelist_screen_title_popular)
-                            TitleListType.TopRated ->
-                                stringResource(id = R.string.titlelist_screen_title_toprated)
-                            TitleListType.UpcomingMovies ->
-                                stringResource(id = R.string.titlelist_screen_title_upcoming_movies)
-                            null -> ""
-                        }
+                    if (otherScreens.any { currentDestination?.route?.contains(it.route) == true }) {
+                        /* If current destination is NOT a top level destination and previous
+                        backstack was one of the top level screens, keeping its title. That's
+                        because when transition animation is playing, we don't want to see the title
+                        instantly change before it's off the screen. The next screen (Details or
+                        Title List) have their own custom top app bars with their own titles */
+                        val stringResId =
+                            topLevelScreens.find {
+                                it.route == navController.previousBackStackEntry?.destination?.route
+                            }?.titleResId
+                        if (stringResId == null) "" else stringResource(id = stringResId)
                     } else {
                         val stringResId =
                             topLevelScreens.find { it.route == currentDestination?.route }?.titleResId
@@ -119,7 +125,13 @@ class MainActivity : ComponentActivity() {
 
                 Scaffold(
                     topBar = {
-                        if (showTopAppBar.value) {
+                        AnimatedVisibility(
+                            visible = showTopAppBar.value,
+                            enter =
+                                fadeIn(tween(durationMillis = TRANSITION_DURATION, delayMillis = 0)),
+                            exit =
+                                fadeOut(tween(durationMillis = TRANSITION_DURATION, delayMillis = 0))
+                        ) {
                             MyTopAppBar(
                                 title = topBarTitle,
                                 showUpButton = showUpButton.value,
@@ -174,10 +186,21 @@ class MainActivity : ComponentActivity() {
                         * values must be passed on to each screen and used however needed. */
                         modifier = Modifier
                     ) {
+
                         composable(
                             route = TopLevelScreens.Home.route,
-                            enterTransition = { EnterTransition.None },
-                            exitTransition = { ExitTransition.None }
+                            enterTransition = {
+                                getEnterTransition(initialState, targetState, false)
+                            },
+                            exitTransition = {
+                                getExitTransition(initialState, targetState, false)
+                            },
+                            popEnterTransition = {
+                                getEnterTransition(initialState, targetState, true)
+                            },
+                            popExitTransition = {
+                                getExitTransition(initialState, targetState, true)
+                            }
                         ) {
                             HomeScreen(
                                 placeholderPoster = placeholderPoster,
@@ -198,8 +221,18 @@ class MainActivity : ComponentActivity() {
                         }
                         composable(
                             route = TopLevelScreens.Discover.route,
-                            enterTransition = { EnterTransition.None },
-                            exitTransition = { ExitTransition.None }
+                            enterTransition = {
+                                getEnterTransition(initialState, targetState, false)
+                            },
+                            exitTransition = {
+                                getExitTransition(initialState, targetState, false)
+                            },
+                            popEnterTransition = {
+                                getEnterTransition(initialState, targetState, true)
+                            },
+                            popExitTransition = {
+                                getExitTransition(initialState, targetState, true)
+                            }
                         ) {
                             DiscoverScreen(
                                 placeholderImage = placeholderPoster,
@@ -212,8 +245,18 @@ class MainActivity : ComponentActivity() {
                         }
                         composable(
                             route = TopLevelScreens.Watchlist.route,
-                            enterTransition = { EnterTransition.None },
-                            exitTransition = { ExitTransition.None }
+                            enterTransition = {
+                                getEnterTransition(initialState, targetState, false)
+                            },
+                            exitTransition = {
+                                getExitTransition(initialState, targetState, false)
+                            },
+                            popEnterTransition = {
+                                getEnterTransition(initialState, targetState, true)
+                            },
+                            popExitTransition = {
+                                getExitTransition(initialState, targetState, true)
+                            }
                         ) {
                             WatchlistScreen(
                                 placeholderImage = placeholderPoster,
@@ -238,9 +281,18 @@ class MainActivity : ComponentActivity() {
                                     type = NavType.StringType
                                 }
                             ),
-                            // TODO: Research and use more appropriate transitions
-                            enterTransition = { fadeIn (animationSpec = tween(500)) },
-                            exitTransition = { fadeOut (animationSpec = tween(500)) }
+                            enterTransition = {
+                                getEnterTransition(initialState, targetState, false)
+                            },
+                            exitTransition = {
+                                getExitTransition(initialState, targetState, false)
+                            },
+                            popEnterTransition = {
+                                getEnterTransition(initialState, targetState, true)
+                            },
+                            popExitTransition = {
+                                getExitTransition(initialState, targetState, true)
+                            }
                         ) {
                             DetailsScreen(
                                 placeHolderBackdrop = placeHolderBackdrop,
@@ -264,11 +316,20 @@ class MainActivity : ComponentActivity() {
                                     type = NavType.StringType
                                 }
                             ),
-                            enterTransition = { EnterTransition.None },
-                            exitTransition = { ExitTransition.None }
+                            enterTransition = {
+                                getEnterTransition(initialState, targetState, false)
+                            },
+                            exitTransition = {
+                                getExitTransition(initialState, targetState, false)
+                            },
+                            popEnterTransition = {
+                                getEnterTransition(initialState, targetState, true)
+                            },
+                            popExitTransition = {
+                                getExitTransition(initialState, targetState, true)
+                            }
                         ) {
                             TitleListScreen(
-                                screenTitle = topBarTitle,
                                 placeholderPoster = placeholderPoster,
                                 onTitleClicked = { title ->
                                     navController.navigate(route = OtherScreens.Details.route +
@@ -281,6 +342,99 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+    }
+
+    private fun getEnterTransition(
+        initialState: NavBackStackEntry,
+        targetState: NavBackStackEntry,
+        isPopTransition: Boolean,
+    ): EnterTransition {
+
+        /* Getting the initial and target screens by searching the top level screens and then other
+       screens. Only OtherScreens have navigation arguments therefore checking with .contains */
+        val initialScreen = topLevelScreens.find { initialState.destination.route == it.route }
+            ?: otherScreens.find { initialState.destination.route?.contains(it.route) == true }
+        val targetScreen = topLevelScreens.find { targetState.destination.route == it.route }
+            ?: otherScreens.find { targetState.destination.route?.contains(it.route) == true }
+
+        return when {
+            // If initial and target are top level, fading in
+            initialScreen is TopLevelScreens && targetScreen is TopLevelScreens ->
+                fadeIn(tween(durationMillis = TRANSITION_DURATION, easing = TRANSITION_EASING ))
+
+            // If target is TopLevel, but initial is NOT, means we are going back, then slide in from left
+            targetScreen is TopLevelScreens && initialScreen !is TopLevelScreens -> slideInHorizontally(
+                tween(durationMillis = TRANSITION_DURATION, easing = TRANSITION_EASING),
+                initialOffsetX = { width -> -width }
+            )
+            // If target is Details, and it's NOT a pop transition - entering by sliding in from right
+            targetScreen is OtherScreens.Details && !isPopTransition -> slideInHorizontally(
+                tween(durationMillis = TRANSITION_DURATION, easing = TRANSITION_EASING),
+                initialOffsetX = { width -> width }
+            )
+            // If target is Details, and it IS a pop transition - entering from the left, because we're going back
+            targetScreen is OtherScreens.Details && isPopTransition -> slideInHorizontally(
+                tween(durationMillis = TRANSITION_DURATION, easing = TRANSITION_EASING),
+                initialOffsetX = { width -> -width }
+            )
+            // If target is TitleList, but initial is Details, means we are going back, so slide in from left
+            targetScreen is OtherScreens.TitleList && initialScreen is OtherScreens.Details -> slideInHorizontally(
+                tween(durationMillis = TRANSITION_DURATION, easing = TRANSITION_EASING),
+                initialOffsetX = { width -> -width }
+            )
+            // If target is TitleList, but initial is TopLevel, means we are going forward, then slide in from right
+            targetScreen is OtherScreens.TitleList && initialScreen is TopLevelScreens -> slideInHorizontally(
+                tween(durationMillis = TRANSITION_DURATION, easing = TRANSITION_EASING),
+                initialOffsetX = { width -> width }
+            )
+            else -> EnterTransition.None
+        }
+    }
+
+    private fun getExitTransition(
+        initialState: NavBackStackEntry,
+        targetState: NavBackStackEntry,
+        isPopTransition: Boolean,
+    ): ExitTransition {
+
+        /* Getting the initial and target screens by searching the top level screens and then other
+        screens. Only OtherScreens have navigation arguments therefore checking with .contains */
+        val initialScreen = topLevelScreens.find { initialState.destination.route == it.route }
+            ?: otherScreens.find { initialState.destination.route?.contains(it.route) == true }
+        val targetScreen = topLevelScreens.find { targetState.destination.route == it.route }
+            ?: otherScreens.find { targetState.destination.route?.contains(it.route) == true }
+
+        return when {
+            // If initial and target are top level, fading out
+            initialScreen is TopLevelScreens && targetScreen is TopLevelScreens ->
+                fadeOut(tween(durationMillis = TRANSITION_DURATION, easing = TRANSITION_EASING))
+            // If target is TopLevel, but initial is NOT, means we are going back, then slide out to right
+            targetScreen is TopLevelScreens && initialScreen !is TopLevelScreens -> slideOutHorizontally(
+                tween(durationMillis = TRANSITION_DURATION, easing = TRANSITION_EASING),
+                targetOffsetX = { width -> width }
+            )
+            // If target is Details and it's NOT a pop transition - we're going forward, so slide out to left
+            targetScreen is OtherScreens.Details && !isPopTransition -> slideOutHorizontally(
+                tween(durationMillis = TRANSITION_DURATION, easing = TRANSITION_EASING),
+                targetOffsetX = { width -> -width }
+            )
+            // If target is Details, and it IS pop transition - we're going back, so slide out to right
+            targetScreen is OtherScreens.Details && isPopTransition -> slideOutHorizontally(
+                tween(durationMillis = TRANSITION_DURATION, easing = TRANSITION_EASING),
+                targetOffsetX = { width -> width }
+            )
+            // If target is TitleList, but initial is Details, means we are going back, then slide out to right
+            targetScreen is OtherScreens.TitleList && initialScreen is OtherScreens.Details -> slideOutHorizontally(
+                tween(durationMillis = TRANSITION_DURATION, easing = TRANSITION_EASING),
+                targetOffsetX = { width -> width }
+            )
+            // If target is TitleList, but initial is TopLevel, means we are going forward, then slide out to left
+            targetScreen is OtherScreens.TitleList && initialScreen is TopLevelScreens -> slideOutHorizontally(
+                tween(durationMillis = TRANSITION_DURATION, easing = TRANSITION_EASING),
+                targetOffsetX = { width -> -width }
+            )
+            else -> ExitTransition.None
         }
     }
 }
