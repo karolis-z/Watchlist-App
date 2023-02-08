@@ -31,7 +31,7 @@ The app should always be launchable and working in the *main* branch, but this i
 		- [ ]	Add Reviews section
 		- [x] 	Add more Extra Details: budget, profit, languages. :heavy_check_mark: (2023.01.31)
 - [ ] Adapt for different screen sizes. 
-- [ ] Better and more appropriate transitions between screens
+- [x] Better and more appropriate transitions between screens. :heavy_check_mark: (2023.02.08)
 - [ ] Caching of Search and Trending data and getting that data via flows.
 - [ ] Possible theme change.
 
