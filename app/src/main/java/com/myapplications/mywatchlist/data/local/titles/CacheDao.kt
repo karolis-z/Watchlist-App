@@ -34,7 +34,7 @@ interface CacheDao {
     }
 
     @Query("SELECT * FROM 'title_item_cache_trending' ORDER BY page")
-    suspend fun getTrendingTitles(): PagingSource<Int, TitleItemCacheTrendingFull>
+    fun getTrendingTitles(): PagingSource<Int, TitleItemCacheTrendingFull>
 
     @Query("DELETE FROM 'title_item_cache_trending'")
     suspend fun clearAllTrendingTitles()

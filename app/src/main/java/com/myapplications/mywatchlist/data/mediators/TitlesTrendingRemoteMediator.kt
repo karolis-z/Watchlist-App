@@ -8,23 +8,24 @@ import androidx.room.withTransaction
 import com.myapplications.mywatchlist.core.util.Constants.CACHING_TIMEOUT
 import com.myapplications.mywatchlist.data.ApiGetTitleItemsExceptions
 import com.myapplications.mywatchlist.data.entities.RemoteKeyTrending
+import com.myapplications.mywatchlist.data.entities.TitleItemCacheTrendingFull
 import com.myapplications.mywatchlist.data.local.WatchlistDatabase
-import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 import com.myapplications.mywatchlist.domain.repositories.TitleItemsRepository
 import com.myapplications.mywatchlist.domain.result.ResultOf
 import java.time.Instant
-import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 
 @OptIn(ExperimentalPagingApi::class)
-class TitlesTrendingRemoteMediator(
+class TitlesTrendingRemoteMediator @Inject constructor(
     private val titleItemsRepository: TitleItemsRepository,
     private val db: WatchlistDatabase
-) : RemoteMediator<Int, TitleItemFull>() {
+) : RemoteMediator<Int, TitleItemCacheTrendingFull>() {
 
     override suspend fun load(
         loadType: LoadType,
-        state: PagingState<Int, TitleItemFull>
+        state: PagingState<Int, TitleItemCacheTrendingFull>
     ): MediatorResult {
+//        delay(2000)
         val page: Int = when (loadType) {
             LoadType.REFRESH -> {
                 val remoteKeys = getRemoteKeyClosestToCurrentPosition(state)
@@ -33,12 +34,14 @@ class TitlesTrendingRemoteMediator(
             LoadType.PREPEND -> {
                 val remoteKeys = getRemoteKeyForFirstItem(state)
                 val prevKey = remoteKeys?.prevKey
-                prevKey ?: return MediatorResult.Success(endOfPaginationReached = remoteKeys != null)
+                prevKey
+                    ?: return MediatorResult.Success(endOfPaginationReached = remoteKeys != null)
             }
             LoadType.APPEND -> {
                 val remoteKeys = getRemoteKeyForLastItem(state)
                 val nextKey = remoteKeys?.nextKey
-                nextKey ?: return MediatorResult.Success(endOfPaginationReached = remoteKeys != null)
+                nextKey
+                    ?: return MediatorResult.Success(endOfPaginationReached = remoteKeys != null)
             }
         }
 
@@ -46,7 +49,9 @@ class TitlesTrendingRemoteMediator(
         val endOfPaginationReached = when (trendingResult) {
             is ResultOf.Failure -> {
                 if (trendingResult.throwable !is ApiGetTitleItemsExceptions) {
-                    return MediatorResult.Error(Exception("Unknown Error getting page of data from the api"))
+                    return MediatorResult.Error(
+                        Exception("Unknown Error getting page of data from the api")
+                    )
                 } else {
                     when (trendingResult.throwable) {
                         is ApiGetTitleItemsExceptions.FailedApiRequestException,
@@ -58,6 +63,7 @@ class TitlesTrendingRemoteMediator(
             }
             is ResultOf.Success -> false
         }
+        val titleList = (trendingResult as ResultOf.Success).data
 
         db.withTransaction {
             if (loadType == LoadType.REFRESH) {
@@ -66,7 +72,7 @@ class TitlesTrendingRemoteMediator(
             }
             val prevKey = if (page > 1) page - 1 else null
             val nextKey = if (endOfPaginationReached) null else page + 1
-            val remoteKeys = (trendingResult as ResultOf.Success).data.map {
+            val remoteKeys = titleList.map {
                 RemoteKeyTrending(
                     cachedTitleId = it.id,
                     prevKey = prevKey,
@@ -77,7 +83,7 @@ class TitlesTrendingRemoteMediator(
             }
 
             db.cacheDao().insertRemoteKeysTrending(remoteKeysTrending = remoteKeys)
-            db.cacheDao().insertCachedTrendingItems(titlesList = trendingResult.data, page = page)
+            db.cacheDao().insertCachedTrendingItems(titlesList = titleList, page = page)
         }
         return MediatorResult.Success(endOfPaginationReached = endOfPaginationReached)
     }
@@ -92,32 +98,32 @@ class TitlesTrendingRemoteMediator(
     }
 
     private suspend fun getRemoteKeyClosestToCurrentPosition(
-        state: PagingState<Int, TitleItemFull>
+        state: PagingState<Int, TitleItemCacheTrendingFull>
     ): RemoteKeyTrending? {
         return state.anchorPosition?.let { position ->
-            state.closestItemToPosition(position)?.id?.let { id ->
+            state.closestItemToPosition(position)?.titleItem?.id?.let { id ->
                 db.cacheDao().getRemoteKeyTrendingById(id)
             }
         }
     }
 
     private suspend fun getRemoteKeyForFirstItem(
-        state: PagingState<Int, TitleItemFull>
+        state: PagingState<Int, TitleItemCacheTrendingFull>
     ): RemoteKeyTrending? {
         return state.pages.firstOrNull {
             it.data.isNotEmpty()
-        }?.data?.firstOrNull()?.let { title ->
-            db.cacheDao().getRemoteKeyTrendingById(title.id)
+        }?.data?.firstOrNull()?.let { titleItem ->
+            db.cacheDao().getRemoteKeyTrendingById(titleItem.titleItem.id)
         }
     }
 
     private suspend fun getRemoteKeyForLastItem(
-        state: PagingState<Int, TitleItemFull>
+        state: PagingState<Int, TitleItemCacheTrendingFull>
     ): RemoteKeyTrending? {
         return state.pages.lastOrNull {
             it.data.isNotEmpty()
-        }?.data?.lastOrNull()?.let { title ->
-            db.cacheDao().getRemoteKeyTrendingById(title.id)
+        }?.data?.lastOrNull()?.let { titleItem ->
+            db.cacheDao().getRemoteKeyTrendingById(titleItem.titleItem.id)
         }
     }
 

@@ -4,7 +4,12 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.*
+import com.myapplications.mywatchlist.core.util.Constants.PAGE_SIZE
 import com.myapplications.mywatchlist.data.ApiGetDetailsException
+import com.myapplications.mywatchlist.data.local.titles.CacheDao
+import com.myapplications.mywatchlist.data.mappers.toTitleItemFull
+import com.myapplications.mywatchlist.data.mediators.TitlesTrendingRemoteMediator
 import com.myapplications.mywatchlist.domain.entities.Genre
 import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 import com.myapplications.mywatchlist.domain.repositories.GenresRepository
@@ -14,6 +19,7 @@ import com.myapplications.mywatchlist.ui.NavigationArgument
 import com.myapplications.mywatchlist.ui.entities.TitleListFilter
 import com.myapplications.mywatchlist.ui.entities.TitleListType
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -25,6 +31,8 @@ private const val TAG = "TITLE_LIST_VIEWMODEL"
 class TitleListViewModel @Inject constructor(
     private val titlesManager: TitlesManager,
     private val genresRepository: GenresRepository,
+    private val titlesTrendingRemoteMediator: TitlesTrendingRemoteMediator,
+    private val cacheDao: CacheDao, //TODO: TEMP, should get from TitlesManager
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -35,6 +43,67 @@ class TitleListViewModel @Inject constructor(
         MutableStateFlow(TitleListUiState.Loading)
     private val _filterState: MutableStateFlow<TitleListFilter> = MutableStateFlow(TitleListFilter())
     val filterState = _filterState.asStateFlow()
+
+    @OptIn(ExperimentalPagingApi::class)
+    val titlesTrending: Flow<PagingData<TitleItemFull>> = Pager(
+        config = PagingConfig(
+            pageSize = PAGE_SIZE,
+            prefetchDistance = PAGE_SIZE / 4,
+            initialLoadSize = PAGE_SIZE
+        ),
+        pagingSourceFactory = { cacheDao.getTrendingTitles() },
+        remoteMediator = titlesTrendingRemoteMediator
+    ).flow
+        .flowOn(Dispatchers.Default)
+        .map { pagingData ->
+            pagingData.map { titleItem ->
+                titleItem.toTitleItemFull()
+            }
+        }
+        .cachedIn(viewModelScope)
+        .combine(filterState) { pagingData, filter ->
+            pagingData.filter { title -> isMatchingFilter(title, filter) }
+        }
+        .cachedIn(viewModelScope)
+
+
+    private fun isMatchingFilter(title: TitleItemFull, filter: TitleListFilter): Boolean {
+        // Check if same type, if not return false
+        if (filter.titleType != null && title.type != filter.titleType) {
+            return false
+        }
+
+        // Check if within genres
+        if (filter.genres.isNotEmpty()) {
+            /* If none of title's genres are 'contained' within the filter's genres list, means the
+            titles does not match the Genre filter and should not be shown */
+            if (!title.genres.any { genre -> filter.genres.contains(genre) }){
+                return false
+            }
+        }
+
+        // Check if within score range
+        if (title.voteAverage > filter.scoreRange.second.toDouble() ||
+            title.voteAverage < filter.scoreRange.first.toDouble()) {
+            return false
+        }
+        // Check if within years range
+        val releaseYear = title.releaseDate?.year
+        if (releaseYear != null) {
+            // Showing future titles if the latest possible year (i.e. current) is chosen.
+            val showFutureTitles = filter.yearsRange.second == LocalDate.now().year
+            if (
+                releaseYear.toFloat() < filter.yearsRange.first ||
+                (!showFutureTitles && releaseYear.toFloat() > filter.yearsRange.second)
+            ) {
+                return false
+            }
+        }
+
+        // If we reached this point - means all filters are 'passed' and title should be shown
+        return true
+    }
+
 
     val uiState: StateFlow<TitleListUiState> =
         combine(titleListState, filterState) { titleListState, filter ->

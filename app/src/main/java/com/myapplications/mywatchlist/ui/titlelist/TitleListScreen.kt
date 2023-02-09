@@ -3,7 +3,7 @@ package com.myapplications.mywatchlist.ui.titlelist
 import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
@@ -19,6 +19,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.items
 import com.myapplications.mywatchlist.R
 import com.myapplications.mywatchlist.domain.entities.Genre
 import com.myapplications.mywatchlist.domain.entities.TitleItemFull
@@ -47,6 +51,8 @@ fun TitleListScreen(
     val screenTitle by viewModel.screenTitle.collectAsState()
     val titleListUiState by viewModel.uiState.collectAsState()
     val filterState by viewModel.filterState.collectAsState()
+
+    val trendingTitles = viewModel.titlesTrending.collectAsLazyPagingItems()
 
     val showFilterState = rememberDrawerState(initialValue = DrawerValue.Closed)
 
@@ -106,13 +112,15 @@ fun TitleListScreen(
                                 top = paddingValues.calculateTopPadding()
                             )
                     ) {
-                        TitleListScreenContent(
-                            titleListUiState = titleListUiState,
+                        TitleListScreenContentNew(
+//                            titleListUiState = titleListUiState,
+                            trendingTitles = trendingTitles,
                             filterState = filterState,
                             onAllFiltersClicked = {
                                 scope.launch { showFilterState.open() }
                             },
-                            onButtonRetryClick = viewModel::retryGetData,
+                            onRetryAppendPrependClick = { trendingTitles.retry() },
+                            onRetryEntireListClick = { trendingTitles.refresh() },
                             onWatchlistClicked = viewModel::onWatchlistClicked,
                             onTitleClicked = onTitleClicked,
                             placeholderPoster = placeholderPoster,
@@ -128,9 +136,101 @@ fun TitleListScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun TitleListScreenContentNew(
+    //titleListUiState: TitleListUiState,
+    trendingTitles: LazyPagingItems<TitleItemFull>,
+    filterState: TitleListFilter,
+    onRetryAppendPrependClick: () -> Unit,
+    onRetryEntireListClick: () -> Unit,
+    onWatchlistClicked: (TitleItemFull) -> Unit,
+    onTitleClicked: (TitleItemFull) -> Unit,
+    onAllFiltersClicked: () -> Unit,
+    onTitleTypeFilterSelected: (TitleType?) -> Unit,
+    placeholderPoster: Painter,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        FilterButtonsRow(
+            filterState = filterState,
+            onAllFiltersClicked = onAllFiltersClicked,
+            onTypeFilterSelected = onTitleTypeFilterSelected
+        )
+        when (trendingTitles.loadState.refresh) {
+            LoadState.Loading ->
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    LoadingCircle()
+                }
+            is LoadState.Error -> {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    ErrorText(errorMessage = "OOPSIE DAISY", onButtonRetryClick = onRetryEntireListClick)
+                }
+            }
+            is LoadState.NotLoading ->
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    contentPadding = PaddingValues(vertical = 10.dp),
+                    state = rememberLazyListState(),
+                    modifier = modifier
+                ) {
+                    // Prepend load or error item
+                    pagingLoadStateItem(
+                        loadState = trendingTitles.loadState.prepend,
+                        keySuffix = "prepend",
+                        loading = { AppendPrependLoading() },
+                        error = {
+                            AppendPrependError(
+                                errorText = "Could not load more data",
+                                onButtonRetryClick = onRetryAppendPrependClick
+                            )
+                        }
+                    )
+
+                    // Main Content
+                    items(
+                        items = trendingTitles,
+                        key = { titleItem -> titleItem.id }
+                    ) { titleItem: TitleItemFull? ->
+                        titleItem?.let { titleItemFull ->
+                            TitleItemCard(
+                                title = titleItemFull,
+                                onWatchlistClicked = { onWatchlistClicked(titleItemFull) },
+                                onTitleClicked = { onTitleClicked(it) },
+                                placeholderImage = placeholderPoster,
+                                modifier = Modifier.animateItemPlacement()
+                            )
+                        }
+                    }
+
+                    // Append load or error item
+                    pagingLoadStateItem(
+                        loadState = trendingTitles.loadState.append,
+                        keySuffix = "append",
+                        loading = { AppendPrependLoading() },
+                        error = {
+                            AppendPrependError(
+                                errorText = "Could not load more data",
+                                onButtonRetryClick = onRetryAppendPrependClick
+                            )
+                        }
+                    )
+                }
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TitleListScreenContent(
     titleListUiState: TitleListUiState,
+    trendingTitles: LazyPagingItems<TitleItemFull>,
     filterState: TitleListFilter,
     onButtonRetryClick: () -> Unit,
     onWatchlistClicked: (TitleItemFull) -> Unit,
@@ -191,14 +291,35 @@ fun TitleListScreenContent(
                         onAllFiltersClicked = onAllFiltersClicked,
                         onTypeFilterSelected = onTitleTypeFilterSelected
                     )
-                    TitleItemsList(
-                        titleItemsFull = uiState.titleItems,
-                        placeholderImage = placeholderPoster,
-                        onWatchlistClicked = onWatchlistClicked,
-                        onTitleClicked = onTitleClicked,
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
                         contentPadding = PaddingValues(vertical = 10.dp),
-                        state = listState
-                    )
+                        state = rememberLazyListState(),
+                        modifier = modifier
+                    ) {
+                        items(
+                            items = trendingTitles,
+                            key = { titleItem -> titleItem.id }
+                        ) { titleItem: TitleItemFull? ->
+                            titleItem?.let { titleItemFull ->
+                                TitleItemCard(
+                                    title = titleItemFull,
+                                    onWatchlistClicked = { onWatchlistClicked(titleItemFull) },
+                                    onTitleClicked = { onTitleClicked(it) },
+                                    placeholderImage = placeholderPoster,
+                                    modifier = Modifier.animateItemPlacement()
+                                )
+                            }
+                        }
+                    }
+//                    TitleItemsList(
+//                        titleItemsFull = uiState.titleItems,
+//                        placeholderImage = placeholderPoster,
+//                        onWatchlistClicked = onWatchlistClicked,
+//                        onTitleClicked = onTitleClicked,
+//                        contentPadding = PaddingValues(vertical = 10.dp),
+//                        state = listState
+//                    )
                 }
             }
         }
@@ -491,6 +612,34 @@ fun FilterLabel(
 }
 
 @Composable
+fun AppendPrependLoading(
+    modifier: Modifier = Modifier,
+    rowHorizontalArrangement: Arrangement.Horizontal = Arrangement.Center,
+    circleSize: Dp = 40.dp
+) {
+    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = rowHorizontalArrangement) {
+        LoadingCircle(modifier = Modifier.size(circleSize))
+    }
+}
+
+@Composable
+fun AppendPrependError(
+    errorText: String,
+    onButtonRetryClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    rowHorizontalArrangement: Arrangement.Horizontal = Arrangement.Center,
+    errorTextStyle: TextStyle = MaterialTheme.typography.bodyMedium
+) {
+    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = rowHorizontalArrangement) {
+        ErrorText(
+            errorMessage = errorText,
+            onButtonRetryClick = onButtonRetryClick,
+            errorTextStyle = errorTextStyle
+        )
+    }
+}
+
+@Composable
 fun FilterSectionDivider(
     modifier: Modifier = Modifier,
     color: Color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -515,3 +664,22 @@ fun getScreenTitle(titleListType: TitleListType?): String {
     }
 }
 
+private fun LazyListScope.pagingLoadStateItem(
+    loadState: LoadState,
+    keySuffix: String? = null,
+    loading: (@Composable LazyItemScope.() -> Unit)? = null,
+    error: (@Composable LazyItemScope.(LoadState.Error) -> Unit)? = null,
+) {
+    if (loading != null && loadState == LoadState.Loading) {
+        item(
+            key = keySuffix?.let { "loadingItem_$it" },
+            content = loading,
+        )
+    }
+    if (error != null && loadState is LoadState.Error) {
+        item(
+            key = keySuffix?.let { "errorItem_$it" },
+            content = { error(loadState)},
+        )
+    }
+}
