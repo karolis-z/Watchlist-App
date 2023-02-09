@@ -46,6 +46,11 @@ interface TitleItemsRepository {
     suspend fun getTrendingTitles(): ResultOf<List<TitleItemFull>>
 
     /**
+     * @return a paginated list of [TitleItemFull]s that are trending
+     */
+    suspend fun getTrendingTitlesPaginated(page: Int): ResultOf<List<TitleItemFull>>
+
+    /**
      * @return a list of [TitleItemFull]s that are popular
      */
     suspend fun getPopularTitles(): ResultOf<List<TitleItemFull>>

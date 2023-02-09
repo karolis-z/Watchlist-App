@@ -1,13 +1,22 @@
 package com.myapplications.mywatchlist.data.entities
 
 import androidx.room.*
-import androidx.room.ForeignKey.Companion.CASCADE
 import com.myapplications.mywatchlist.domain.entities.Genre
 import com.myapplications.mywatchlist.domain.entities.TitleType
 import java.time.LocalDate
 
-@Entity
-data class TitleItemEntity(
+@Entity(tableName = "remote_key_trending")
+data class RemoteKeyTrending(
+    @PrimaryKey(autoGenerate = false)
+    val cachedTitleId: Long,
+    val prevKey: Int?,
+    val currentPage: Int,
+    val nextKey: Int?,
+    val createdOn: Long
+)
+
+@Entity(tableName = "title_item_cache_trending")
+data class TitleItemCacheTrending(
     @PrimaryKey(autoGenerate = false)
     val id: Long,
     val name: String,
@@ -19,35 +28,36 @@ data class TitleItemEntity(
     val releaseDate: LocalDate?,
     val voteCount: Long,
     val voteAverage: Double,
-    val isWatchlisted: Boolean
+    val isWatchlisted: Boolean,
+    val page: Int
 )
 
+
 @Entity(
+    tableName = "genre_for_cache_item_trending",
     primaryKeys = ["id", "titleId"],
     foreignKeys = [ForeignKey(
-        entity = TitleItemEntity::class,
+        entity = TitleItemCacheTrending::class,
         parentColumns = ["id"],
         childColumns = ["titleId"],
-        onDelete = CASCADE,
-        onUpdate = CASCADE
+        onDelete = ForeignKey.CASCADE,
+        onUpdate = ForeignKey.CASCADE
     )]
 )
-data class GenreForTitleEntity(
+data class GenreForCacheItemTrending(
     val id: Long,
     val name: String,
     val titleId: Long
 )
 
 
-data class TitleItemWithGenres(
-    @Embedded val titleItem: TitleItemEntity,
+data class TitleItemCacheTrendingFull(
+    @Embedded val titleItem: TitleItemCacheTrending,
     @Relation(
         parentColumn = "id",
         entityColumn = "titleId",
-        entity = GenreForTitleEntity::class,
+        entity = GenreForCacheItemTrending::class,
         projection = ["id","name"]
     )
     val genres: List<Genre>,
 )
-
-

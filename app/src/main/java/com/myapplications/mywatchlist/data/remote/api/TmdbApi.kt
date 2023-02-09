@@ -22,6 +22,9 @@ interface TmdbApi {
     @GET("trending/all/week?api_key=$apiKey")
     suspend fun getTrendingTitles(): Response<ApiResponse>
 
+    @GET("trending/all/week?api_key=$apiKey")
+    suspend fun getTrendingTitlesPaging(@Query("page") page: Int): Response<ApiResponse>
+
     @GET("movie/popular?api_key=$apiKey")
     suspend fun getPopularMovies(): Response<ApiResponse>
 

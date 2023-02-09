@@ -7,6 +7,7 @@ import com.myapplications.mywatchlist.data.entities.*
 import com.myapplications.mywatchlist.data.local.details.MovieDao
 import com.myapplications.mywatchlist.data.local.details.TvDao
 import com.myapplications.mywatchlist.data.local.genres.GenresDao
+import com.myapplications.mywatchlist.data.local.titles.CacheDao
 import com.myapplications.mywatchlist.data.local.titles.TitlesDao
 
 @Database(
@@ -25,7 +26,10 @@ import com.myapplications.mywatchlist.data.local.titles.TitlesDao
         TitleItemRecommendedMovieEntity::class,
         TitleItemSimilarMovieEntity::class,
         TitleItemRecommendedTvEntity::class,
-        TitleItemSimilarTvEntity::class
+        TitleItemSimilarTvEntity::class,
+        RemoteKeyTrending::class,
+        TitleItemCacheTrending::class,
+        GenreForCacheItemTrending::class,
     ],
     version = 1
 )
@@ -39,5 +43,7 @@ abstract class WatchlistDatabase : RoomDatabase() {
     abstract fun movieDao(): MovieDao
 
     abstract fun tvDao(): TvDao
+
+    abstract fun cacheDao(): CacheDao
 
 }

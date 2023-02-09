@@ -48,6 +48,7 @@ fun List<TitleItemApiModel>.toTitleItemsFull(
  */
 fun TitleItemFull.toTitleItemEntity(): TitleItemEntity {
     return TitleItemEntity(
+        id = this.id,
         name = this.name,
         type = this.type,
         mediaId = this.mediaId,

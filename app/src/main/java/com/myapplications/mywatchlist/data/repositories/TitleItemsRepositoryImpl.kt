@@ -53,6 +53,12 @@ class TitleItemsRepositoryImpl @Inject constructor(
         )
     }
 
+    override suspend fun getTrendingTitlesPaginated(page: Int): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        return@withContext getTitleItemsFullResult(
+            requestType = TitleItemsRequestType.TrendingMoviesAndTVPaginated(page = page)
+        )
+    }
+
     override suspend fun getPopularTitles(): ResultOf<List<TitleItemFull>> =
         withContext(dispatcher) {
             return@withContext getTitleItemsFullResult(
@@ -101,6 +107,8 @@ class TitleItemsRepositoryImpl @Inject constructor(
                 remoteDataSource.getTopRatedTitles(allGenres = genresList)
             TitleItemsRequestType.UpcomingMovies ->
                 remoteDataSource.getUpcomingMovies(allGenres = genresList)
+            is TitleItemsRequestType.TrendingMoviesAndTVPaginated ->
+                remoteDataSource.getTrendingTitlesPaginated(allGenres = genresList, page = requestType.page)
         }
         return@withContext parseTitlesListResult(result)
     }
@@ -133,6 +141,7 @@ class TitleItemsRepositoryImpl @Inject constructor(
 
     private sealed class TitleItemsRequestType {
         object TrendingMoviesAndTV : TitleItemsRequestType()
+        data class TrendingMoviesAndTVPaginated(val page: Int) : TitleItemsRequestType()
         object PopularMoviesAndTV : TitleItemsRequestType()
         object UpcomingMovies : TitleItemsRequestType()
         object TopRatedMoviesAndTV : TitleItemsRequestType()

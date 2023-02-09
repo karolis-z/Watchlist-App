@@ -91,6 +91,7 @@ dependencies {
     implementation "androidx.room:room-runtime:$room_version"
     kapt "androidx.room:room-compiler:$room_version"
     implementation "androidx.room:room-ktx:$room_version"
+    implementation "androidx.room:room-paging:$room_version"
 
     // RETROFIT + GSON
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
@@ -128,6 +129,10 @@ dependencies {
 
     // BALLOON - TOOLTIPS
     implementation "com.github.skydoves:balloon-compose:1.5.2"
+
+    // PAGINATION
+    implementation "androidx.paging:paging-runtime:$paging_version"
+    implementation "androidx.paging:paging-compose:1.0.0-alpha17"
 
     // TESTING
     testImplementation 'junit:junit:4.13.2'

@@ -2,6 +2,10 @@ package com.myapplications.mywatchlist.domain.entities
 
 import java.time.LocalDate
 
+// TITLE TYPE CODES
+const val MOVIE_CODE: Long = 99
+const val TV_CODE: Long = 11
+
 interface TitleItem {
     val name: String
     val type: TitleType
@@ -47,9 +51,9 @@ data class TitleItemMinimal(
     override val isWatchlisted: Boolean
 ): TitleItem
 
-enum class TitleType {
-    MOVIE,
-    TV
+enum class TitleType(val typeCode: Long) {
+    MOVIE(typeCode = MOVIE_CODE),
+    TV(typeCode = TV_CODE)
 }
 
 data class Genre(

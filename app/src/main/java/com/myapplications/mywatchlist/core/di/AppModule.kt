@@ -56,4 +56,7 @@ object AppModule {
     @Provides
     fun provideTvDao(db: WatchlistDatabase) = db.tvDao()
 
+    @Singleton
+    @Provides
+    fun provideCacheDao(db: WatchlistDatabase) = db.cacheDao()
 }

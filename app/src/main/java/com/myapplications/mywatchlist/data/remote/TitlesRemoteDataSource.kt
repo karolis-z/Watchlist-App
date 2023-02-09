@@ -34,6 +34,8 @@ interface TitlesRemoteDataSource {
      */
     suspend fun getTrendingTitles(allGenres: List<Genre>): ResultOf<List<TitleItemFull>>
 
+    suspend fun getTrendingTitlesPaginated(allGenres: List<Genre>, page: Int): ResultOf<List<TitleItemFull>>
+
     /**
      * Retrieves titles that are popular today from TMDB
      * @return [ResultOf.Success] containing List of [TitleItemFull] if successful and [ResultOf.Failure]
@@ -86,6 +88,17 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
             )
         }
 
+    override suspend fun getTrendingTitlesPaginated(
+        allGenres: List<Genre>,
+        page: Int
+    ): ResultOf<List<TitleItemFull>> =
+        withContext(dispatcher) {
+            return@withContext getTitleItemsFullResult(
+                requestType = TitleItemsRequestType.TrendingMoviesAndTVPaginated(page = page),
+                allGenres = allGenres
+            )
+        }
+
     override suspend fun getPopularTitles(allGenres: List<Genre>): ResultOf<List<TitleItemFull>> =
         withContext(dispatcher) {
             return@withContext getTitleItemsFullResult(
@@ -123,16 +136,16 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
                     apiResponses.add(api.getPopularMovies())
                     apiResponses.add(api.getPopularTV())
                 }
-                is TitleItemsRequestType.SearchQuery -> {
+                is TitleItemsRequestType.SearchQuery ->
                     apiResponses.add(api.search(requestType.query))
-                }
                 TitleItemsRequestType.TopRatedMoviesAndTV -> {
                     apiResponses.add(api.getTopRatedTV())
                     apiResponses.add(api.getTopRatedMovies())
                 }
-                TitleItemsRequestType.UpcomingMovies -> {
+                TitleItemsRequestType.UpcomingMovies ->
                     apiResponses.add(api.getUpcomingMovies())
-                }
+                is TitleItemsRequestType.TrendingMoviesAndTVPaginated ->
+                    apiResponses.add(api.getTrendingTitlesPaging(page = requestType.page))
             }
         } catch (e: Exception) {
             return@withContext getFailedApiResponseResult(exception = e)
@@ -176,6 +189,7 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
                     )
                     is TitleItemsRequestType.SearchQuery,
                     TitleItemsRequestType.TrendingMoviesAndTV,
+                    is TitleItemsRequestType.TrendingMoviesAndTVPaginated,
                     TitleItemsRequestType.UpcomingMovies -> parsedResult.copy(
                         data = parsedResult.data.sortedBy { it.releaseDate }
                     )
@@ -235,6 +249,7 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
 
     private sealed class TitleItemsRequestType {
         object TrendingMoviesAndTV : TitleItemsRequestType()
+        data class TrendingMoviesAndTVPaginated(val page: Int) : TitleItemsRequestType()
         object PopularMoviesAndTV : TitleItemsRequestType()
         object UpcomingMovies : TitleItemsRequestType()
         object TopRatedMoviesAndTV : TitleItemsRequestType()

@@ -61,7 +61,7 @@ fun List<TvApiModel>.toTvList(
  */
 fun TV.toTitleItemFull(): TitleItemFull {
     return TitleItemFull(
-        id = 0,
+        id = ("${TitleType.TV.typeCode}${this.id}").toLong(),
         name = this.name,
         type = TitleType.TV,
         mediaId = this.id,

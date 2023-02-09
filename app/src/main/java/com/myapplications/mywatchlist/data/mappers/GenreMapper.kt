@@ -1,9 +1,6 @@
 package com.myapplications.mywatchlist.data.mappers
 
-import com.myapplications.mywatchlist.data.entities.GenreEntity
-import com.myapplications.mywatchlist.data.entities.GenreForMovieEntity
-import com.myapplications.mywatchlist.data.entities.GenreForTitleEntity
-import com.myapplications.mywatchlist.data.entities.GenreForTvEntity
+import com.myapplications.mywatchlist.data.entities.*
 import com.myapplications.mywatchlist.domain.entities.Genre
 
 /**
@@ -90,4 +87,12 @@ fun List<Genre>.toListOfGenreForTvEntity(tvId: Long): List<GenreForTvEntity> {
     return this.map {
         it.toGenreForTvEntity(tvId)
     }
+}
+
+fun Genre.toGenreForCacheItemTrending(mediaId: Long): GenreForCacheItemTrending {
+    return GenreForCacheItemTrending(id = this.id, name = this.name, titleId = mediaId)
+}
+
+fun List<Genre>.toGenreForCacheItemTrendingList(mediaId: Long): List<GenreForCacheItemTrending> {
+    return this.map { it.toGenreForCacheItemTrending(mediaId) }
 }

@@ -295,8 +295,9 @@ object MyGsonConverter {
                     if (mediaType != null) {
                         val titleItem = when (requestType) {
                             TitleItemsRequest.GENERAL_TITLE_ITEMS_FULL -> {
+                                val mediaId = resultJson.get("id").asLong
                                 TitleItemApiModel(
-                                    id = 0,
+                                    id = ("${mediaType.typeCode}$mediaId").toLong(),
                                     name = getName(resultJson),
                                     type = mediaType,
                                     mediaId = resultJson.get("id").asLong,
