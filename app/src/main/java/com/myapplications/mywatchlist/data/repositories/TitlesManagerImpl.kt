@@ -21,9 +21,19 @@ class TitlesManagerImpl @Inject constructor(
     @IoDispatcher private val dispatcher: CoroutineDispatcher
 ) : TitlesManager {
 
-    override suspend fun searchTitles(query: String): ResultOf<List<TitleItemFull>> =
+    override suspend fun searchAll(query: String, page: Int): ResultOf<List<TitleItemFull>> =
         withContext(dispatcher) {
-            titleItemsRepository.searchTitles(query)
+            titleItemsRepository.searchAll(query = query, page = page)
+        }
+
+    override suspend fun searchMovies(query: String, page: Int): ResultOf<List<TitleItemFull>> =
+        withContext(dispatcher) {
+            titleItemsRepository.searchMovies(query = query, page = page)
+        }
+
+    override suspend fun searchTV(query: String, page: Int): ResultOf<List<TitleItemFull>> =
+        withContext(dispatcher) {
+            titleItemsRepository.searchTV(query = query, page = page)
         }
 
     override suspend fun bookmarkTitleItem(titleItemFull: TitleItemFull) = withContext(dispatcher) {
@@ -81,20 +91,54 @@ class TitlesManagerImpl @Inject constructor(
             titleItemsRepository.getTrendingTitles()
         }
 
-    override suspend fun getPopularTitles(): ResultOf<List<TitleItemFull>> =
-        withContext(dispatcher) {
-            titleItemsRepository.getPopularTitles()
-        }
+    override suspend fun getPopularMovies(
+        page: Int,
+        filter: TitleListFilter
+    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        titleItemsRepository.getPopularMovies(page = page, filter = filter)
+    }
 
-    override suspend fun getTopRatedTitles(): ResultOf<List<TitleItemFull>> =
-        withContext(dispatcher) {
-            titleItemsRepository.getTopRatedTitles()
-        }
+    override suspend fun getPopularTV(
+        page: Int,
+        filter: TitleListFilter
+    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        titleItemsRepository.getPopularTV(page = page, filter = filter)
+    }
 
-    override suspend fun getUpcomingMovies(): ResultOf<List<TitleItemFull>> =
-        withContext(dispatcher) {
-            titleItemsRepository.getUpcomingMovies()
-        }
+    override suspend fun getTopRatedMovies(
+        page: Int,
+        filter: TitleListFilter
+    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        titleItemsRepository.getTopRatedMovies(page = page, filter = filter)
+    }
+
+    override suspend fun getTopRatedTV(
+        page: Int,
+        filter: TitleListFilter
+    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        titleItemsRepository.getTopRatedTV(page = page, filter = filter)
+    }
+
+    override suspend fun getUpcomingMovies(
+        page: Int,
+        filter: TitleListFilter
+    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        titleItemsRepository.getUpcomingMovies(page = page, filter = filter)
+    }
+
+    override suspend fun getDiscoverMovies(
+        page: Int,
+        filter: TitleListFilter
+    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        titleItemsRepository.getDiscoverMovies(page = page, filter = filter)
+    }
+
+    override suspend fun getDiscoverTV(
+        page: Int,
+        filter: TitleListFilter
+    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        titleItemsRepository.getDiscoverTV(page = page, filter = filter)
+    }
 
     override suspend fun getTitle(mediaId: Long, type: TitleType): ResultOf<Title> =
         withContext(dispatcher) {

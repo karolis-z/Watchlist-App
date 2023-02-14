@@ -6,7 +6,6 @@ import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 
 fun TitleItemFull.toTitleItemCacheTrending(page: Int): TitleItemCacheTrending {
     return TitleItemCacheTrending(
-        id = this.id,
         name = this.name,
         type =this.type,
         mediaId = this.mediaId,

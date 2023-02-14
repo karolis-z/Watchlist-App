@@ -1,17 +1,35 @@
 package com.myapplications.mywatchlist.domain.repositories
 
 import com.myapplications.mywatchlist.domain.entities.TitleItemFull
+import com.myapplications.mywatchlist.domain.entities.TitleListFilter
 import com.myapplications.mywatchlist.domain.result.ResultOf
 import kotlinx.coroutines.flow.Flow
 
 interface TitleItemsRepository {
 
     /**
-     * Searches for the given query in The Movie Database.
+     * Searches for the given query in The Movie Database among Movies and TV Shows.
      * @return [ResultOf.Success] containing List of [TitleItemFull] if successful and [ResultOf.Failure]
      * if not.
+     * @param query [String] to be searched
      */
-    suspend fun searchTitles(query: String): ResultOf<List<TitleItemFull>>
+    suspend fun searchAll(query: String, page: Int): ResultOf<List<TitleItemFull>>
+
+    /**
+     * Searches for the given query in The Movie Database among Movies.
+     * @return [ResultOf.Success] containing List of [TitleItemFull] if successful and [ResultOf.Failure]
+     * if not.
+     * @param query [String] to be searched
+     */
+    suspend fun searchMovies(query: String, page: Int): ResultOf<List<TitleItemFull>>
+
+    /**
+     * Searches for the given query in The Movie Database among TV Shows.
+     * @return [ResultOf.Success] containing List of [TitleItemFull] if successful and [ResultOf.Failure]
+     * if not.
+     * @param query [String] to be searched
+     */
+    suspend fun searchTV(query: String, page: Int): ResultOf<List<TitleItemFull>>
 
     /**
      * Bookmarks the [TitleItemFull] as added to user's watchlist.
@@ -46,22 +64,38 @@ interface TitleItemsRepository {
     suspend fun getTrendingTitles(): ResultOf<List<TitleItemFull>>
 
     /**
-     * @return a paginated list of [TitleItemFull]s that are trending
+     * @return a list of Movie [TitleItemFull]s that are popular
      */
-    suspend fun getTrendingTitlesPaginated(page: Int): ResultOf<List<TitleItemFull>>
+    suspend fun getPopularMovies(page: Int, filter: TitleListFilter): ResultOf<List<TitleItemFull>>
 
     /**
-     * @return a list of [TitleItemFull]s that are popular
+     * @return a list of TV Show [TitleItemFull]s that are popular
      */
-    suspend fun getPopularTitles(): ResultOf<List<TitleItemFull>>
+    suspend fun getPopularTV(page: Int, filter: TitleListFilter): ResultOf<List<TitleItemFull>>
 
     /**
-     * @return a list of [TitleItemFull]s that are top rated
+     * @return a list of Movie [TitleItemFull]s that are top rated
      */
-    suspend fun getTopRatedTitles(): ResultOf<List<TitleItemFull>>
+    suspend fun getTopRatedMovies(page: Int, filter: TitleListFilter): ResultOf<List<TitleItemFull>>
+
+    /**
+     * @return a list of TV Show [TitleItemFull]s that are top rated
+     */
+    suspend fun getTopRatedTV(page: Int, filter: TitleListFilter): ResultOf<List<TitleItemFull>>
 
     /**
      * @return a list of [TitleItemFull]s that are upcoming movies
      */
-    suspend fun getUpcomingMovies(): ResultOf<List<TitleItemFull>>
+    suspend fun getUpcomingMovies(page: Int, filter: TitleListFilter): ResultOf<List<TitleItemFull>>
+
+    /**
+     * @return a list of Movie [TitleItemFull]s that searched by the custom filter
+     */
+    suspend fun getDiscoverMovies(page: Int, filter: TitleListFilter): ResultOf<List<TitleItemFull>>
+
+    /**
+     * @return a list of TV Show [TitleItemFull]s that searched by the custom filter
+     */
+    suspend fun getDiscoverTV(page: Int, filter: TitleListFilter): ResultOf<List<TitleItemFull>>
+
 }

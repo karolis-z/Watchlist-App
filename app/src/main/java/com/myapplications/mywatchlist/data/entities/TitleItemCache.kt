@@ -17,8 +17,8 @@ data class RemoteKeyTrending(
 
 @Entity(tableName = "title_item_cache_trending")
 data class TitleItemCacheTrending(
-    @PrimaryKey(autoGenerate = false)
-    val id: Long,
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
     val name: String,
     val type: TitleType,
     val mediaId: Long,

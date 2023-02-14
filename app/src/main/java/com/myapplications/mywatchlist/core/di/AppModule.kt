@@ -4,10 +4,8 @@ import android.content.Context
 import androidx.room.Room
 import com.myapplications.mywatchlist.core.util.Constants
 import com.myapplications.mywatchlist.data.local.WatchlistDatabase
-import com.myapplications.mywatchlist.data.mediators.TitlesTrendingRemoteMediator
 import com.myapplications.mywatchlist.data.remote.api.MyGsonConverter
 import com.myapplications.mywatchlist.data.remote.api.TmdbApi
-import com.myapplications.mywatchlist.domain.repositories.TitleItemsRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -62,10 +60,4 @@ object AppModule {
     @Provides
     fun provideCacheDao(db: WatchlistDatabase) = db.cacheDao()
 
-    @Singleton
-    @Provides
-    fun provideTitlesTrendingRemoteMediator(
-        titleItemsRepository: TitleItemsRepository,
-        db: WatchlistDatabase
-    ) = TitlesTrendingRemoteMediator(titleItemsRepository = titleItemsRepository, db = db)
 }

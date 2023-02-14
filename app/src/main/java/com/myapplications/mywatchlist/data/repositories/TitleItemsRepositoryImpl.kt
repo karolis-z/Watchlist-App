@@ -6,6 +6,7 @@ import com.myapplications.mywatchlist.data.ApiGetTitleItemsExceptions
 import com.myapplications.mywatchlist.data.local.titles.TitlesLocalDataSource
 import com.myapplications.mywatchlist.data.remote.TitlesRemoteDataSource
 import com.myapplications.mywatchlist.domain.entities.TitleItemFull
+import com.myapplications.mywatchlist.domain.entities.TitleListFilter
 import com.myapplications.mywatchlist.domain.repositories.GenresRepository
 import com.myapplications.mywatchlist.domain.repositories.TitleItemsRepository
 import com.myapplications.mywatchlist.domain.result.ResultOf
@@ -24,10 +25,24 @@ class TitleItemsRepositoryImpl @Inject constructor(
     @IoDispatcher private val dispatcher: CoroutineDispatcher
 ) : TitleItemsRepository {
 
-    override suspend fun searchTitles(query: String): ResultOf<List<TitleItemFull>> =
+    override suspend fun searchAll(query: String, page: Int): ResultOf<List<TitleItemFull>> =
         withContext(dispatcher) {
             return@withContext getTitleItemsFullResult(
-                requestType = TitleItemsRequestType.SearchQuery(query)
+                requestType = TitleItemsRequestType.SearchAll(query = query, page = page)
+            )
+        }
+
+    override suspend fun searchMovies(query: String, page: Int): ResultOf<List<TitleItemFull>> =
+        withContext(dispatcher) {
+            return@withContext getTitleItemsFullResult(
+                requestType = TitleItemsRequestType.SearchMovies(query = query, page = page)
+            )
+        }
+
+    override suspend fun searchTV(query: String, page: Int): ResultOf<List<TitleItemFull>> =
+        withContext(dispatcher) {
+            return@withContext getTitleItemsFullResult(
+                requestType = TitleItemsRequestType.SearchTV(query = query, page = page)
             )
         }
 
@@ -53,32 +68,68 @@ class TitleItemsRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun getTrendingTitlesPaginated(page: Int): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+    override suspend fun getPopularMovies(
+        page: Int,
+        filter: TitleListFilter
+    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
         return@withContext getTitleItemsFullResult(
-            requestType = TitleItemsRequestType.TrendingMoviesAndTVPaginated(page = page)
+            requestType = TitleItemsRequestType.PopularMovies(page = page, filter = filter)
         )
     }
 
-    override suspend fun getPopularTitles(): ResultOf<List<TitleItemFull>> =
-        withContext(dispatcher) {
-            return@withContext getTitleItemsFullResult(
-                requestType = TitleItemsRequestType.PopularMoviesAndTV
-            )
-        }
+    override suspend fun getPopularTV(
+        page: Int,
+        filter: TitleListFilter
+    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        return@withContext getTitleItemsFullResult(
+            requestType = TitleItemsRequestType.PopularTV(page = page, filter = filter)
+        )
+    }
 
-    override suspend fun getTopRatedTitles(): ResultOf<List<TitleItemFull>> =
-        withContext(dispatcher) {
-            return@withContext getTitleItemsFullResult(
-                requestType = TitleItemsRequestType.TopRatedMoviesAndTV
-            )
-        }
+    override suspend fun getTopRatedMovies(
+        page: Int,
+        filter: TitleListFilter
+    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        return@withContext getTitleItemsFullResult(
+            requestType = TitleItemsRequestType.TopRatedMovies(page = page, filter = filter)
+        )
+    }
 
-    override suspend fun getUpcomingMovies(): ResultOf<List<TitleItemFull>> =
-        withContext(dispatcher) {
-            return@withContext getTitleItemsFullResult(
-                requestType = TitleItemsRequestType.UpcomingMovies
-            )
-        }
+    override suspend fun getTopRatedTV(
+        page: Int,
+        filter: TitleListFilter
+    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        return@withContext getTitleItemsFullResult(
+            requestType = TitleItemsRequestType.TopRatedTV(page = page, filter = filter)
+        )
+    }
+
+    override suspend fun getUpcomingMovies(
+        page: Int,
+        filter: TitleListFilter
+    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        return@withContext getTitleItemsFullResult(
+            requestType = TitleItemsRequestType.UpcomingMovies(page = page, filter = filter)
+        )
+    }
+
+    override suspend fun getDiscoverMovies(
+        page: Int,
+        filter: TitleListFilter
+    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        return@withContext getTitleItemsFullResult(
+            requestType = TitleItemsRequestType.DiscoverMovies(page = page, filter = filter)
+        )
+    }
+
+    override suspend fun getDiscoverTV(
+        page: Int,
+        filter: TitleListFilter
+    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        return@withContext getTitleItemsFullResult(
+            requestType = TitleItemsRequestType.DiscoverTV(page = page, filter = filter)
+        )
+    }
 
     /**
      * General function to get a result from remote data source
@@ -94,21 +145,70 @@ class TitleItemsRepositoryImpl @Inject constructor(
             )
         }
         val genresList = genresRepository.getAvailableGenres()
+
         val result = when (requestType) {
-            TitleItemsRequestType.PopularMoviesAndTV ->
-                remoteDataSource.getPopularTitles(allGenres = genresList)
-            is TitleItemsRequestType.SearchQuery -> remoteDataSource.searchTitles(
-                query = requestType.query,
-                allGenres = genresList
-            )
             TitleItemsRequestType.TrendingMoviesAndTV ->
                 remoteDataSource.getTrendingTitles(allGenres = genresList)
-            TitleItemsRequestType.TopRatedMoviesAndTV ->
-                remoteDataSource.getTopRatedTitles(allGenres = genresList)
-            TitleItemsRequestType.UpcomingMovies ->
-                remoteDataSource.getUpcomingMovies(allGenres = genresList)
-            is TitleItemsRequestType.TrendingMoviesAndTVPaginated ->
-                remoteDataSource.getTrendingTitlesPaginated(allGenres = genresList, page = requestType.page)
+            is TitleItemsRequestType.SearchAll ->
+                remoteDataSource.searchAllTitles(
+                    allGenres = genresList,
+                    page = requestType.page,
+                    query = requestType.query
+                )
+            is TitleItemsRequestType.SearchMovies ->
+                remoteDataSource.searchMovies(
+                    allGenres = genresList,
+                    page = requestType.page,
+                    query = requestType.query
+                )
+            is TitleItemsRequestType.SearchTV ->
+                remoteDataSource.searchTV(
+                    allGenres = genresList,
+                    page = requestType.page,
+                    query = requestType.query
+                )
+            is TitleItemsRequestType.DiscoverMovies ->
+                remoteDataSource.getDiscoverMovies(
+                    allGenres = genresList,
+                    page = requestType.page,
+                    filter = requestType.filter
+                )
+            is TitleItemsRequestType.DiscoverTV ->
+                remoteDataSource.getDiscoverTV(
+                    allGenres = genresList,
+                    page = requestType.page,
+                    filter = requestType.filter
+                )
+            is TitleItemsRequestType.PopularMovies ->
+                remoteDataSource.getPopularMovies(
+                    allGenres = genresList,
+                    page = requestType.page,
+                    filter = requestType.filter
+                )
+            is TitleItemsRequestType.PopularTV ->
+                remoteDataSource.getPopularTV(
+                    allGenres = genresList,
+                    page = requestType.page,
+                    filter = requestType.filter
+                )
+            is TitleItemsRequestType.TopRatedMovies ->
+                remoteDataSource.getTopRatedMovies(
+                    allGenres = genresList,
+                    page = requestType.page,
+                    filter = requestType.filter
+                )
+            is TitleItemsRequestType.TopRatedTV ->
+                remoteDataSource.getTopRatedTV(
+                    allGenres = genresList,
+                    page = requestType.page,
+                    filter = requestType.filter
+                )
+            is TitleItemsRequestType.UpcomingMovies ->
+                remoteDataSource.getUpcomingMovies(
+                    allGenres = genresList,
+                    page = requestType.page,
+                    filter = requestType.filter
+                )
         }
         return@withContext parseTitlesListResult(result)
     }
@@ -120,31 +220,41 @@ class TitleItemsRepositoryImpl @Inject constructor(
      * @param result is a [ResultOf] returned from remote data source.
      * @return [ResultOf] that can be further returned to the requester.
      */
-    private suspend fun parseTitlesListResult(result: ResultOf<List<TitleItemFull>>): ResultOf<List<TitleItemFull>> =
-        withContext(dispatcher) {
-            when (result) {
-                is ResultOf.Failure -> return@withContext result
-                is ResultOf.Success -> {
-                    val titlesFilteredForWatchlisted = mutableListOf<TitleItemFull>()
-                    result.data.forEach { titleItem ->
-                        val isWatchlisted = localDataSource.checkIfTitleItemWatchlisted(titleItem)
-                        if (isWatchlisted) {
-                            titlesFilteredForWatchlisted.add(titleItem.copy(isWatchlisted = true))
-                        } else {
-                            titlesFilteredForWatchlisted.add(titleItem)
-                        }
+    private suspend fun parseTitlesListResult(
+        result: ResultOf<List<TitleItemFull>>
+    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        when (result) {
+            is ResultOf.Failure -> return@withContext result
+            is ResultOf.Success -> {
+                val titlesFilteredForWatchlisted = mutableListOf<TitleItemFull>()
+                result.data.forEach { titleItem ->
+                    val isWatchlisted = localDataSource.checkIfTitleItemWatchlisted(titleItem)
+                    if (isWatchlisted) {
+                        titlesFilteredForWatchlisted.add(titleItem.copy(isWatchlisted = true))
+                    } else {
+                        titlesFilteredForWatchlisted.add(titleItem)
                     }
-                    return@withContext ResultOf.Success(data = titlesFilteredForWatchlisted)
                 }
+                return@withContext ResultOf.Success(data = titlesFilteredForWatchlisted)
             }
         }
+    }
 
     private sealed class TitleItemsRequestType {
         object TrendingMoviesAndTV : TitleItemsRequestType()
-        data class TrendingMoviesAndTVPaginated(val page: Int) : TitleItemsRequestType()
-        object PopularMoviesAndTV : TitleItemsRequestType()
-        object UpcomingMovies : TitleItemsRequestType()
-        object TopRatedMoviesAndTV : TitleItemsRequestType()
-        data class SearchQuery(val query: String): TitleItemsRequestType()
+        data class PopularMovies(val page: Int, val filter: TitleListFilter) :
+            TitleItemsRequestType()
+        data class PopularTV(val page: Int, val filter: TitleListFilter) : TitleItemsRequestType()
+        data class UpcomingMovies(val page: Int, val filter: TitleListFilter) :
+            TitleItemsRequestType()
+        data class TopRatedMovies(val page: Int, val filter: TitleListFilter) :
+            TitleItemsRequestType()
+        data class TopRatedTV(val page: Int, val filter: TitleListFilter) : TitleItemsRequestType()
+        data class SearchAll(val query: String, val page: Int) : TitleItemsRequestType()
+        data class SearchMovies(val query: String, val page: Int) : TitleItemsRequestType()
+        data class SearchTV(val query: String, val page: Int) : TitleItemsRequestType()
+        data class DiscoverMovies(val page: Int, val filter: TitleListFilter) :
+            TitleItemsRequestType()
+        data class DiscoverTV(val page: Int, val filter: TitleListFilter) : TitleItemsRequestType()
     }
 }

@@ -13,19 +13,19 @@ import com.myapplications.mywatchlist.data.local.WatchlistDatabase
 import com.myapplications.mywatchlist.domain.repositories.TitleItemsRepository
 import com.myapplications.mywatchlist.domain.result.ResultOf
 import java.time.Instant
-import javax.inject.Inject
+
+private const val TAG = "MEDIATOR"
 
 @OptIn(ExperimentalPagingApi::class)
-class TitlesTrendingRemoteMediator @Inject constructor(
+class TitlesTrendingRemoteMediator (
     private val titleItemsRepository: TitleItemsRepository,
-    private val db: WatchlistDatabase
+    private val database: WatchlistDatabase
 ) : RemoteMediator<Int, TitleItemCacheTrendingFull>() {
 
     override suspend fun load(
         loadType: LoadType,
         state: PagingState<Int, TitleItemCacheTrendingFull>
     ): MediatorResult {
-//        delay(2000)
         val page: Int = when (loadType) {
             LoadType.REFRESH -> {
                 val remoteKeys = getRemoteKeyClosestToCurrentPosition(state)
@@ -46,6 +46,7 @@ class TitlesTrendingRemoteMediator @Inject constructor(
         }
 
         val trendingResult = titleItemsRepository.getTrendingTitlesPaginated(page = page)
+
         val endOfPaginationReached = when (trendingResult) {
             is ResultOf.Failure -> {
                 if (trendingResult.throwable !is ApiGetTitleItemsExceptions) {
@@ -55,41 +56,43 @@ class TitlesTrendingRemoteMediator @Inject constructor(
                 } else {
                     when (trendingResult.throwable) {
                         is ApiGetTitleItemsExceptions.FailedApiRequestException,
-                        is ApiGetTitleItemsExceptions.NoConnectionException ->
+                        is ApiGetTitleItemsExceptions.NoConnectionException -> {
                             return MediatorResult.Error(trendingResult.throwable)
-                        is ApiGetTitleItemsExceptions.NothingFoundException -> true
+                        }
+                        is ApiGetTitleItemsExceptions.NothingFoundException -> {
+                            true
+                        }
                     }
                 }
             }
             is ResultOf.Success -> false
         }
-        val titleList = (trendingResult as ResultOf.Success).data
+        if (!endOfPaginationReached) {
 
-        db.withTransaction {
-            if (loadType == LoadType.REFRESH) {
-                db.cacheDao().clearRemoteKeysTrending()
-                db.cacheDao().clearAllTrendingTitles()
-            }
-            val prevKey = if (page > 1) page - 1 else null
-            val nextKey = if (endOfPaginationReached) null else page + 1
-            val remoteKeys = titleList.map {
-                RemoteKeyTrending(
-                    cachedTitleId = it.id,
+            val titleList = (trendingResult as ResultOf.Success).data
+
+            database.withTransaction {
+                if (loadType == LoadType.REFRESH) {
+                    database.cacheDao().clearRemoteKeysTrending()
+                    database.cacheDao().clearAllTrendingTitles()
+                }
+                val prevKey = if (page > 1) page - 1 else null
+                val nextKey = if (endOfPaginationReached) null else page + 1
+
+                database.cacheDao().insertCachedTrendingItems(
+                    titlesList = titleList,
+                    page = page,
                     prevKey = prevKey,
-                    currentPage = page,
                     nextKey = nextKey,
                     createdOn = Instant.now().toEpochMilli()
                 )
             }
-
-            db.cacheDao().insertRemoteKeysTrending(remoteKeysTrending = remoteKeys)
-            db.cacheDao().insertCachedTrendingItems(titlesList = titleList, page = page)
         }
         return MediatorResult.Success(endOfPaginationReached = endOfPaginationReached)
     }
 
     override suspend fun initialize(): InitializeAction {
-        val timeDifference = Instant.now().toEpochMilli() - (db.cacheDao().getCreationTime() ?: 0)
+        val timeDifference = Instant.now().toEpochMilli() - (database.cacheDao().getCreationTime() ?: 0)
         return if (timeDifference < CACHING_TIMEOUT) {
             InitializeAction.SKIP_INITIAL_REFRESH
         } else {
@@ -102,7 +105,7 @@ class TitlesTrendingRemoteMediator @Inject constructor(
     ): RemoteKeyTrending? {
         return state.anchorPosition?.let { position ->
             state.closestItemToPosition(position)?.titleItem?.id?.let { id ->
-                db.cacheDao().getRemoteKeyTrendingById(id)
+                database.cacheDao().getRemoteKeyTrendingById(id)
             }
         }
     }
@@ -113,7 +116,7 @@ class TitlesTrendingRemoteMediator @Inject constructor(
         return state.pages.firstOrNull {
             it.data.isNotEmpty()
         }?.data?.firstOrNull()?.let { titleItem ->
-            db.cacheDao().getRemoteKeyTrendingById(titleItem.titleItem.id)
+            database.cacheDao().getRemoteKeyTrendingById(titleItem.titleItem.id)
         }
     }
 
@@ -123,7 +126,7 @@ class TitlesTrendingRemoteMediator @Inject constructor(
         return state.pages.lastOrNull {
             it.data.isNotEmpty()
         }?.data?.lastOrNull()?.let { titleItem ->
-            db.cacheDao().getRemoteKeyTrendingById(titleItem.titleItem.id)
+            database.cacheDao().getRemoteKeyTrendingById(titleItem.titleItem.id)
         }
     }
 

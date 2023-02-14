@@ -37,7 +37,7 @@ class DiscoverViewModel @Inject constructor(
                     error = null
                 )
             }
-            val response = titlesManager.searchTitles(query)
+            val response = titlesManager.searchAll(query)
             when (response) {
                 is ResultOf.Success -> {
                     _uiState.update {

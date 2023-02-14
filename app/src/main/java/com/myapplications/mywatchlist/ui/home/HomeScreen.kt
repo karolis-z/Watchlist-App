@@ -95,7 +95,7 @@ fun HomeScreen(
                         //#region POPULAR TITLES
                         SectionHeadlineWithSeeAll(
                             label = stringResource(id = R.string.home_popular_label),
-                            onSeeAllClicked = { onSeeAllClicked(TitleListType.Popular) }
+                            onSeeAllClicked = { onSeeAllClicked(TitleListType.PopularMovies) }
                         )
                         TitleItemsLazyRow(
                             titleItemsFull = uiState.popularItems,
@@ -121,7 +121,7 @@ fun HomeScreen(
                         //#region TOPRATED TITLES
                         SectionHeadlineWithSeeAll(
                             label = stringResource(id = R.string.home_top_rated_label),
-                            onSeeAllClicked = { onSeeAllClicked(TitleListType.TopRated) }
+                            onSeeAllClicked = { onSeeAllClicked(TitleListType.TopRatedMovies) }
                         )
                         TitleItemsLazyRow(
                             titleItemsFull = uiState.topRatedItems,

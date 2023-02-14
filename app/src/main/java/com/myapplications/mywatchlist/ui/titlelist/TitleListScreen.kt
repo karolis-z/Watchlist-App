@@ -1,5 +1,6 @@
 package com.myapplications.mywatchlist.ui.titlelist
 
+import android.util.Log
 import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -29,8 +30,8 @@ import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 import com.myapplications.mywatchlist.domain.entities.TitleType
 import com.myapplications.mywatchlist.ui.MyTopAppBar
 import com.myapplications.mywatchlist.ui.components.*
-import com.myapplications.mywatchlist.ui.entities.TitleListFilter
 import com.myapplications.mywatchlist.ui.entities.TitleListType
+import com.myapplications.mywatchlist.ui.entities.TitleListUiFilter
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -52,7 +53,8 @@ fun TitleListScreen(
     val titleListUiState by viewModel.uiState.collectAsState()
     val filterState by viewModel.filterState.collectAsState()
 
-    val trendingTitles = viewModel.titlesTrending.collectAsLazyPagingItems()
+//    val trendingTitles = viewModel.titlesTrending.collectAsLazyPagingItems()
+    val trendingTitles = viewModel.titlesTrendingFlow.collectAsLazyPagingItems()
 
     val showFilterState = rememberDrawerState(initialValue = DrawerValue.Closed)
 
@@ -65,7 +67,7 @@ fun TitleListScreen(
             drawerContent = {
                 CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
                     BoxWithConstraints {
-                        val defaultFilter = TitleListFilter()
+                        val defaultFilter = TitleListUiFilter()
                         /* Need to have the FilterSection invisible when it's closed because during
                         * transition of 'sliding to the left' it is briefly visible because it
                         * actually exists on the right side of this screen when closed */
@@ -112,6 +114,9 @@ fun TitleListScreen(
                                 top = paddingValues.calculateTopPadding()
                             )
                     ) {
+                        SideEffect {
+                            Log.d("TitleListScreen", "RECOMPOSED ")
+                        }
                         TitleListScreenContentNew(
 //                            titleListUiState = titleListUiState,
                             trendingTitles = trendingTitles,
@@ -141,7 +146,7 @@ fun TitleListScreen(
 fun TitleListScreenContentNew(
     //titleListUiState: TitleListUiState,
     trendingTitles: LazyPagingItems<TitleItemFull>,
-    filterState: TitleListFilter,
+    filterState: TitleListUiFilter,
     onRetryAppendPrependClick: () -> Unit,
     onRetryEntireListClick: () -> Unit,
     onWatchlistClicked: (TitleItemFull) -> Unit,
@@ -151,6 +156,9 @@ fun TitleListScreenContentNew(
     placeholderPoster: Painter,
     modifier: Modifier = Modifier
 ) {
+    SideEffect {
+        Log.d("TitleListScreenContentNew", "RECOMPOSED ")
+    }
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -173,13 +181,15 @@ fun TitleListScreenContentNew(
                     ErrorText(errorMessage = "OOPSIE DAISY", onButtonRetryClick = onRetryEntireListClick)
                 }
             }
-            is LoadState.NotLoading ->
+            is LoadState.NotLoading -> {
+                Log.d("LazyColumn", "RECOMPOSED. trendingTitles size ${trendingTitles.itemCount}: ")
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                     contentPadding = PaddingValues(vertical = 10.dp),
                     state = rememberLazyListState(),
                     modifier = modifier
                 ) {
+
                     // Prepend load or error item
                     pagingLoadStateItem(
                         loadState = trendingTitles.loadState.prepend,
@@ -193,11 +203,15 @@ fun TitleListScreenContentNew(
                         }
                     )
 
+
                     // Main Content
                     items(
                         items = trendingTitles,
                         key = { titleItem -> titleItem.id }
                     ) { titleItem: TitleItemFull? ->
+                        SideEffect {
+                            Log.d("TITLE", "titleItem: ${titleItem?.id}-${titleItem?.name}")
+                        }
                         titleItem?.let { titleItemFull ->
                             TitleItemCard(
                                 title = titleItemFull,
@@ -222,6 +236,7 @@ fun TitleListScreenContentNew(
                         }
                     )
                 }
+            }
         }
     }
 }
@@ -231,7 +246,7 @@ fun TitleListScreenContentNew(
 fun TitleListScreenContent(
     titleListUiState: TitleListUiState,
     trendingTitles: LazyPagingItems<TitleItemFull>,
-    filterState: TitleListFilter,
+    filterState: TitleListUiFilter,
     onButtonRetryClick: () -> Unit,
     onWatchlistClicked: (TitleItemFull) -> Unit,
     onTitleClicked: (TitleItemFull) -> Unit,
@@ -328,7 +343,7 @@ fun TitleListScreenContent(
 
 @Composable
 fun FilterButtonsRow(
-    filterState: TitleListFilter,
+    filterState: TitleListUiFilter,
     onAllFiltersClicked: () -> Unit,
     onTypeFilterSelected: (TitleType?) -> Unit,
     modifier: Modifier = Modifier
@@ -379,11 +394,11 @@ fun FilterButtonsRow(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun FilterSection(
-    filterState: TitleListFilter,
+    filterState: TitleListUiFilter,
     defaultScoreRange: ClosedFloatingPointRange<Float>,
     defaultYearsRange: ClosedFloatingPointRange<Float>,
     allGenres: List<Genre>,
-    onFilterApplied: (TitleListFilter) -> Unit,
+    onFilterApplied: (TitleListUiFilter) -> Unit,
     onCloseClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -545,7 +560,7 @@ fun FilterSection(
                 }
                 Button(
                     onClick = {
-                        val mFilter = TitleListFilter(
+                        val mFilter = TitleListUiFilter(
                             genres = selectedGenres,
                             scoreRange = Pair(
                                 scoreRange.start.roundToInt(),
@@ -654,9 +669,9 @@ fun getScreenTitle(titleListType: TitleListType?): String {
     return when (titleListType) {
         TitleListType.Trending ->
             stringResource(id = R.string.titlelist_screen_title_trending)
-        TitleListType.Popular ->
+        TitleListType.PopularMovies ->
             stringResource(id = R.string.titlelist_screen_title_popular)
-        TitleListType.TopRated ->
+        TitleListType.TopRatedMovies ->
             stringResource(id = R.string.titlelist_screen_title_toprated)
         TitleListType.UpcomingMovies ->
             stringResource(id = R.string.titlelist_screen_title_upcoming_movies)
