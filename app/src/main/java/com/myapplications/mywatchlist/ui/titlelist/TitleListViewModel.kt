@@ -8,7 +8,6 @@ import androidx.paging.*
 import com.myapplications.mywatchlist.core.util.Constants.PAGE_SIZE
 import com.myapplications.mywatchlist.data.ApiGetDetailsException
 import com.myapplications.mywatchlist.data.local.WatchlistDatabase
-import com.myapplications.mywatchlist.data.local.titles.CacheDao
 import com.myapplications.mywatchlist.data.mappers.toTitleItemFull
 import com.myapplications.mywatchlist.data.mediators.TitlesTrendingRemoteMediator
 import com.myapplications.mywatchlist.domain.entities.Genre
@@ -34,7 +33,6 @@ class TitleListViewModel @Inject constructor(
     private val titlesManager: TitlesManager,
     private val genresRepository: GenresRepository,
    // private val titlesTrendingRemoteMediator: TitlesTrendingRemoteMediator,
-    private val cacheDao: CacheDao, //TODO: TEMP, should get from TitlesManager
     private val titleItemsRepository: TitleItemsRepository,
     private val db: WatchlistDatabase,
     private val savedStateHandle: SavedStateHandle

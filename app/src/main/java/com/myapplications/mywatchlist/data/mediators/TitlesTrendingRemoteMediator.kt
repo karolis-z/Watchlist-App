@@ -9,6 +9,7 @@ import com.myapplications.mywatchlist.core.util.Constants.CACHING_TIMEOUT
 import com.myapplications.mywatchlist.data.ApiGetTitleItemsExceptions
 import com.myapplications.mywatchlist.data.entities.RemoteKeyTrending
 import com.myapplications.mywatchlist.data.entities.TitleItemCacheTrendingFull
+import com.myapplications.mywatchlist.data.entities.cached.TitleItemCache
 import com.myapplications.mywatchlist.data.local.WatchlistDatabase
 import com.myapplications.mywatchlist.domain.repositories.TitleItemsRepository
 import com.myapplications.mywatchlist.domain.result.ResultOf
@@ -20,11 +21,11 @@ private const val TAG = "MEDIATOR"
 class TitlesTrendingRemoteMediator (
     private val titleItemsRepository: TitleItemsRepository,
     private val database: WatchlistDatabase
-) : RemoteMediator<Int, TitleItemCacheTrendingFull>() {
+) : RemoteMediator<Int, TitleItemCache>() {
 
     override suspend fun load(
         loadType: LoadType,
-        state: PagingState<Int, TitleItemCacheTrendingFull>
+        state: PagingState<Int,TitleItemCache>
     ): MediatorResult {
         val page: Int = when (loadType) {
             LoadType.REFRESH -> {
