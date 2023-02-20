@@ -84,9 +84,9 @@ class TitleListViewModel @Inject constructor(
                 initialLoadSize = 2 * PAGE_SIZE,
                 maxSize = 200
             ),
-            pagingSourceFactory = { cacheDao.getTrendingTitles() },
+            pagingSourceFactory = { db.popularMoviesCacheDao().getCachedTitles() },
             remoteMediator = TitlesTrendingRemoteMediator(
-                titleItemsRepository = titleItemsRepository,
+                titlesRemoteDataSource = titleItemsRepository,
                 database = db,
             )
         ).flow
@@ -287,6 +287,8 @@ class TitleListViewModel @Inject constructor(
 
         return titlesList
     }
+
+
 
     fun onWatchlistClicked(title: TitleItemFull) {
         viewModelScope.launch {

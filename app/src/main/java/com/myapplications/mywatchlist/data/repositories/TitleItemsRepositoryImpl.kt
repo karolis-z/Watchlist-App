@@ -1,9 +1,17 @@
 package com.myapplications.mywatchlist.data.repositories
 
+import androidx.paging.ExperimentalPagingApi
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.map
 import com.myapplications.mywatchlist.core.di.IoDispatcher
+import com.myapplications.mywatchlist.core.util.Constants
 import com.myapplications.mywatchlist.core.util.NetworkStatusManager
 import com.myapplications.mywatchlist.data.ApiGetTitleItemsExceptions
+import com.myapplications.mywatchlist.data.local.WatchlistDatabase
 import com.myapplications.mywatchlist.data.local.titles.TitlesLocalDataSource
+import com.myapplications.mywatchlist.data.mappers.toTitleItemFull
+import com.myapplications.mywatchlist.data.mediators.TitlesRemoteMediatorProvider
 import com.myapplications.mywatchlist.data.remote.TitlesRemoteDataSource
 import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 import com.myapplications.mywatchlist.domain.entities.TitleListFilter
@@ -12,6 +20,7 @@ import com.myapplications.mywatchlist.domain.repositories.TitleItemsRepository
 import com.myapplications.mywatchlist.domain.result.ResultOf
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -22,6 +31,8 @@ class TitleItemsRepositoryImpl @Inject constructor(
     private val remoteDataSource: TitlesRemoteDataSource,
     private val genresRepository: GenresRepository,
     private val networkStatusManager: NetworkStatusManager,
+    private val database: WatchlistDatabase,
+    private val titlesRemoteMediatorProvider: TitlesRemoteMediatorProvider,
     @IoDispatcher private val dispatcher: CoroutineDispatcher
 ) : TitleItemsRepository {
 
@@ -68,10 +79,25 @@ class TitleItemsRepositoryImpl @Inject constructor(
         )
     }
 
+    @OptIn(ExperimentalPagingApi::class)
     override suspend fun getPopularMovies(
         page: Int,
         filter: TitleListFilter
     ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+
+        // TODO: Move to separate method
+        val genresList = genresRepository.getAvailableGenres()
+        val titlesFlow = Pager(
+            config = getPagingConfig(),
+            pagingSourceFactory = { localDataSource.getCachedPopularMovies() },
+            remoteMediator = titlesRemoteMediatorProvider.getPopularMoviesRemoteMediator(
+                filter = filter,
+                genres = genresList
+            )
+        ).flow.map { pagingData ->
+            pagingData.map { it.toTitleItemFull() }
+        }
+
         return@withContext getTitleItemsFullResult(
             requestType = TitleItemsRequestType.PopularMovies(page = page, filter = filter)
         )
@@ -239,6 +265,20 @@ class TitleItemsRepositoryImpl @Inject constructor(
             }
         }
     }
+
+    private fun getPagingConfig(
+        pageSize: Int = Constants.PAGE_SIZE,
+        prefetchDistance: Int = 2 * Constants.PAGE_SIZE,
+        enablePlaceholders: Boolean = true,
+        initialLoadSize: Int = 2 * Constants.PAGE_SIZE,
+        maxSize: Int = 200,
+    ): PagingConfig = PagingConfig(
+        pageSize = pageSize,
+        prefetchDistance = prefetchDistance,
+        enablePlaceholders = enablePlaceholders,
+        initialLoadSize = initialLoadSize,
+        maxSize = maxSize
+    )
 
     private sealed class TitleItemsRequestType {
         object TrendingMoviesAndTV : TitleItemsRequestType()

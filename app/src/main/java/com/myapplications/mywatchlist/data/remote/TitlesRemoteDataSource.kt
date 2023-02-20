@@ -78,8 +78,8 @@ interface TitlesRemoteDataSource {
      */
     suspend fun getPopularMovies(
         allGenres: List<Genre>,
-        page: Int,
-        filter: TitleListFilter
+        page: Int = 1,
+        filter: TitleListFilter? = null
     ): ResultOf<List<TitleItemFull>>
 
     /**
@@ -91,8 +91,8 @@ interface TitlesRemoteDataSource {
      */
     suspend fun getPopularTV(
         allGenres: List<Genre>,
-        page: Int,
-        filter: TitleListFilter
+        page: Int = 1,
+        filter: TitleListFilter? = null
     ): ResultOf<List<TitleItemFull>>
 
     /**
@@ -104,8 +104,8 @@ interface TitlesRemoteDataSource {
      */
     suspend fun getTopRatedMovies(
         allGenres: List<Genre>,
-        page: Int,
-        filter: TitleListFilter
+        page: Int = 1,
+        filter: TitleListFilter? = null
     ): ResultOf<List<TitleItemFull>>
 
     /**
@@ -117,8 +117,8 @@ interface TitlesRemoteDataSource {
      */
     suspend fun getTopRatedTV(
         allGenres: List<Genre>,
-        page: Int,
-        filter: TitleListFilter
+        page: Int = 1,
+        filter: TitleListFilter? = null
     ): ResultOf<List<TitleItemFull>>
 
     /**
@@ -130,8 +130,8 @@ interface TitlesRemoteDataSource {
      */
     suspend fun getUpcomingMovies(
         allGenres: List<Genre>,
-        page: Int,
-        filter: TitleListFilter
+        page: Int = 1,
+        filter: TitleListFilter? = null
     ): ResultOf<List<TitleItemFull>>
 
     /**
@@ -175,7 +175,7 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
         page: Int
     ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
         return@withContext getTitleItemsFullResult(
-            requestType = TitleItemsRequestType.SearchAll(query = query, page = page),
+            requestType = TitleItemsRequestType.SearchAllPaginated(query = query, page = page),
             allGenres = allGenres
         )
     }
@@ -186,7 +186,7 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
         page: Int
     ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
         return@withContext getTitleItemsFullResult(
-            requestType = TitleItemsRequestType.SearchMovies(query = query, page = page),
+            requestType = TitleItemsRequestType.SearchMoviesPaginated(query = query, page = page),
             allGenres = allGenres
         )
     }
@@ -197,7 +197,7 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
         page: Int
     ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
         return@withContext getTitleItemsFullResult(
-            requestType = TitleItemsRequestType.SearchTV(query = query, page = page),
+            requestType = TitleItemsRequestType.SearchTVPaginated(query = query, page = page),
             allGenres = allGenres
         )
     }
@@ -213,56 +213,66 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
     override suspend fun getPopularMovies(
         allGenres: List<Genre>,
         page: Int,
-        filter: TitleListFilter
+        filter: TitleListFilter?
     ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
-        return@withContext getTitleItemsFullResult(
-            requestType = TitleItemsRequestType.PopularMovies(page = page, filter = filter),
-            allGenres = allGenres
-        )
+        val requestType = if (filter == null) {
+            TitleItemsRequestType.PopularMovies
+        } else {
+            TitleItemsRequestType.PopularMoviesPaginated(page = page, filter = filter)
+        }
+        return@withContext getTitleItemsFullResult(requestType = requestType, allGenres = allGenres)
     }
 
     override suspend fun getPopularTV(
         allGenres: List<Genre>,
         page: Int,
-        filter: TitleListFilter
+        filter: TitleListFilter?
     ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
-        return@withContext getTitleItemsFullResult(
-            requestType = TitleItemsRequestType.PopularTV(page = page, filter = filter),
-            allGenres = allGenres
-        )
+        val requestType = if (filter == null) {
+            TitleItemsRequestType.PopularTV
+        } else {
+            TitleItemsRequestType.PopularTVPaginated(page = page, filter = filter)
+        }
+        return@withContext getTitleItemsFullResult(requestType = requestType, allGenres = allGenres)
     }
 
     override suspend fun getTopRatedMovies(
         allGenres: List<Genre>,
         page: Int,
-        filter: TitleListFilter
+        filter: TitleListFilter?
     ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
-        return@withContext getTitleItemsFullResult(
-            requestType = TitleItemsRequestType.TopRatedMovies(page = page, filter = filter),
-            allGenres = allGenres
-        )
+        val requestType = if (filter == null) {
+            TitleItemsRequestType.TopRatedMovies
+        } else {
+            TitleItemsRequestType.TopRatedMoviesPaginated(page = page, filter = filter)
+        }
+        return@withContext getTitleItemsFullResult(requestType = requestType, allGenres = allGenres)
     }
 
     override suspend fun getTopRatedTV(
         allGenres: List<Genre>,
         page: Int,
-        filter: TitleListFilter
+        filter: TitleListFilter?
     ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
-        return@withContext getTitleItemsFullResult(
-            requestType = TitleItemsRequestType.TopRatedTV(page = page, filter = filter),
-            allGenres = allGenres
-        )
+        val requestType = if (filter == null) {
+            TitleItemsRequestType.TopRatedTV
+        } else {
+            TitleItemsRequestType.TopRatedTVPaginated(page = page, filter = filter)
+        }
+        return@withContext getTitleItemsFullResult(requestType = requestType, allGenres = allGenres)
     }
 
     override suspend fun getUpcomingMovies(
         allGenres: List<Genre>,
         page: Int,
-        filter: TitleListFilter
+        filter: TitleListFilter?
     ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
-        return@withContext getTitleItemsFullResult(
-            requestType = TitleItemsRequestType.UpcomingMovies(page = page, filter = filter),
-            allGenres = allGenres
-        )
+        val requestType = if (filter == null) {
+            TitleItemsRequestType.UpcomingMovies
+        } else {
+            TitleItemsRequestType.UpcomingMoviesPaginated(page = page, filter = filter)
+        }
+        return@withContext getTitleItemsFullResult(requestType = requestType, allGenres = allGenres)
     }
 
     override suspend fun getDiscoverMovies(
@@ -271,7 +281,10 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
         filter: TitleListFilter
     ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
         return@withContext getTitleItemsFullResult(
-            requestType = TitleItemsRequestType.DiscoverMovies(page = page, filter = filter),
+            requestType = TitleItemsRequestType.DiscoverMoviesPaginated(
+                page = page,
+                filter = filter
+            ),
             allGenres = allGenres
         )
     }
@@ -282,7 +295,7 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
         filter: TitleListFilter
     ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
         return@withContext getTitleItemsFullResult(
-            requestType = TitleItemsRequestType.DiscoverTV(page = page, filter = filter),
+            requestType = TitleItemsRequestType.DiscoverTVPaginated(page = page, filter = filter),
             allGenres = allGenres
         )
     }
@@ -296,7 +309,7 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
             when (requestType) {
                 TitleItemsRequestType.TrendingMoviesAndTV ->
                     apiResponses.add(api.getTrendingTitles())
-                is TitleItemsRequestType.DiscoverMovies ->
+                is TitleItemsRequestType.DiscoverMoviesPaginated ->
                     apiResponses.add(
                         api.getDiscoverMoviesFiltered(
                             page = requestType.page,
@@ -309,7 +322,7 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
                                 ?: SortByApiParam.SortMoviesBy.Popularity_Descending.propertyName
                         )
                     )
-                is TitleItemsRequestType.DiscoverTV ->
+                is TitleItemsRequestType.DiscoverTVPaginated ->
                     apiResponses.add(
                         api.getDiscoverTvFiltered(
                             page = requestType.page,
@@ -322,7 +335,7 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
                                 ?: SortByApiParam.SortTvBy.Popularity_Descending.propertyName
                         )
                     )
-                is TitleItemsRequestType.PopularMovies ->
+                is TitleItemsRequestType.PopularMoviesPaginated ->
                     apiResponses.add(
                         api.getPopularMoviesFiltered(
                             page = requestType.page,
@@ -333,7 +346,9 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
                             genresListString = getGenresListString(requestType.filter.withGenres)
                         )
                     )
-                is TitleItemsRequestType.PopularTV ->
+                TitleItemsRequestType.PopularMovies ->
+                    apiResponses.add(api.getPopularMovies())
+                is TitleItemsRequestType.PopularTVPaginated ->
                     apiResponses.add(
                         api.getPopularTvFiltered(
                             page = requestType.page,
@@ -344,7 +359,9 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
                             genresListString = getGenresListString(requestType.filter.withGenres)
                         )
                     )
-                is TitleItemsRequestType.TopRatedMovies ->
+                TitleItemsRequestType.PopularTV ->
+                    apiResponses.add(api.getPopularTV())
+                is TitleItemsRequestType.TopRatedMoviesPaginated ->
                     apiResponses.add(
                         api.getTopRatedMoviesFiltered(
                             page = requestType.page,
@@ -355,7 +372,9 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
                             genresListString = getGenresListString(requestType.filter.withGenres)
                         )
                     )
-                is TitleItemsRequestType.TopRatedTV ->
+                TitleItemsRequestType.TopRatedMovies ->
+                    apiResponses.add(api.getTopRatedMovies())
+                is TitleItemsRequestType.TopRatedTVPaginated ->
                     apiResponses.add(
                         api.getTopRatedTvFiltered(
                             page = requestType.page,
@@ -366,7 +385,9 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
                             genresListString = getGenresListString(requestType.filter.withGenres)
                         )
                     )
-                is TitleItemsRequestType.UpcomingMovies ->
+                TitleItemsRequestType.TopRatedTV ->
+                    apiResponses.add(api.getTopRatedTV())
+                is TitleItemsRequestType.UpcomingMoviesPaginated ->
                     apiResponses.add(
                         api.getUpcomingMoviesFiltered(
                             page = requestType.page,
@@ -377,15 +398,17 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
                             genresListString = getGenresListString(requestType.filter.withGenres)
                         )
                     )
-                is TitleItemsRequestType.SearchAll ->
+                TitleItemsRequestType.UpcomingMovies ->
+                    apiResponses.add(api.getUpcomingMovies())
+                is TitleItemsRequestType.SearchAllPaginated ->
                     apiResponses.add(
                         api.searchAll(query = requestType.query, page = requestType.page)
                     )
-                is TitleItemsRequestType.SearchMovies ->
+                is TitleItemsRequestType.SearchMoviesPaginated ->
                     apiResponses.add(
                         api.searchMovies(query = requestType.query, page = requestType.page)
                     )
-                is TitleItemsRequestType.SearchTV ->
+                is TitleItemsRequestType.SearchTVPaginated ->
                     apiResponses.add(
                         api.searchTV(query = requestType.query, page = requestType.page)
                     )
@@ -417,7 +440,7 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
         return@withContext when (parsedResult) {
             is ResultOf.Failure -> parsedResult
             is ResultOf.Success -> {
-                if (requestType is TitleItemsRequestType.TopRatedMovies || requestType is TitleItemsRequestType.TopRatedTV) {
+                if (requestType is TitleItemsRequestType.TopRatedMoviesPaginated || requestType is TitleItemsRequestType.TopRatedTVPaginated) {
                     /* Sorting top rated by voteAverage but also by vote count to list titles higher
                     with same vote average but higher vote count */
                     parsedResult.copy(
@@ -491,19 +514,24 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
 
     private sealed class TitleItemsRequestType {
         object TrendingMoviesAndTV : TitleItemsRequestType()
-        data class PopularMovies(val page: Int, val filter: TitleListFilter) :
+        data class PopularMoviesPaginated(val page: Int, val filter: TitleListFilter) :
             TitleItemsRequestType()
-        data class PopularTV(val page: Int, val filter: TitleListFilter) : TitleItemsRequestType()
-        data class UpcomingMovies(val page: Int, val filter: TitleListFilter) :
+        object PopularMovies : TitleItemsRequestType()
+        data class PopularTVPaginated(val page: Int, val filter: TitleListFilter) : TitleItemsRequestType()
+        object PopularTV : TitleItemsRequestType()
+        data class UpcomingMoviesPaginated(val page: Int, val filter: TitleListFilter) :
             TitleItemsRequestType()
-        data class TopRatedMovies(val page: Int, val filter: TitleListFilter) :
+        object UpcomingMovies : TitleItemsRequestType()
+        data class TopRatedMoviesPaginated(val page: Int, val filter: TitleListFilter) :
             TitleItemsRequestType()
-        data class TopRatedTV(val page: Int, val filter: TitleListFilter) : TitleItemsRequestType()
-        data class SearchAll(val query: String, val page: Int) : TitleItemsRequestType()
-        data class SearchMovies(val query: String, val page: Int) : TitleItemsRequestType()
-        data class SearchTV(val query: String, val page: Int) : TitleItemsRequestType()
-        data class DiscoverMovies(val page: Int, val filter: TitleListFilter) :
+        object TopRatedMovies : TitleItemsRequestType()
+        data class TopRatedTVPaginated(val page: Int, val filter: TitleListFilter) : TitleItemsRequestType()
+        object TopRatedTV : TitleItemsRequestType()
+        data class SearchAllPaginated(val query: String, val page: Int) : TitleItemsRequestType()
+        data class SearchMoviesPaginated(val query: String, val page: Int) : TitleItemsRequestType()
+        data class SearchTVPaginated(val query: String, val page: Int) : TitleItemsRequestType()
+        data class DiscoverMoviesPaginated(val page: Int, val filter: TitleListFilter) :
             TitleItemsRequestType()
-        data class DiscoverTV(val page: Int, val filter: TitleListFilter) : TitleItemsRequestType()
+        data class DiscoverTVPaginated(val page: Int, val filter: TitleListFilter) : TitleItemsRequestType()
     }
 }

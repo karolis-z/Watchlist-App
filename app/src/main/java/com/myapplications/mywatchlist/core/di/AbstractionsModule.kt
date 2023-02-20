@@ -10,6 +10,8 @@ import com.myapplications.mywatchlist.data.local.genres.GenresLocalDataSource
 import com.myapplications.mywatchlist.data.local.genres.GenresLocalDataSourceImpl
 import com.myapplications.mywatchlist.data.local.titles.TitlesLocalDataSource
 import com.myapplications.mywatchlist.data.local.titles.TitlesLocalDataSourceImpl
+import com.myapplications.mywatchlist.data.mediators.TitlesRemoteMediatorProvider
+import com.myapplications.mywatchlist.data.mediators.TitlesRemoteMediatorProviderImpl
 import com.myapplications.mywatchlist.data.remote.*
 import com.myapplications.mywatchlist.data.repositories.DetailsRepositoryImpl
 import com.myapplications.mywatchlist.data.repositories.GenresRepositoryImpl
@@ -64,4 +66,6 @@ abstract class AbstractionsModule {
     @Binds
     abstract fun bindUserPrefsRepository(userPrefsRepositoryImpl: UserPrefsRepositoryImpl): UserPrefsRepository
 
+    @Binds
+    abstract fun bindTitlesRemoteMediatorProvider(titlesRemoteMediatorProviderImpl: TitlesRemoteMediatorProviderImpl): TitlesRemoteMediatorProvider
 }

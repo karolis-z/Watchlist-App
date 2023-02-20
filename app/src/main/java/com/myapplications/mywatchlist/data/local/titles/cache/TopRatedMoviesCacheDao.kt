@@ -12,7 +12,7 @@ import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 
 @Dao
 abstract class TopRatedMoviesCacheDao :
-    BaseCacheDao<TitleItemCacheTopRatedMovie, GenreForCacheItemSearchMovie, RemoteKeyTopRatedMovie> {
+    BaseCacheDao<TitleItemCacheTopRatedMovie, GenreForCacheItemTopRatedMovie, RemoteKeyTopRatedMovie> {
 
     @Transaction
     suspend fun insertCachedTrendingItems(
@@ -52,7 +52,7 @@ abstract class TopRatedMoviesCacheDao :
     }
 
     @Query("SELECT * FROM 'title_item_cache_toprated_movie' ORDER BY page, id")
-    abstract fun getCachedTitles(): PagingSource<Int, TitleItemCacheSearchMovieFull>
+    abstract fun getCachedTitles(): PagingSource<Int, TitleItemCacheTopRatedMovieFull>
 
     @Query("DELETE FROM 'title_item_cache_toprated_movie'")
     abstract suspend fun clearAllCachedTitles()
