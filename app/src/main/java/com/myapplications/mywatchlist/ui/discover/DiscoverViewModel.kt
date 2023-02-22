@@ -2,14 +2,11 @@ package com.myapplications.mywatchlist.ui.discover
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.myapplications.mywatchlist.data.ApiGetTitleItemsExceptions
 import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 import com.myapplications.mywatchlist.domain.repositories.TitlesManager
-import com.myapplications.mywatchlist.domain.result.ResultOf
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -27,54 +24,55 @@ class DiscoverViewModel @Inject constructor(
     private var searchString: String = ""
 
     fun searchTitleClicked(query: String) {
-        searchString = query
-        viewModelScope.launch {
-            _uiState.update {
-                it.copy(
-                    titleItemsFull = null,
-                    isLoading = true,
-                    isSearchFinished = false,
-                    error = null
-                )
-            }
-            val response = titlesManager.searchAll(query)
-            when (response) {
-                is ResultOf.Success -> {
-                    _uiState.update {
-                        it.copy(
-                            titleItemsFull = response.data,
-                            isLoading = false,
-                            isSearchFinished = true,
-                            error = null
-                        )
-                    }
-                }
-                is ResultOf.Failure -> {
-                    val exception = response.throwable
-                    val error: DiscoverError =
-                        if (exception is ApiGetTitleItemsExceptions) {
-                            when (exception) {
-                                is ApiGetTitleItemsExceptions.FailedApiRequestException ->
-                                    DiscoverError.FAILED_API_REQUEST
-                                is ApiGetTitleItemsExceptions.NothingFoundException ->
-                                    DiscoverError.NOTHING_FOUND
-                                is ApiGetTitleItemsExceptions.NoConnectionException ->
-                                    DiscoverError.NO_INTERNET
-                            }
-                        } else {
-                            DiscoverError.FAILED_API_REQUEST
-                        }
-                    _uiState.update {
-                        it.copy(
-                            titleItemsFull = emptyList(),
-                            isLoading = false,
-                            isSearchFinished = true,
-                            error = error
-                        )
-                    }
-                }
-            }
-        }
+        // TODO: NEEDS OVERHAUL AFTER PAGINATION IS COMPLETE
+//        searchString = query
+//        viewModelScope.launch {
+//            _uiState.update {
+//                it.copy(
+//                    titleItemsFull = null,
+//                    isLoading = true,
+//                    isSearchFinished = false,
+//                    error = null
+//                )
+//            }
+//            val response = titlesManager.searchAll(query)
+//            when (response) {
+//                is ResultOf.Success -> {
+//                    _uiState.update {
+//                        it.copy(
+//                            titleItemsFull = response.data,
+//                            isLoading = false,
+//                            isSearchFinished = true,
+//                            error = null
+//                        )
+//                    }
+//                }
+//                is ResultOf.Failure -> {
+//                    val exception = response.throwable
+//                    val error: DiscoverError =
+//                        if (exception is ApiGetTitleItemsExceptions) {
+//                            when (exception) {
+//                                is ApiGetTitleItemsExceptions.FailedApiRequestException ->
+//                                    DiscoverError.FAILED_API_REQUEST
+//                                is ApiGetTitleItemsExceptions.NothingFoundException ->
+//                                    DiscoverError.NOTHING_FOUND
+//                                is ApiGetTitleItemsExceptions.NoConnectionException ->
+//                                    DiscoverError.NO_INTERNET
+//                            }
+//                        } else {
+//                            DiscoverError.FAILED_API_REQUEST
+//                        }
+//                    _uiState.update {
+//                        it.copy(
+//                            titleItemsFull = emptyList(),
+//                            isLoading = false,
+//                            isSearchFinished = true,
+//                            error = error
+//                        )
+//                    }
+//                }
+//            }
+//        }
     }
 
     fun onWatchlistClicked(title: TitleItemFull) {

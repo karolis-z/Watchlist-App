@@ -1,9 +1,7 @@
 package com.myapplications.mywatchlist.ui.titlelist
 
-import com.myapplications.mywatchlist.domain.entities.TitleItemFull
-
 sealed class TitleListUiState {
-    data class Ready(val titleItems: List<TitleItemFull>) : TitleListUiState()
+    object Ready : TitleListUiState()
     data class Error(val error: TitleListError) : TitleListUiState()
     object Loading : TitleListUiState()
 }

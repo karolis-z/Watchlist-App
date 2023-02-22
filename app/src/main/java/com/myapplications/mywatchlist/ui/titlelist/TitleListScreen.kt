@@ -54,7 +54,8 @@ fun TitleListScreen(
     val filterState by viewModel.filterState.collectAsState()
 
 //    val trendingTitles = viewModel.titlesTrending.collectAsLazyPagingItems()
-    val trendingTitles = viewModel.titlesTrendingFlow.collectAsLazyPagingItems()
+//    val trendingTitles = viewModel.titlesTrendingFlow.collectAsLazyPagingItems()
+//    val trendingTitles = viewModel.titlesFlow.collectAsLazyPagingItems()
 
     val showFilterState = rememberDrawerState(initialValue = DrawerValue.Closed)
 
@@ -117,23 +118,34 @@ fun TitleListScreen(
                         SideEffect {
                             Log.d("TitleListScreen", "RECOMPOSED ")
                         }
-                        TitleListScreenContentNew(
+                        when (titleListUiState) {
+                            is TitleListUiState.Error -> {
+                                Text ("Error")
+                            }
+                            TitleListUiState.Loading -> {
+                                Text ("Loading")
+                            }
+                            is TitleListUiState.Ready -> {
+                                val x =
+                                TitleListScreenContentNew(
 //                            titleListUiState = titleListUiState,
-                            trendingTitles = trendingTitles,
-                            filterState = filterState,
-                            onAllFiltersClicked = {
-                                scope.launch { showFilterState.open() }
-                            },
-                            onRetryAppendPrependClick = { trendingTitles.retry() },
-                            onRetryEntireListClick = { trendingTitles.refresh() },
-                            onWatchlistClicked = viewModel::onWatchlistClicked,
-                            onTitleClicked = onTitleClicked,
-                            placeholderPoster = placeholderPoster,
-                            onTitleTypeFilterSelected = {
-                                viewModel.setFilter(filterState.copy(titleType = it))
-                            },
-                            modifier = Modifier
-                        )
+                                    trendingTitles = viewModel.titlesFlow.collectAsLazyPagingItems(),
+                                    filterState = filterState,
+                                    onAllFiltersClicked = {
+                                        scope.launch { showFilterState.open() }
+                                    },
+                                    onRetryAppendPrependClick = { /* trendingTitles.retry() */ },
+                                    onRetryEntireListClick = { /* trendingTitles.refresh() */ },
+                                    onWatchlistClicked = viewModel::onWatchlistClicked,
+                                    onTitleClicked = onTitleClicked,
+                                    placeholderPoster = placeholderPoster,
+                                    onTitleTypeFilterSelected = {
+                                        viewModel.setFilter(filterState.copy(titleType = it))
+                                    },
+                                    modifier = Modifier
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -167,6 +179,9 @@ fun TitleListScreenContentNew(
             onAllFiltersClicked = onAllFiltersClicked,
             onTypeFilterSelected = onTitleTypeFilterSelected
         )
+        SideEffect {
+            Log.d(TAG, "TitleListScreenContentNew: trendingTitles.loadState.refresh = ${trendingTitles.loadState.refresh}")
+        }
         when (trendingTitles.loadState.refresh) {
             LoadState.Loading ->
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -667,12 +682,14 @@ fun FilterSectionDivider(
 @Composable
 fun getScreenTitle(titleListType: TitleListType?): String {
     return when (titleListType) {
-        TitleListType.Trending ->
-            stringResource(id = R.string.titlelist_screen_title_trending)
         TitleListType.PopularMovies ->
-            stringResource(id = R.string.titlelist_screen_title_popular)
+            stringResource(id = R.string.titlelist_screen_title_popular_movies)
+        TitleListType.PopularTV ->
+            stringResource(id = R.string.titlelist_screen_title_popular_tv)
         TitleListType.TopRatedMovies ->
-            stringResource(id = R.string.titlelist_screen_title_toprated)
+            stringResource(id = R.string.titlelist_screen_title_toprated_movies)
+        TitleListType.TopRatedTV ->
+            stringResource(id = R.string.titlelist_screen_title_toprated_tv)
         TitleListType.UpcomingMovies ->
             stringResource(id = R.string.titlelist_screen_title_upcoming_movies)
         null -> ""

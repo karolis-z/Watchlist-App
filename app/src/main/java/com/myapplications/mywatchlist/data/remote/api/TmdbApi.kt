@@ -59,7 +59,7 @@ interface TmdbApi {
      * @param genresListString pipe or comma separated genre id. E.g. "28|12|53" or "28,15,53".
      * Pipes mean "OR", commas mean "AND"
      */
-    @GET("movie/popular/?api_key=$apiKey&include_adult=false")
+    @GET("movie/popular?api_key=$apiKey&include_adult=false")
     suspend fun getPopularMoviesFiltered(
         @Query("page") page: Int,
         @Query("primary_release_date.gte") releaseDateFrom: String = "",
@@ -69,7 +69,7 @@ interface TmdbApi {
         @Query("with_genres") genresListString: String = ""
     ): Response<ApiResponse>
 
-    @GET("tv/popular/?api_key=$apiKey&include_adult=false")
+    @GET("tv/popular?api_key=$apiKey&include_adult=false")
     suspend fun getPopularTvFiltered(
         @Query("page") page: Int,
         @Query("first_air_date.gte") releaseDateFrom: String = "",
@@ -79,7 +79,7 @@ interface TmdbApi {
         @Query("with_genres") genresListString: String = ""
     ): Response<ApiResponse>
 
-    @GET("movie/top_rated/?api_key=$apiKey&include_adult=false")
+    @GET("movie/top_rated?api_key=$apiKey&include_adult=false")
     suspend fun getTopRatedMoviesFiltered(
         @Query("page") page: Int,
         @Query("primary_release_date.gte") releaseDateFrom: String = "",
@@ -89,7 +89,7 @@ interface TmdbApi {
         @Query("with_genres") genresListString: String = ""
     ): Response<ApiResponse>
 
-    @GET("tv/top_rated/?api_key=$apiKey&include_adult=false")
+    @GET("tv/top_rated?api_key=$apiKey&include_adult=false")
     suspend fun getTopRatedTvFiltered(
         @Query("page") page: Int,
         @Query("first_air_date.gte") releaseDateFrom: String = "",
@@ -99,7 +99,7 @@ interface TmdbApi {
         @Query("with_genres") genresListString: String = ""
     ): Response<ApiResponse>
 
-    @GET("movie/upcoming/?api_key=$apiKey&include_adult=false")
+    @GET("movie/upcoming?api_key=$apiKey&include_adult=false")
     suspend fun getUpcomingMoviesFiltered(
         @Query("page") page: Int,
         @Query("primary_release_date.gte") releaseDateFrom: String = "",
@@ -109,7 +109,7 @@ interface TmdbApi {
         @Query("with_genres") genresListString: String = ""
     ): Response<ApiResponse>
 
-    @GET("discover/movie/?api_key=$apiKey&include_adult=false")
+    @GET("discover/movie?api_key=$apiKey&include_adult=false")
     suspend fun getDiscoverMoviesFiltered(
         @Query("page") page: Int,
         @Query("sort_by") sortBy: String,
@@ -120,7 +120,7 @@ interface TmdbApi {
         @Query("with_genres") genresListString: String = ""
     ): Response<ApiResponse>
 
-    @GET("discover/tv/?api_key=$apiKey&include_adult=false")
+    @GET("discover/tv?api_key=$apiKey&include_adult=false")
     suspend fun getDiscoverTvFiltered(
         @Query("page") page: Int,
         @Query("sort_by") sortBy: String,

@@ -2,6 +2,7 @@ package com.myapplications.mywatchlist.data.local.titles.cache
 
 import android.util.Log
 import androidx.paging.PagingSource
+import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Transaction
 import com.myapplications.mywatchlist.data.entities.cached.*
@@ -9,11 +10,12 @@ import com.myapplications.mywatchlist.data.mappers.toGenreForCacheItemList
 import com.myapplications.mywatchlist.data.mappers.toTitleItemCacheList
 import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 
+@Dao
 abstract class SearchMoviesCacheDao :
     BaseCacheDao<TitleItemCacheSearchMovie, GenreForCacheItemSearchMovie, RemoteKeySearchMovie> {
 
     @Transaction
-    suspend fun insertCachedTrendingItems(
+    open suspend fun insertCachedTrendingItems(
         titlesList: List<TitleItemFull>,
         page: Int,
         prevKey: Int?,

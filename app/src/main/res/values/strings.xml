@@ -29,9 +29,11 @@
 
     <!-- TITLE LIST SCREEN-->
     <string name="titlelist_screen_title_trending">Trending Movies &amp; TV</string>
-    <string name="titlelist_screen_title_popular">Popular Movies &amp; TV</string>
+    <string name="titlelist_screen_title_popular_movies">Popular Movies</string>
+    <string name="titlelist_screen_title_popular_tv">Popular TV Shows</string>
     <string name="titlelist_screen_title_upcoming_movies">Upcoming Movies</string>
-    <string name="titlelist_screen_title_toprated">Top Rated Movies &amp; TV</string>
+    <string name="titlelist_screen_title_toprated_movies">Top Rated Movies</string>
+    <string name="titlelist_screen_title_toprated_tv">Top Rated TV Shows</string>
     <string name="titlelist_no_data">No data available…</string>
     <string name="titlelist_filter_label_all_filters">All Filters</string>
     <string name="titlelist_filter_button_apply">Show Results</string>

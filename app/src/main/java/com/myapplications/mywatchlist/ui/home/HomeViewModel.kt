@@ -79,6 +79,7 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun getTitleItemsList(requestType: TitleItemsRequestType) {
+        // TODO: NEEDS OVERHAUL AFTER PAGINATION IS COMPLETE
         val stateToUpdate = when (requestType) {
             TitleItemsRequestType.PopularTitles -> popularState
             TitleItemsRequestType.TrendingTitles -> trendingState
@@ -88,9 +89,9 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             stateToUpdate.update { TitleItemsState.Loading }
             val response = when (requestType) {
-                TitleItemsRequestType.PopularTitles -> titlesManager.getPopularTitles()
+                TitleItemsRequestType.PopularTitles -> titlesManager.getPopularMovies()
                 TitleItemsRequestType.TrendingTitles -> titlesManager.getTrendingTitles()
-                TitleItemsRequestType.TopRatedTitles -> titlesManager.getTopRatedTitles()
+                TitleItemsRequestType.TopRatedTitles -> titlesManager.getTopRatedMovies()
                 TitleItemsRequestType.UpcomingMovies -> titlesManager.getUpcomingMovies()
             }
             when (response) {

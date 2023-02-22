@@ -16,10 +16,11 @@ import com.myapplications.mywatchlist.domain.entities.Genre
 import com.myapplications.mywatchlist.domain.entities.TitleListFilter
 import com.myapplications.mywatchlist.domain.result.ResultOf
 import java.time.Instant
+import javax.inject.Inject
 
 private const val TAG = "MEDIATOR"
 
-class TitlesRemoteMediatorProviderImpl(
+class TitlesRemoteMediatorProviderImpl @Inject constructor(
     private val titlesRemoteDataSource: TitlesRemoteDataSource,
     private val database: WatchlistDatabase
 ) : TitlesRemoteMediatorProvider {
@@ -381,121 +382,102 @@ class TitlesRemoteMediatorProviderImpl(
 
             database.withTransaction {
                 if (loadType == LoadType.REFRESH) {
+                    clearDataOnRefresh(requestType = requestType)
+                }
 
-                    val prevKey = if (page > 1) page - 1 else null
-                    val nextKey = if (endOfPaginationReached) null else page + 1
+                val prevKey = if (page > 1) page - 1 else null
+                val nextKey = if (endOfPaginationReached) null else page + 1
 
-                    when (requestType) {
-                        is TitleItemsRequestType.DiscoverMovies -> {
-                            database.discoverMoviesCacheDao().clearRemoteKeys()
-                            database.discoverMoviesCacheDao().clearAllCachedTitles()
-                            database.discoverMoviesCacheDao().insertCachedTrendingItems(
-                                titlesList = titleList,
-                                page = page,
-                                prevKey = prevKey,
-                                nextKey = nextKey,
-                                createdOn = Instant.now().toEpochMilli()
-                            )
-                        }
-                        is TitleItemsRequestType.DiscoverTV -> {
-                            database.discoverTvCacheDao().clearRemoteKeys()
-                            database.discoverTvCacheDao().clearAllCachedTitles()
-                            database.discoverTvCacheDao().insertCachedTrendingItems(
-                                titlesList = titleList,
-                                page = page,
-                                prevKey = prevKey,
-                                nextKey = nextKey,
-                                createdOn = Instant.now().toEpochMilli()
-                            )
-                        }
-                        is TitleItemsRequestType.PopularMovies -> {
-                            database.popularMoviesCacheDao().clearRemoteKeys()
-                            database.popularMoviesCacheDao().clearAllCachedTitles()
-                            database.popularMoviesCacheDao().insertCachedTrendingItems(
-                                titlesList = titleList,
-                                page = page,
-                                prevKey = prevKey,
-                                nextKey = nextKey,
-                                createdOn = Instant.now().toEpochMilli()
-                            )
-                        }
-                        is TitleItemsRequestType.PopularTV -> {
-                            database.popularTvCacheDao().clearRemoteKeys()
-                            database.popularTvCacheDao().clearAllCachedTitles()
-                            database.popularTvCacheDao().insertCachedTrendingItems(
-                                titlesList = titleList,
-                                page = page,
-                                prevKey = prevKey,
-                                nextKey = nextKey,
-                                createdOn = Instant.now().toEpochMilli()
-                            )
-                        }
-                        is TitleItemsRequestType.SearchAll -> {
-                            database.searchAllCacheDao().clearRemoteKeys()
-                            database.searchAllCacheDao().clearAllCachedTitles()
-                            database.searchAllCacheDao().insertCachedTrendingItems(
-                                titlesList = titleList,
-                                page = page,
-                                prevKey = prevKey,
-                                nextKey = nextKey,
-                                createdOn = Instant.now().toEpochMilli()
-                            )
-                        }
-                        is TitleItemsRequestType.SearchMovies -> {
-                            database.searchMoviesCacheDao().clearRemoteKeys()
-                            database.searchMoviesCacheDao().clearAllCachedTitles()
-                            database.searchMoviesCacheDao().insertCachedTrendingItems(
-                                titlesList = titleList,
-                                page = page,
-                                prevKey = prevKey,
-                                nextKey = nextKey,
-                                createdOn = Instant.now().toEpochMilli()
-                            )
-                        }
-                        is TitleItemsRequestType.SearchTV -> {
-                            database.searchTvCacheDao().clearRemoteKeys()
-                            database.searchTvCacheDao().clearAllCachedTitles()
-                            database.searchTvCacheDao().insertCachedTrendingItems(
-                                titlesList = titleList,
-                                page = page,
-                                prevKey = prevKey,
-                                nextKey = nextKey,
-                                createdOn = Instant.now().toEpochMilli()
-                            )
-                        }
-                        is TitleItemsRequestType.TopRatedMovies -> {
-                            database.topRatedMoviesCacheDao().clearRemoteKeys()
-                            database.topRatedMoviesCacheDao().clearAllCachedTitles()
-                            database.topRatedMoviesCacheDao().insertCachedTrendingItems(
-                                titlesList = titleList,
-                                page = page,
-                                prevKey = prevKey,
-                                nextKey = nextKey,
-                                createdOn = Instant.now().toEpochMilli()
-                            )
-                        }
-                        is TitleItemsRequestType.TopRatedTV -> {
-                            database.topRatedTvCacheDao().clearRemoteKeys()
-                            database.topRatedTvCacheDao().clearAllCachedTitles()
-                            database.topRatedTvCacheDao().insertCachedTrendingItems(
-                                titlesList = titleList,
-                                page = page,
-                                prevKey = prevKey,
-                                nextKey = nextKey,
-                                createdOn = Instant.now().toEpochMilli()
-                            )
-                        }
-                        is TitleItemsRequestType.UpcomingMovies -> {
-                            database.upcomingMoviesDao().clearRemoteKeys()
-                            database.upcomingMoviesDao().clearAllCachedTitles()
-                            database.upcomingMoviesDao().insertCachedTrendingItems(
-                                titlesList = titleList,
-                                page = page,
-                                prevKey = prevKey,
-                                nextKey = nextKey,
-                                createdOn = Instant.now().toEpochMilli()
-                            )
-                        }
+                when (requestType) {
+                    is TitleItemsRequestType.DiscoverMovies -> {
+                        database.discoverMoviesCacheDao().insertCachedTrendingItems(
+                            titlesList = titleList,
+                            page = page,
+                            prevKey = prevKey,
+                            nextKey = nextKey,
+                            createdOn = Instant.now().toEpochMilli()
+                        )
+                    }
+                    is TitleItemsRequestType.DiscoverTV -> {
+                        database.discoverTvCacheDao().insertCachedTrendingItems(
+                            titlesList = titleList,
+                            page = page,
+                            prevKey = prevKey,
+                            nextKey = nextKey,
+                            createdOn = Instant.now().toEpochMilli()
+                        )
+                    }
+                    is TitleItemsRequestType.PopularMovies -> {
+                        database.popularMoviesCacheDao().insertCachedTrendingItems(
+                            titlesList = titleList,
+                            page = page,
+                            prevKey = prevKey,
+                            nextKey = nextKey,
+                            createdOn = Instant.now().toEpochMilli()
+                        )
+                    }
+                    is TitleItemsRequestType.PopularTV -> {
+                        database.popularTvCacheDao().insertCachedTrendingItems(
+                            titlesList = titleList,
+                            page = page,
+                            prevKey = prevKey,
+                            nextKey = nextKey,
+                            createdOn = Instant.now().toEpochMilli()
+                        )
+                    }
+                    is TitleItemsRequestType.SearchAll -> {
+                        database.searchAllCacheDao().insertCachedTrendingItems(
+                            titlesList = titleList,
+                            page = page,
+                            prevKey = prevKey,
+                            nextKey = nextKey,
+                            createdOn = Instant.now().toEpochMilli()
+                        )
+                    }
+                    is TitleItemsRequestType.SearchMovies -> {
+                        database.searchMoviesCacheDao().insertCachedTrendingItems(
+                            titlesList = titleList,
+                            page = page,
+                            prevKey = prevKey,
+                            nextKey = nextKey,
+                            createdOn = Instant.now().toEpochMilli()
+                        )
+                    }
+                    is TitleItemsRequestType.SearchTV -> {
+                        database.searchTvCacheDao().insertCachedTrendingItems(
+                            titlesList = titleList,
+                            page = page,
+                            prevKey = prevKey,
+                            nextKey = nextKey,
+                            createdOn = Instant.now().toEpochMilli()
+                        )
+                    }
+                    is TitleItemsRequestType.TopRatedMovies -> {
+                        database.topRatedMoviesCacheDao().insertCachedTrendingItems(
+                            titlesList = titleList,
+                            page = page,
+                            prevKey = prevKey,
+                            nextKey = nextKey,
+                            createdOn = Instant.now().toEpochMilli()
+                        )
+                    }
+                    is TitleItemsRequestType.TopRatedTV -> {
+                        database.topRatedTvCacheDao().insertCachedTrendingItems(
+                            titlesList = titleList,
+                            page = page,
+                            prevKey = prevKey,
+                            nextKey = nextKey,
+                            createdOn = Instant.now().toEpochMilli()
+                        )
+                    }
+                    is TitleItemsRequestType.UpcomingMovies -> {
+                        database.upcomingMoviesDao().insertCachedTrendingItems(
+                            titlesList = titleList,
+                            page = page,
+                            prevKey = prevKey,
+                            nextKey = nextKey,
+                            createdOn = Instant.now().toEpochMilli()
+                        )
                     }
                 }
             }
@@ -533,6 +515,51 @@ class TitlesRemoteMediatorProviderImpl(
             RemoteMediator.InitializeAction.SKIP_INITIAL_REFRESH
         } else {
             RemoteMediator.InitializeAction.LAUNCH_INITIAL_REFRESH
+        }
+    }
+
+    private suspend fun clearDataOnRefresh(requestType: TitleItemsRequestType) {
+        when (requestType) {
+            is TitleItemsRequestType.DiscoverMovies -> {
+                database.discoverMoviesCacheDao().clearRemoteKeys()
+                database.discoverMoviesCacheDao().clearAllCachedTitles()
+            }
+            is TitleItemsRequestType.DiscoverTV -> {
+                database.discoverTvCacheDao().clearRemoteKeys()
+                database.discoverTvCacheDao().clearAllCachedTitles()
+            }
+            is TitleItemsRequestType.PopularMovies -> {
+                database.popularMoviesCacheDao().clearRemoteKeys()
+                database.popularMoviesCacheDao().clearAllCachedTitles()
+            }
+            is TitleItemsRequestType.PopularTV -> {
+                database.popularTvCacheDao().clearRemoteKeys()
+                database.popularTvCacheDao().clearAllCachedTitles()
+            }
+            is TitleItemsRequestType.SearchAll -> {
+                database.searchAllCacheDao().clearRemoteKeys()
+                database.searchAllCacheDao().clearAllCachedTitles()
+            }
+            is TitleItemsRequestType.SearchMovies -> {
+                database.searchMoviesCacheDao().clearRemoteKeys()
+                database.searchMoviesCacheDao().clearAllCachedTitles()
+            }
+            is TitleItemsRequestType.SearchTV -> {
+                database.searchTvCacheDao().clearRemoteKeys()
+                database.searchTvCacheDao().clearAllCachedTitles()
+            }
+            is TitleItemsRequestType.TopRatedMovies -> {
+                database.topRatedMoviesCacheDao().clearRemoteKeys()
+                database.topRatedMoviesCacheDao().clearAllCachedTitles()
+            }
+            is TitleItemsRequestType.TopRatedTV -> {
+                database.topRatedTvCacheDao().clearRemoteKeys()
+                database.topRatedTvCacheDao().clearAllCachedTitles()
+            }
+            is TitleItemsRequestType.UpcomingMovies -> {
+                database.upcomingMoviesDao().clearRemoteKeys()
+                database.upcomingMoviesDao().clearAllCachedTitles()
+            }
         }
     }
 

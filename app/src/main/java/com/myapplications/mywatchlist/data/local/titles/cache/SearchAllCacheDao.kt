@@ -15,7 +15,7 @@ abstract class SearchAllCacheDao :
     BaseCacheDao<TitleItemCacheSearchAll, GenreForCacheItemSearchAll, RemoteKeySearchAll> {
 
     @Transaction
-    suspend fun insertCachedTrendingItems(
+    open suspend fun insertCachedTrendingItems(
         titlesList: List<TitleItemFull>,
         page: Int,
         prevKey: Int?,

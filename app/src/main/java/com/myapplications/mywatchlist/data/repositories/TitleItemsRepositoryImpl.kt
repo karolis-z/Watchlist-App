@@ -5,7 +5,6 @@ import com.myapplications.mywatchlist.core.di.IoDispatcher
 import com.myapplications.mywatchlist.core.util.Constants
 import com.myapplications.mywatchlist.core.util.NetworkStatusManager
 import com.myapplications.mywatchlist.data.ApiGetTitleItemsExceptions
-import com.myapplications.mywatchlist.data.local.WatchlistDatabase
 import com.myapplications.mywatchlist.data.local.titles.TitlesLocalDataSource
 import com.myapplications.mywatchlist.data.mappers.toTitleItemFull
 import com.myapplications.mywatchlist.data.mediators.TitlesRemoteMediatorProvider
@@ -311,8 +310,8 @@ class TitleItemsRepositoryImpl @Inject constructor(
     private fun getPagingConfig(
         pageSize: Int = Constants.PAGE_SIZE,
         prefetchDistance: Int = 2 * Constants.PAGE_SIZE,
-        enablePlaceholders: Boolean = true,
-        initialLoadSize: Int = 2 * Constants.PAGE_SIZE,
+        enablePlaceholders: Boolean = false,
+        initialLoadSize: Int = 4 * Constants.PAGE_SIZE,
         maxSize: Int = 200,
     ): PagingConfig = PagingConfig(
         pageSize = pageSize,

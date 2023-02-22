@@ -15,7 +15,7 @@ abstract class DiscoverTVCacheDao :
     BaseCacheDao<TitleItemCacheDiscoverTV, GenreForCacheItemDiscoverTV, RemoteKeyDiscoverTV> {
 
     @Transaction
-    suspend fun insertCachedTrendingItems(
+    open suspend fun insertCachedTrendingItems(
         titlesList: List<TitleItemFull>,
         page: Int,
         prevKey: Int?,

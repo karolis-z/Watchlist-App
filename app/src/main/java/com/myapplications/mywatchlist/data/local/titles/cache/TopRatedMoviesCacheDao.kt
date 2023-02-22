@@ -15,7 +15,7 @@ abstract class TopRatedMoviesCacheDao :
     BaseCacheDao<TitleItemCacheTopRatedMovie, GenreForCacheItemTopRatedMovie, RemoteKeyTopRatedMovie> {
 
     @Transaction
-    suspend fun insertCachedTrendingItems(
+    open suspend fun insertCachedTrendingItems(
         titlesList: List<TitleItemFull>,
         page: Int,
         prevKey: Int?,

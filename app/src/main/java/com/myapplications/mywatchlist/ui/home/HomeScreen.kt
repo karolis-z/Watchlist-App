@@ -80,16 +80,18 @@ fun HomeScreen(
                             .verticalScroll(rememberScrollState())
                     ) {
                         //#region TRENDING TITLES
-                        SectionHeadlineWithSeeAll(
-                            label = stringResource(id = R.string.home_trending_label),
-                            onSeeAllClicked = { onSeeAllClicked(TitleListType.Trending) }
-                        )
-                        TitleItemsLazyRow(
-                            titleItemsFull = uiState.trendingItems,
-                            placeholderPoster = placeholderPoster,
-                            onTitleClicked = onTitleClicked
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
+                        // TODO: TRENDING WILL NOT BE SHOWN LIKE THIS, NEEDS OVERHAUL AFTER
+                        //  PAGINATION IS COMPLETE
+//                        SectionHeadlineWithSeeAll(
+//                            label = stringResource(id = R.string.home_trending_label),
+//                            onSeeAllClicked = { onSeeAllClicked(TitleListType.Trending) }
+//                        )
+//                        TitleItemsLazyRow(
+//                            titleItemsFull = uiState.trendingItems,
+//                            placeholderPoster = placeholderPoster,
+//                            onTitleClicked = onTitleClicked
+//                        )
+//                        Spacer(modifier = Modifier.height(12.dp))
                         //#endregion
 
                         //#region POPULAR TITLES
