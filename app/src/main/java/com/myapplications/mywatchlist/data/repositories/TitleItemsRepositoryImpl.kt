@@ -1,9 +1,6 @@
 package com.myapplications.mywatchlist.data.repositories
 
-import androidx.paging.ExperimentalPagingApi
-import androidx.paging.Pager
-import androidx.paging.PagingConfig
-import androidx.paging.map
+import androidx.paging.*
 import com.myapplications.mywatchlist.core.di.IoDispatcher
 import com.myapplications.mywatchlist.core.util.Constants
 import com.myapplications.mywatchlist.core.util.NetworkStatusManager
@@ -31,31 +28,9 @@ class TitleItemsRepositoryImpl @Inject constructor(
     private val remoteDataSource: TitlesRemoteDataSource,
     private val genresRepository: GenresRepository,
     private val networkStatusManager: NetworkStatusManager,
-    private val database: WatchlistDatabase,
     private val titlesRemoteMediatorProvider: TitlesRemoteMediatorProvider,
     @IoDispatcher private val dispatcher: CoroutineDispatcher
 ) : TitleItemsRepository {
-
-    override suspend fun searchAll(query: String, page: Int): ResultOf<List<TitleItemFull>> =
-        withContext(dispatcher) {
-            return@withContext getTitleItemsFullResult(
-                requestType = TitleItemsRequestType.SearchAll(query = query, page = page)
-            )
-        }
-
-    override suspend fun searchMovies(query: String, page: Int): ResultOf<List<TitleItemFull>> =
-        withContext(dispatcher) {
-            return@withContext getTitleItemsFullResult(
-                requestType = TitleItemsRequestType.SearchMovies(query = query, page = page)
-            )
-        }
-
-    override suspend fun searchTV(query: String, page: Int): ResultOf<List<TitleItemFull>> =
-        withContext(dispatcher) {
-            return@withContext getTitleItemsFullResult(
-                requestType = TitleItemsRequestType.SearchTV(query = query, page = page)
-            )
-        }
 
     override suspend fun bookmarkTitleItem(titleItemFull: TitleItemFull) = withContext(dispatcher) {
         localDataSource.bookmarkTitleItem(titleItemFull = titleItemFull.copy(isWatchlisted = true))
@@ -73,21 +48,58 @@ class TitleItemsRepositoryImpl @Inject constructor(
         return localDataSource.allWatchlistedTitlesFlow()
     }
 
-    override suspend fun getTrendingTitles(): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
-        return@withContext getTitleItemsFullResult(
-            requestType = TitleItemsRequestType.TrendingMoviesAndTV
-        )
+    override suspend fun getTrendingTitles(): ResultOf<List<TitleItemFull>> =
+        withContext(dispatcher) {
+            getTitleItemsFullResult(requestType = TitleItemsRequestType.TrendingMoviesAndTV)
+        }
+
+    @OptIn(ExperimentalPagingApi::class)
+    override suspend fun getDiscoverMoviesPaginated(
+        filter: TitleListFilter
+    ): Flow<PagingData<TitleItemFull>> = withContext(dispatcher) {
+        // TODO: implement a better way to get genres, perhaps getting them in init block and
+        //  then reusing in all other functions
+        val genresList = genresRepository.getAvailableGenres()
+        return@withContext Pager(
+            config = getPagingConfig(),
+            pagingSourceFactory = { localDataSource.getCachedDiscoverMovies() },
+            remoteMediator = titlesRemoteMediatorProvider.getDiscoverMovieRemoteMediator(
+                filter = filter,
+                genres = genresList
+            )
+        ).flow.map { pagingData ->
+            pagingData.map { it.toTitleItemFull() }
+        }
     }
 
     @OptIn(ExperimentalPagingApi::class)
-    override suspend fun getPopularMovies(
-        page: Int,
+    override suspend fun getDiscoverTVPaginated(
         filter: TitleListFilter
-    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
-
-        // TODO: Move to separate method
+    ): Flow<PagingData<TitleItemFull>> = withContext(dispatcher) {
         val genresList = genresRepository.getAvailableGenres()
-        val titlesFlow = Pager(
+        return@withContext Pager(
+            config = getPagingConfig(),
+            pagingSourceFactory = { localDataSource.getCachedDiscoverTV() },
+            remoteMediator = titlesRemoteMediatorProvider.getDiscoverTVRemoteMediator(
+                filter = filter,
+                genres = genresList
+            )
+        ).flow.map { pagingData ->
+            pagingData.map { it.toTitleItemFull() }
+        }
+    }
+
+    override suspend fun getPopularMovies(): ResultOf<List<TitleItemFull>> =
+        withContext(dispatcher) {
+            getTitleItemsFullResult(requestType = TitleItemsRequestType.PopularMovies)
+        }
+
+    @OptIn(ExperimentalPagingApi::class)
+    override suspend fun getPopularMoviesPaginated(
+        filter: TitleListFilter
+    ): Flow<PagingData<TitleItemFull>> = withContext(dispatcher) {
+        val genresList = genresRepository.getAvailableGenres()
+        return@withContext Pager(
             config = getPagingConfig(),
             pagingSourceFactory = { localDataSource.getCachedPopularMovies() },
             remoteMediator = titlesRemoteMediatorProvider.getPopularMoviesRemoteMediator(
@@ -97,64 +109,140 @@ class TitleItemsRepositoryImpl @Inject constructor(
         ).flow.map { pagingData ->
             pagingData.map { it.toTitleItemFull() }
         }
-
-        return@withContext getTitleItemsFullResult(
-            requestType = TitleItemsRequestType.PopularMovies(page = page, filter = filter)
-        )
     }
 
-    override suspend fun getPopularTV(
-        page: Int,
-        filter: TitleListFilter
-    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
-        return@withContext getTitleItemsFullResult(
-            requestType = TitleItemsRequestType.PopularTV(page = page, filter = filter)
-        )
+    override suspend fun getPopularTV(): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        getTitleItemsFullResult(requestType = TitleItemsRequestType.PopularTV)
     }
 
-    override suspend fun getTopRatedMovies(
-        page: Int,
+    @OptIn(ExperimentalPagingApi::class)
+    override suspend fun getPopularTvPaginated(
         filter: TitleListFilter
-    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
-        return@withContext getTitleItemsFullResult(
-            requestType = TitleItemsRequestType.TopRatedMovies(page = page, filter = filter)
-        )
+    ): Flow<PagingData<TitleItemFull>> = withContext(dispatcher) {
+        val genresList = genresRepository.getAvailableGenres()
+        return@withContext Pager(
+            config = getPagingConfig(),
+            pagingSourceFactory = { localDataSource.getCachedPopularTV() },
+            remoteMediator = titlesRemoteMediatorProvider.getPopularTVRemoteMediator(
+                filter = filter,
+                genres = genresList
+            )
+        ).flow.map { pagingData ->
+            pagingData.map { it.toTitleItemFull() }
+        }
     }
 
-    override suspend fun getTopRatedTV(
-        page: Int,
+    @OptIn(ExperimentalPagingApi::class)
+    override suspend fun searchAllPaginated(query: String): Flow<PagingData<TitleItemFull>> =
+        withContext(dispatcher) {
+            val genresList = genresRepository.getAvailableGenres()
+            return@withContext Pager(
+                config = getPagingConfig(),
+                pagingSourceFactory = { localDataSource.getCachedSearchAll() },
+                remoteMediator = titlesRemoteMediatorProvider.getSearchAllRemoteMediator(
+                    query = query,
+                    genres = genresList
+                )
+            ).flow.map { pagingData ->
+                pagingData.map { it.toTitleItemFull() }
+            }
+        }
+
+    @OptIn(ExperimentalPagingApi::class)
+    override suspend fun searchMoviesPaginated(query: String): Flow<PagingData<TitleItemFull>> =
+        withContext(dispatcher) {
+            val genresList = genresRepository.getAvailableGenres()
+            return@withContext Pager(
+                config = getPagingConfig(),
+                pagingSourceFactory = { localDataSource.getCachedSearchMovies() },
+                remoteMediator = titlesRemoteMediatorProvider.getSearchMoviesRemoteMediator(
+                    query = query,
+                    genres = genresList
+                )
+            ).flow.map { pagingData ->
+                pagingData.map { it.toTitleItemFull() }
+            }
+        }
+
+    @OptIn(ExperimentalPagingApi::class)
+    override suspend fun searchTVPaginated(query: String): Flow<PagingData<TitleItemFull>> =
+        withContext(dispatcher) {
+            val genresList = genresRepository.getAvailableGenres()
+            return@withContext Pager(
+                config = getPagingConfig(),
+                pagingSourceFactory = { localDataSource.getCachedSearchTV() },
+                remoteMediator = titlesRemoteMediatorProvider.getSearchTVRemoteMediator(
+                    query = query,
+                    genres = genresList
+                )
+            ).flow.map { pagingData ->
+                pagingData.map { it.toTitleItemFull() }
+            }
+        }
+
+    override suspend fun getTopRatedMovies(): ResultOf<List<TitleItemFull>> =
+        withContext(dispatcher) {
+            getTitleItemsFullResult(requestType = TitleItemsRequestType.TopRatedMovies)
+        }
+
+    @OptIn(ExperimentalPagingApi::class)
+    override suspend fun getTopRatedMoviesPaginated(
         filter: TitleListFilter
-    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
-        return@withContext getTitleItemsFullResult(
-            requestType = TitleItemsRequestType.TopRatedTV(page = page, filter = filter)
-        )
+    ): Flow<PagingData<TitleItemFull>> = withContext(dispatcher) {
+        val genresList = genresRepository.getAvailableGenres()
+        return@withContext Pager(
+            config = getPagingConfig(),
+            pagingSourceFactory = { localDataSource.getCachedTopRatedMovies() },
+            remoteMediator = titlesRemoteMediatorProvider.getTopRatedMoviesRemoteMediator(
+                filter = filter,
+                genres = genresList
+            )
+        ).flow.map { pagingData ->
+            pagingData.map { it.toTitleItemFull() }
+        }
     }
 
-    override suspend fun getUpcomingMovies(
-        page: Int,
-        filter: TitleListFilter
-    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
-        return@withContext getTitleItemsFullResult(
-            requestType = TitleItemsRequestType.UpcomingMovies(page = page, filter = filter)
-        )
+    override suspend fun getTopRatedTV(): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        getTitleItemsFullResult(requestType = TitleItemsRequestType.TopRatedTV)
     }
 
-    override suspend fun getDiscoverMovies(
-        page: Int,
+    @OptIn(ExperimentalPagingApi::class)
+    override suspend fun getTopRatedTVPaginated(
         filter: TitleListFilter
-    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
-        return@withContext getTitleItemsFullResult(
-            requestType = TitleItemsRequestType.DiscoverMovies(page = page, filter = filter)
-        )
+    ): Flow<PagingData<TitleItemFull>> = withContext(dispatcher) {
+        val genresList = genresRepository.getAvailableGenres()
+        return@withContext Pager(
+            config = getPagingConfig(),
+            pagingSourceFactory = { localDataSource.getCachedTopRatedTV() },
+            remoteMediator = titlesRemoteMediatorProvider.getTopRatedTVRemoteMediator(
+                filter = filter,
+                genres = genresList
+            )
+        ).flow.map { pagingData ->
+            pagingData.map { it.toTitleItemFull() }
+        }
     }
 
-    override suspend fun getDiscoverTV(
-        page: Int,
+    override suspend fun getUpcomingMovies(): ResultOf<List<TitleItemFull>> =
+        withContext(dispatcher) {
+            getTitleItemsFullResult(requestType = TitleItemsRequestType.UpcomingMovies)
+        }
+
+    @OptIn(ExperimentalPagingApi::class)
+    override suspend fun getUpcomingMoviesPaginated(
         filter: TitleListFilter
-    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
-        return@withContext getTitleItemsFullResult(
-            requestType = TitleItemsRequestType.DiscoverTV(page = page, filter = filter)
-        )
+    ): Flow<PagingData<TitleItemFull>> = withContext(dispatcher) {
+        val genresList = genresRepository.getAvailableGenres()
+        return@withContext Pager(
+            config = getPagingConfig(),
+            pagingSourceFactory = { localDataSource.getCachedUpcomingMovies() },
+            remoteMediator = titlesRemoteMediatorProvider.getUpcomingMoviesRemoteMediator(
+                filter = filter,
+                genres = genresList
+            )
+        ).flow.map { pagingData ->
+            pagingData.map { it.toTitleItemFull() }
+        }
     }
 
     /**
@@ -175,66 +263,16 @@ class TitleItemsRepositoryImpl @Inject constructor(
         val result = when (requestType) {
             TitleItemsRequestType.TrendingMoviesAndTV ->
                 remoteDataSource.getTrendingTitles(allGenres = genresList)
-            is TitleItemsRequestType.SearchAll ->
-                remoteDataSource.searchAllTitles(
-                    allGenres = genresList,
-                    page = requestType.page,
-                    query = requestType.query
-                )
-            is TitleItemsRequestType.SearchMovies ->
-                remoteDataSource.searchMovies(
-                    allGenres = genresList,
-                    page = requestType.page,
-                    query = requestType.query
-                )
-            is TitleItemsRequestType.SearchTV ->
-                remoteDataSource.searchTV(
-                    allGenres = genresList,
-                    page = requestType.page,
-                    query = requestType.query
-                )
-            is TitleItemsRequestType.DiscoverMovies ->
-                remoteDataSource.getDiscoverMovies(
-                    allGenres = genresList,
-                    page = requestType.page,
-                    filter = requestType.filter
-                )
-            is TitleItemsRequestType.DiscoverTV ->
-                remoteDataSource.getDiscoverTV(
-                    allGenres = genresList,
-                    page = requestType.page,
-                    filter = requestType.filter
-                )
-            is TitleItemsRequestType.PopularMovies ->
-                remoteDataSource.getPopularMovies(
-                    allGenres = genresList,
-                    page = requestType.page,
-                    filter = requestType.filter
-                )
-            is TitleItemsRequestType.PopularTV ->
-                remoteDataSource.getPopularTV(
-                    allGenres = genresList,
-                    page = requestType.page,
-                    filter = requestType.filter
-                )
-            is TitleItemsRequestType.TopRatedMovies ->
-                remoteDataSource.getTopRatedMovies(
-                    allGenres = genresList,
-                    page = requestType.page,
-                    filter = requestType.filter
-                )
-            is TitleItemsRequestType.TopRatedTV ->
-                remoteDataSource.getTopRatedTV(
-                    allGenres = genresList,
-                    page = requestType.page,
-                    filter = requestType.filter
-                )
-            is TitleItemsRequestType.UpcomingMovies ->
-                remoteDataSource.getUpcomingMovies(
-                    allGenres = genresList,
-                    page = requestType.page,
-                    filter = requestType.filter
-                )
+            TitleItemsRequestType.PopularMovies ->
+                remoteDataSource.getPopularMovies(allGenres = genresList)
+            TitleItemsRequestType.PopularTV ->
+                remoteDataSource.getPopularTV(allGenres = genresList)
+            TitleItemsRequestType.TopRatedMovies ->
+                remoteDataSource.getTopRatedMovies(allGenres = genresList)
+            TitleItemsRequestType.TopRatedTV ->
+                remoteDataSource.getTopRatedTV(allGenres = genresList)
+            TitleItemsRequestType.UpcomingMovies ->
+                remoteDataSource.getUpcomingMovies(allGenres = genresList)
         }
         return@withContext parseTitlesListResult(result)
     }
@@ -266,6 +304,10 @@ class TitleItemsRepositoryImpl @Inject constructor(
         }
     }
 
+    /**
+     * A convenience method for returning a [PagingConfig], in most cases the default version should
+     * be used.
+     */
     private fun getPagingConfig(
         pageSize: Int = Constants.PAGE_SIZE,
         prefetchDistance: Int = 2 * Constants.PAGE_SIZE,
@@ -282,19 +324,10 @@ class TitleItemsRepositoryImpl @Inject constructor(
 
     private sealed class TitleItemsRequestType {
         object TrendingMoviesAndTV : TitleItemsRequestType()
-        data class PopularMovies(val page: Int, val filter: TitleListFilter) :
-            TitleItemsRequestType()
-        data class PopularTV(val page: Int, val filter: TitleListFilter) : TitleItemsRequestType()
-        data class UpcomingMovies(val page: Int, val filter: TitleListFilter) :
-            TitleItemsRequestType()
-        data class TopRatedMovies(val page: Int, val filter: TitleListFilter) :
-            TitleItemsRequestType()
-        data class TopRatedTV(val page: Int, val filter: TitleListFilter) : TitleItemsRequestType()
-        data class SearchAll(val query: String, val page: Int) : TitleItemsRequestType()
-        data class SearchMovies(val query: String, val page: Int) : TitleItemsRequestType()
-        data class SearchTV(val query: String, val page: Int) : TitleItemsRequestType()
-        data class DiscoverMovies(val page: Int, val filter: TitleListFilter) :
-            TitleItemsRequestType()
-        data class DiscoverTV(val page: Int, val filter: TitleListFilter) : TitleItemsRequestType()
+        object PopularMovies : TitleItemsRequestType()
+        object PopularTV : TitleItemsRequestType()
+        object UpcomingMovies : TitleItemsRequestType()
+        object TopRatedMovies : TitleItemsRequestType()
+        object TopRatedTV : TitleItemsRequestType()
     }
 }
