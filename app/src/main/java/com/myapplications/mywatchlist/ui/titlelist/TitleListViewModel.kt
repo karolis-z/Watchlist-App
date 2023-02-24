@@ -6,21 +6,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import com.myapplications.mywatchlist.data.ApiGetDetailsException
-import com.myapplications.mywatchlist.data.local.WatchlistDatabase
+import com.myapplications.mywatchlist.data.ApiGetTitleItemsExceptions
 import com.myapplications.mywatchlist.domain.entities.Genre
 import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 import com.myapplications.mywatchlist.domain.repositories.GenresRepository
-import com.myapplications.mywatchlist.domain.repositories.TitleItemsRepository
 import com.myapplications.mywatchlist.domain.repositories.TitlesManager
 import com.myapplications.mywatchlist.ui.NavigationArgument
 import com.myapplications.mywatchlist.ui.entities.TitleListType
 import com.myapplications.mywatchlist.ui.entities.TitleListUiFilter
 import com.myapplications.mywatchlist.ui.mappers.toTitleListFilter
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 import javax.inject.Inject
 
 private const val TAG = "TITLE_LIST_VIEWMODEL"
@@ -29,9 +27,6 @@ private const val TAG = "TITLE_LIST_VIEWMODEL"
 class TitleListViewModel @Inject constructor(
     private val titlesManager: TitlesManager,
     private val genresRepository: GenresRepository,
-   // private val titlesTrendingRemoteMediator: TitlesTrendingRemoteMediator,
-    private val titleItemsRepository: TitleItemsRepository,
-    private val db: WatchlistDatabase,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -43,99 +38,7 @@ class TitleListViewModel @Inject constructor(
     private val _filterState: MutableStateFlow<TitleListUiFilter> = MutableStateFlow(TitleListUiFilter())
     val filterState = _filterState.asStateFlow()
 
-//    @OptIn(ExperimentalPagingApi::class, FlowPreview::class)
-//    val titlesTrending: Flow<PagingData<TitleItemFull>> = Pager(
-//        config = PagingConfig(
-//            pageSize = PAGE_SIZE,
-//            prefetchDistance = PAGE_SIZE / 4,
-//            initialLoadSize = PAGE_SIZE
-//        ),
-//        pagingSourceFactory = { cacheDao.getTrendingTitles() },
-//        remoteMediator = titlesTrendingRemoteMediator
-//    ).flow
-//        .flowOn(Dispatchers.IO)
-//        .map { pagingData ->
-//            pagingData.map { titleItem ->
-//                titleItem.toTitleItemFull()
-//            }.filter { title -> isMatchingFilter(title, filterState.value) }
-//        }
-//        .cachedIn(viewModelScope)
-
-//        .combine(filterState) { pagingData, filter ->
-//            val data = pagingData.filter { title -> isMatchingFilter(title, filter) }
-//            val x = mutableListOf<Long>()
-//            val y = data.map {
-//                 x.add(it.id)
-//                 it.name
-//            }
-//            Log.d(TAG, "combine: $x")
-//            data
-//        }
-
     lateinit var titlesFlow: Flow<PagingData<TitleItemFull>>
-
-//    @OptIn(ExperimentalCoroutinesApi::class, ExperimentalPagingApi::class)
-//    val titlesTrendingFlow = filterState.flatMapLatest { filter ->
-//        Pager(
-//            config = PagingConfig(
-//                pageSize = PAGE_SIZE,
-//                prefetchDistance = 2 * PAGE_SIZE,
-//                initialLoadSize = 2 * PAGE_SIZE,
-//                maxSize = 200
-//            ),
-//            pagingSourceFactory = { db.popularMoviesCacheDao().getCachedTitles() },
-//            remoteMediator = TitlesTrendingRemoteMediator(
-//                titlesRemoteDataSource = titleItemsRepository,
-//                database = db,
-//            )
-//        ).flow
-//            .map { pagingData ->
-//                pagingData.map {titleItem ->
-//                    titleItem.toTitleItemFull()
-//                }
-//            }
-//            .map { pagingData ->
-//                pagingData.filter { title -> isMatchingFilter(title, filter) }
-//            }
-//            .cachedIn(viewModelScope)
-//    }
-
-    private fun isMatchingFilter(title: TitleItemFull, filter: TitleListUiFilter): Boolean {
-        // Check if same type, if not return false
-        if (filter.titleType != null && title.type != filter.titleType) {
-            return false
-        }
-
-        // Check if within genres
-        if (filter.genres.isNotEmpty()) {
-            /* If none of title's genres are 'contained' within the filter's genres list, means the
-            titles does not match the Genre filter and should not be shown */
-            if (!title.genres.any { genre -> filter.genres.contains(genre) }){
-                return false
-            }
-        }
-
-        // Check if within score range
-        if (title.voteAverage > filter.scoreRange.second.toDouble() ||
-            title.voteAverage < filter.scoreRange.first.toDouble()) {
-            return false
-        }
-        // Check if within years range
-        val releaseYear = title.releaseDate?.year
-        if (releaseYear != null) {
-            // Showing future titles if the latest possible year (i.e. current) is chosen.
-            val showFutureTitles = filter.yearsRange.second == LocalDate.now().year
-            if (
-                releaseYear.toFloat() < filter.yearsRange.first ||
-                (!showFutureTitles && releaseYear.toFloat() > filter.yearsRange.second)
-            ) {
-                return false
-            }
-        }
-
-        // If we reached this point - means all filters are 'passed' and title should be shown
-        return true
-    }
 
     val uiState: StateFlow<TitleListUiState> =
         combine(titleListState, filterState) { titleListState, filter ->
@@ -182,127 +85,51 @@ class TitleListViewModel @Inject constructor(
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun getTitleList() {
         titleListState.update { TitleListUiState.Loading }
         viewModelScope.launch {
-            titlesFlow = when (screenTitle.value) {
-                TitleListType.PopularMovies -> titlesManager.getPopularMoviesPaginated(
-                    filter = filterState.value.toTitleListFilter()
-                )
-                TitleListType.PopularTV -> titlesManager.getPopularTvPaginated(
-                    filter = filterState.value.toTitleListFilter()
-                )
-                TitleListType.TopRatedMovies -> titlesManager.getTopRatedMoviesPaginated(
-                    filter = filterState.value.toTitleListFilter()
-                )
-                TitleListType.TopRatedTV -> titlesManager.getTopRatedTVPaginated(
-                    filter = filterState.value.toTitleListFilter()
-                )
-                TitleListType.UpcomingMovies -> titlesManager.getUpcomingMoviesPaginated(
-                    filter = filterState.value.toTitleListFilter()
-                )
-                null -> return@launch
-            }.cachedIn(viewModelScope)
+            val listType = screenTitle.value
+            if (listType != null) {
+                titlesFlow = filterState.flatMapLatest { filter ->
+                    Log.d(TAG, "getTitleList: listtype = $listType. filter set: $filter")
+                    when (listType) {
+                        TitleListType.PopularMovies -> titlesManager.getPopularMoviesPaginated(
+                            filter = filter.toTitleListFilter()
+                        )
+                        TitleListType.PopularTV -> titlesManager.getPopularTvPaginated(
+                            filter = filter.toTitleListFilter()
+                        )
+                        TitleListType.TopRatedMovies -> titlesManager.getTopRatedMoviesPaginated(
+                            filter = filter.toTitleListFilter()
+                        )
+                        TitleListType.TopRatedTV -> titlesManager.getTopRatedTVPaginated(
+                            filter = filter.toTitleListFilter()
+                        )
+                        TitleListType.UpcomingMovies -> titlesManager.getUpcomingMoviesPaginated(
+                            filter = filter.toTitleListFilter()
+                        )
+                    }
+                }.cachedIn(viewModelScope)
+            }
             titleListState.update { TitleListUiState.Ready }
         }
-//        viewModelScope.launch {
-//            val result = when (titleListType) {
-//                null -> {
-//                    Log.e(TAG, "getTitleList: titleListType is null. Unable to infer which list to get")
-//                    titleListState.update { TitleListUiState.Error(TitleListError.UNKNOWN) }
-//                    return@launch
-//                }
-//                TitleListType.Trending -> titlesManager.getTrendingTitles()
-//                TitleListType.PopularMovies -> titlesManager.getPopularTitles()
-//                TitleListType.TopRatedMovies -> titlesManager.getTopRatedTitles()
-//                TitleListType.UpcomingMovies -> titlesManager.getUpcomingMovies()
-//            }
-//            when (result) {
-//                is ResultOf.Failure -> titleListState.update {
-//                    TitleListUiState.Error(
-//                        error = getErrorFromResultThrowable(
-//                            result.throwable
-//                        )
-//                    )
-//                }
-//                is ResultOf.Success -> titleListState.update {
-//                    TitleListUiState.Ready(titleItems = result.data)
-//                }
-//            }
-//        }
     }
 
-    private fun getErrorFromResultThrowable(throwable: Throwable?): TitleListError {
-        return if (throwable is ApiGetDetailsException) {
+    fun getErrorFromResultThrowable(throwable: Throwable?): TitleListError {
+        return if (throwable is ApiGetTitleItemsExceptions) {
             when (throwable) {
-                is ApiGetDetailsException.FailedApiRequestException ->
+                is ApiGetTitleItemsExceptions.FailedApiRequestException ->
                     TitleListError.FAILED_API_REQUEST
-                is ApiGetDetailsException.NoConnectionException ->
+                is ApiGetTitleItemsExceptions.NoConnectionException ->
                     TitleListError.NO_INTERNET
-                is ApiGetDetailsException.NothingFoundException ->
+                is ApiGetTitleItemsExceptions.NothingFoundException ->
                     TitleListError.NO_TITLES
             }
         } else {
             TitleListError.UNKNOWN
         }
     }
-
-    /**
-     * Filters the given list of [TitleItemFull] by given [TitleListUiFilter]
-     */
-    private fun filterTitles(
-        titles: List<TitleItemFull>,
-        filter: TitleListUiFilter
-    ): List<TitleItemFull> {
-
-        var titlesList = titles
-
-        // Apply TitleType filer
-        if (filter.titleType != null) {
-            titlesList = titlesList.filter { it.type == filter.titleType }
-        }
-
-        // Apply score range filter
-        if (filter.scoreRange != Pair(0, 10)) {
-            titlesList = titlesList.filter {
-                (it.voteAverage >= filter.scoreRange.first) &&
-                        (it.voteAverage <= filter.scoreRange.second)
-            }
-        }
-
-        // Apply years range filter
-        if (filter.yearsRange != Pair(1900, LocalDate.now().year)) {
-            val showFutureTitles = filter.yearsRange.second == LocalDate.now().year
-            val titlesWithNoReleaseDate = titlesList.filter { it.releaseDate == null }
-            var titlesWithReleaseDate = if (titlesWithNoReleaseDate.isNotEmpty()) {
-                titlesList.minus(titlesWithNoReleaseDate.toSet())
-            } else {
-                titlesList
-            }
-            titlesWithReleaseDate = titlesWithReleaseDate.filter {
-                /* Non-null assertion here because we already filtered out items with
-                null release date */
-                if (showFutureTitles) {
-                    it.releaseDate!!.year >= filter.yearsRange.first
-                } else {
-                    (it.releaseDate!!.year >= filter.yearsRange.first) &&
-                            (it.releaseDate.year <= filter.yearsRange.second)
-                }
-            }
-            titlesList = titlesWithReleaseDate + titlesWithNoReleaseDate
-        }
-
-        // Apply genres filter
-        if (filter.genres.isNotEmpty()) {
-            titlesList = titlesList.filter { title ->
-                title.genres.any { filter.genres.contains(it) }
-            }
-        }
-
-        return titlesList
-    }
-
-
 
     fun onWatchlistClicked(title: TitleItemFull) {
         viewModelScope.launch {
@@ -335,7 +162,7 @@ class TitleListViewModel @Inject constructor(
         }
     }
 
-//    fun retryGetData(){
-//        getTitleList()
-//    }
+    fun retryGetData(){
+        getTitleList()
+    }
 }

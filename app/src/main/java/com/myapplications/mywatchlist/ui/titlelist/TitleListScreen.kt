@@ -1,6 +1,5 @@
 package com.myapplications.mywatchlist.ui.titlelist
 
-import android.util.Log
 import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -52,10 +51,6 @@ fun TitleListScreen(
     val screenTitle by viewModel.screenTitle.collectAsState()
     val titleListUiState by viewModel.uiState.collectAsState()
     val filterState by viewModel.filterState.collectAsState()
-
-//    val trendingTitles = viewModel.titlesTrending.collectAsLazyPagingItems()
-//    val trendingTitles = viewModel.titlesTrendingFlow.collectAsLazyPagingItems()
-//    val trendingTitles = viewModel.titlesFlow.collectAsLazyPagingItems()
 
     val showFilterState = rememberDrawerState(initialValue = DrawerValue.Closed)
 
@@ -115,32 +110,33 @@ fun TitleListScreen(
                                 top = paddingValues.calculateTopPadding()
                             )
                     ) {
-                        SideEffect {
-                            Log.d("TitleListScreen", "RECOMPOSED ")
-                        }
                         when (titleListUiState) {
                             is TitleListUiState.Error -> {
-                                Text ("Error")
+                                FullScreenErrorMessage(
+                                    error = (titleListUiState as TitleListUiState.Error).error,
+                                    onButtonRetryClick = { viewModel.retryGetData() }
+                                )
                             }
                             TitleListUiState.Loading -> {
-                                Text ("Loading")
+                                FullScreenLoadingCircle()
                             }
                             is TitleListUiState.Ready -> {
-                                val x =
+                                val titles = viewModel.titlesFlow.collectAsLazyPagingItems()
                                 TitleListScreenContentNew(
-//                            titleListUiState = titleListUiState,
-                                    trendingTitles = viewModel.titlesFlow.collectAsLazyPagingItems(),
+                                    trendingTitles = titles,
                                     filterState = filterState,
+                                    placeholderPoster = placeholderPoster,
+                                    onRetryAppendPrependClick = { titles.retry() },
+                                    onRetryEntireListClick = { viewModel.retryGetData() },
+                                    onWatchlistClicked = viewModel::onWatchlistClicked,
+                                    onTitleClicked = onTitleClicked,
+                                    onLoadingError = { viewModel.getErrorFromResultThrowable(it) },
                                     onAllFiltersClicked = {
                                         scope.launch { showFilterState.open() }
                                     },
-                                    onRetryAppendPrependClick = { /* trendingTitles.retry() */ },
-                                    onRetryEntireListClick = { /* trendingTitles.refresh() */ },
-                                    onWatchlistClicked = viewModel::onWatchlistClicked,
-                                    onTitleClicked = onTitleClicked,
-                                    placeholderPoster = placeholderPoster,
                                     onTitleTypeFilterSelected = {
                                         viewModel.setFilter(filterState.copy(titleType = it))
+                                        titles.refresh()
                                     },
                                     modifier = Modifier
                                 )
@@ -156,21 +152,18 @@ fun TitleListScreen(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TitleListScreenContentNew(
-    //titleListUiState: TitleListUiState,
     trendingTitles: LazyPagingItems<TitleItemFull>,
     filterState: TitleListUiFilter,
+    placeholderPoster: Painter,
     onRetryAppendPrependClick: () -> Unit,
     onRetryEntireListClick: () -> Unit,
+    onLoadingError: (throwable: Throwable) -> TitleListError,
     onWatchlistClicked: (TitleItemFull) -> Unit,
     onTitleClicked: (TitleItemFull) -> Unit,
     onAllFiltersClicked: () -> Unit,
     onTitleTypeFilterSelected: (TitleType?) -> Unit,
-    placeholderPoster: Painter,
     modifier: Modifier = Modifier
 ) {
-    SideEffect {
-        Log.d("TitleListScreenContentNew", "RECOMPOSED ")
-    }
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -179,32 +172,22 @@ fun TitleListScreenContentNew(
             onAllFiltersClicked = onAllFiltersClicked,
             onTypeFilterSelected = onTitleTypeFilterSelected
         )
-        SideEffect {
-            Log.d(TAG, "TitleListScreenContentNew: trendingTitles.loadState.refresh = ${trendingTitles.loadState.refresh}")
-        }
-        when (trendingTitles.loadState.refresh) {
+        when (val refreshState = trendingTitles.loadState.refresh) {
             LoadState.Loading ->
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    LoadingCircle()
-                }
+                FullScreenLoadingCircle()
             is LoadState.Error -> {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    ErrorText(errorMessage = "OOPSIE DAISY", onButtonRetryClick = onRetryEntireListClick)
-                }
+                FullScreenErrorMessage(
+                    error = onLoadingError(refreshState.error),
+                    onButtonRetryClick = onRetryEntireListClick
+                )
             }
             is LoadState.NotLoading -> {
-                Log.d("LazyColumn", "RECOMPOSED. trendingTitles size ${trendingTitles.itemCount}: ")
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                     contentPadding = PaddingValues(vertical = 10.dp),
                     state = rememberLazyListState(),
                     modifier = modifier
                 ) {
-
                     // Prepend load or error item
                     pagingLoadStateItem(
                         loadState = trendingTitles.loadState.prepend,
@@ -218,15 +201,11 @@ fun TitleListScreenContentNew(
                         }
                     )
 
-
                     // Main Content
                     items(
                         items = trendingTitles,
                         key = { titleItem -> titleItem.id }
                     ) { titleItem: TitleItemFull? ->
-                        SideEffect {
-                            Log.d("TITLE", "titleItem: ${titleItem?.id}-${titleItem?.name}")
-                        }
                         titleItem?.let { titleItemFull ->
                             TitleItemCard(
                                 title = titleItemFull,
@@ -275,12 +254,7 @@ fun TitleListScreenContent(
     Crossfade(targetState = titleListUiState, modifier = modifier) { uiState ->
         when (uiState) {
             TitleListUiState.Loading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    LoadingCircle()
-                }
+
             }
             is TitleListUiState.Error -> {
                 Column(
@@ -351,6 +325,49 @@ fun TitleListScreenContent(
 //                        state = listState
 //                    )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun FullScreenLoadingCircle(modifier: Modifier = Modifier) {
+    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        LoadingCircle()
+    }
+}
+
+@Composable
+fun FullScreenErrorMessage(
+    error: TitleListError,
+    onButtonRetryClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        when (error) {
+            TitleListError.NO_INTERNET -> {
+                ErrorText(
+                    errorMessage =
+                    stringResource(id = R.string.error_no_internet_connection),
+                    onButtonRetryClick = onButtonRetryClick
+                )
+            }
+            TitleListError.FAILED_API_REQUEST,
+            TitleListError.UNKNOWN -> {
+                ErrorText(
+                    errorMessage =
+                    stringResource(id = R.string.error_something_went_wrong),
+                    onButtonRetryClick = onButtonRetryClick
+                )
+            }
+            TitleListError.NO_TITLES -> {
+                ErrorText(
+                    errorMessage = stringResource(id = R.string.titlelist_no_data)
+                )
             }
         }
     }
@@ -705,7 +722,12 @@ private fun LazyListScope.pagingLoadStateItem(
     if (loading != null && loadState == LoadState.Loading) {
         item(
             key = keySuffix?.let { "loadingItem_$it" },
-            content = loading,
+            content = {
+                // TODO: Needs a test, will probably not work
+                AnimatedVisibility(visible = true) {
+                    loading()
+                }
+            },
         )
     }
     if (error != null && loadState is LoadState.Error) {

@@ -21,7 +21,18 @@ data class TitleListFilter(
     val scoreTo: Double,
     val withGenres: List<Genre> = emptyList(),
     val sortBy: SortByParameter? = null
-)
+) {
+    companion object {
+        fun noConstraintsFilter() = TitleListFilter(
+            releaseDateFrom = null,
+            releaseDateTo = null,
+            scoreFrom = 0.0,
+            scoreTo = 10.0,
+            withGenres = emptyList(),
+            sortBy = null
+        )
+    }
+}
 
 interface SortByParameter {
     val propertyName: String
