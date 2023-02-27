@@ -12,6 +12,6 @@ enum class TitleListType {
 //    SearchAll,
 //    SearchMovies,
 //    SearchTV,
-//    DiscoverMovies,
-//    DiscoverTV
+    DiscoverMovies,
+    DiscoverTV
 }

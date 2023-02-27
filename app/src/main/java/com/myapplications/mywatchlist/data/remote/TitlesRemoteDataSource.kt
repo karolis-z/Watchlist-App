@@ -6,7 +6,8 @@ import com.myapplications.mywatchlist.data.ApiGetTitleItemsExceptions
 import com.myapplications.mywatchlist.data.datastore.UserPrefsRepository
 import com.myapplications.mywatchlist.data.mappers.toTitleItemsFull
 import com.myapplications.mywatchlist.data.remote.api.ApiResponse
-import com.myapplications.mywatchlist.data.remote.api.SortByApiParam
+import com.myapplications.mywatchlist.data.remote.api.SortMoviesBy
+import com.myapplications.mywatchlist.data.remote.api.SortTvBy
 import com.myapplications.mywatchlist.data.remote.api.TmdbApi
 import com.myapplications.mywatchlist.domain.entities.Genre
 import com.myapplications.mywatchlist.domain.entities.TitleItemFull
@@ -319,7 +320,7 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
                             scoreTo = requestType.filter.scoreTo,
                             genresListString = getGenresListString(requestType.filter.withGenres),
                             sortBy = requestType.filter.sortBy?.propertyName
-                                ?: SortByApiParam.SortMoviesBy.Popularity_Descending.propertyName
+                                ?: SortMoviesBy.Popularity_Descending.propertyName
                         )
                     )
                 is TitleItemsRequestType.DiscoverTVPaginated ->
@@ -332,7 +333,7 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
                             scoreTo = requestType.filter.scoreTo,
                             genresListString = getGenresListString(requestType.filter.withGenres),
                             sortBy = requestType.filter.sortBy?.propertyName
-                                ?: SortByApiParam.SortTvBy.Popularity_Descending.propertyName
+                                ?: SortTvBy.Popularity_Descending.propertyName
                         )
                     )
                 is TitleItemsRequestType.PopularMoviesPaginated ->

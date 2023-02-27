@@ -9,11 +9,13 @@ import androidx.paging.cachedIn
 import com.myapplications.mywatchlist.data.ApiGetTitleItemsExceptions
 import com.myapplications.mywatchlist.domain.entities.Genre
 import com.myapplications.mywatchlist.domain.entities.TitleItemFull
+import com.myapplications.mywatchlist.domain.entities.TitleType
 import com.myapplications.mywatchlist.domain.repositories.GenresRepository
 import com.myapplications.mywatchlist.domain.repositories.TitlesManager
 import com.myapplications.mywatchlist.ui.NavigationArgument
 import com.myapplications.mywatchlist.ui.entities.TitleListType
 import com.myapplications.mywatchlist.ui.entities.TitleListUiFilter
+import com.myapplications.mywatchlist.ui.mappers.toSortByParameter
 import com.myapplications.mywatchlist.ui.mappers.toTitleListFilter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -95,6 +97,20 @@ class TitleListViewModel @Inject constructor(
                         TitleListType.UpcomingMovies -> titlesManager.getUpcomingMoviesPaginated(
                             filter = filter.toTitleListFilter()
                         )
+                        TitleListType.DiscoverMovies -> titlesManager.getDiscoverMoviesPaginated(
+                            filter = filter.toTitleListFilter(
+                                sortByParameter = filter.sortByApiParam?.toSortByParameter(
+                                    titleType = TitleType.MOVIE
+                                )
+                            )
+                        )
+                        TitleListType.DiscoverTV -> titlesManager.getDiscoverTVPaginated(
+                            filter = filter.toTitleListFilter(
+                                sortByParameter = filter.sortByApiParam?.toSortByParameter(
+                                    titleType = TitleType.TV
+                                )
+                            )
+                        )
                     }
                 }.cachedIn(viewModelScope)
             }
@@ -146,7 +162,8 @@ class TitleListViewModel @Inject constructor(
                 genres = filter.genres.toList(),
                 scoreRange = filter.scoreRange,
                 titleType = filter.titleType,
-                yearsRange = filter.yearsRange
+                yearsRange = filter.yearsRange,
+                sortByApiParam = filter.sortByApiParam
             )
         }
     }

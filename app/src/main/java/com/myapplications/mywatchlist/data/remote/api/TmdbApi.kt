@@ -141,36 +141,30 @@ interface TmdbApi {
     suspend fun getConfiguration(): Response<ApiResponse>
 }
 
-fun lol() {
-    val x = SortByApiParam.SortTvBy.Popularity_Descending.propertyName
-}
-
 /**
- * Holds the values of the "sort_by" parameter of the TMDB Api. These string values can be provided
+ * Holds the values of the "sort_by" parameters of the TMDB Api. These string values can be provided
  * to GET methods of the API that have a "sort_by" query available.
  */
-interface SortByApiParam: SortByParameter {
-    enum class SortTvBy(override val propertyName: String) : SortByApiParam {
-        Popularity_Ascending(propertyName = "popularity.asc"),
-        Popularity_Descending(propertyName = "popularity.desc"),
-        ReleaseDate_Ascending(propertyName = "first_air_date.asc"),
-        ReleaseDate_Descending(propertyName = "first_air_date.desc"),
-        Score_Ascending(propertyName = "vote_average.asc"),
-        Score_Descending(propertyName = "vote_average.desc")
-    }
+enum class SortTvBy(override val propertyName: String) : SortByParameter {
+    Popularity_Ascending(propertyName = "popularity.asc"),
+    Popularity_Descending(propertyName = "popularity.desc"),
+    ReleaseDate_Ascending(propertyName = "first_air_date.asc"),
+    ReleaseDate_Descending(propertyName = "first_air_date.desc"),
+    Score_Ascending(propertyName = "vote_average.asc"),
+    Score_Descending(propertyName = "vote_average.desc")
+}
 
-    enum class SortMoviesBy(override val propertyName: String) : SortByApiParam {
-        Popularity_Ascending(propertyName = "popularity.asc"),
-        Popularity_Descending(propertyName = "popularity.desc"),
-        ReleaseDate_Ascending(propertyName = "primary_release_date.asc"),
-        ReleaseDate_Descending(propertyName = "primary_release_date.desc"),
-        Revenue_Ascending(propertyName = "revenue.asc"),
-        Revenue_Descending(propertyName = "revenue.desc"),
-        Title_Ascending(propertyName = "original_title.asc"),
-        Title_Descending(propertyName = "original_title.desc"),
-        Score_Ascending(propertyName = "vote_average.asc"),
-        Score_Descending(propertyName = "vote_average.desc"),
-        VoteCount_Ascending(propertyName = "vote_count.asc"),
-        VoteCount_Descending(propertyName = "vote_count.desc")
-    }
+enum class SortMoviesBy(override val propertyName: String) : SortByParameter {
+    Popularity_Ascending(propertyName = "popularity.asc"),
+    Popularity_Descending(propertyName = "popularity.desc"),
+    ReleaseDate_Ascending(propertyName = "primary_release_date.asc"),
+    ReleaseDate_Descending(propertyName = "primary_release_date.desc"),
+    Revenue_Ascending(propertyName = "revenue.asc"),
+    Revenue_Descending(propertyName = "revenue.desc"),
+    Title_Ascending(propertyName = "original_title.asc"),
+    Title_Descending(propertyName = "original_title.desc"),
+    Score_Ascending(propertyName = "vote_average.asc"),
+    Score_Descending(propertyName = "vote_average.desc"),
+    VoteCount_Ascending(propertyName = "vote_count.asc"),
+    VoteCount_Descending(propertyName = "vote_count.desc")
 }
