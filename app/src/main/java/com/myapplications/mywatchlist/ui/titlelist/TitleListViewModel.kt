@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import androidx.paging.map
 import com.myapplications.mywatchlist.data.ApiGetTitleItemsExceptions
 import com.myapplications.mywatchlist.domain.entities.Genre
 import com.myapplications.mywatchlist.domain.entities.TitleItemFull
@@ -42,6 +43,7 @@ class TitleListViewModel @Inject constructor(
     private val _filterState: MutableStateFlow<TitleListUiFilter> = MutableStateFlow(TitleListUiFilter())
     val filterState = _filterState.asStateFlow()
 
+    private val watchlistedTitles = titlesManager.allWatchlistedTitleItems()
     lateinit var titlesFlow: Flow<PagingData<TitleItemFull>>
 
     private var titleListType: TitleListType? = null
@@ -113,6 +115,17 @@ class TitleListViewModel @Inject constructor(
                         )
                     }
                 }.cachedIn(viewModelScope)
+                    .combine(watchlistedTitles) { pagingData, watchlistedTitles ->
+                        pagingData.map { pagedTitle ->
+                            pagedTitle.copy(
+                                isWatchlisted = watchlistedTitles.any { title ->
+                                    title.mediaId == pagedTitle.mediaId &&
+                                            title.type == pagedTitle.type
+                                }
+                            )
+                        }
+                    }
+                    .cachedIn(viewModelScope)
             }
             _titleListState.update { TitleListUiState.Ready(titles = titlesFlow) }
         }
