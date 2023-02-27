@@ -1,12 +1,17 @@
 package com.myapplications.mywatchlist.ui.discover
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.cachedIn
+import androidx.paging.map
+import com.myapplications.mywatchlist.data.ApiGetTitleItemsExceptions
 import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 import com.myapplications.mywatchlist.domain.repositories.TitlesManager
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -17,62 +22,68 @@ class DiscoverViewModel @Inject constructor(
     private val titlesManager: TitlesManager
 ) : ViewModel() {
 
-    private val _uiState: MutableStateFlow<DiscoverUiState> = MutableStateFlow(DiscoverUiState())
+    private val _uiState: MutableStateFlow<DiscoverUiState> = MutableStateFlow(DiscoverUiState.FreshStart)
     val uiState = _uiState.asStateFlow()
 
-    // Used to store the search string for when 'Retry' button is clicked
-    private var searchString: String = ""
+    private val watchlistedTitles = titlesManager.allWatchlistedTitleItems()
 
-    fun searchTitleClicked(query: String) {
-        // TODO: NEEDS OVERHAUL AFTER PAGINATION IS COMPLETE
-//        searchString = query
-//        viewModelScope.launch {
-//            _uiState.update {
-//                it.copy(
-//                    titleItemsFull = null,
-//                    isLoading = true,
-//                    isSearchFinished = false,
-//                    error = null
-//                )
-//            }
-//            val response = titlesManager.searchAll(query)
-//            when (response) {
-//                is ResultOf.Success -> {
-//                    _uiState.update {
-//                        it.copy(
-//                            titleItemsFull = response.data,
-//                            isLoading = false,
-//                            isSearchFinished = true,
-//                            error = null
-//                        )
-//                    }
-//                }
-//                is ResultOf.Failure -> {
-//                    val exception = response.throwable
-//                    val error: DiscoverError =
-//                        if (exception is ApiGetTitleItemsExceptions) {
-//                            when (exception) {
-//                                is ApiGetTitleItemsExceptions.FailedApiRequestException ->
-//                                    DiscoverError.FAILED_API_REQUEST
-//                                is ApiGetTitleItemsExceptions.NothingFoundException ->
-//                                    DiscoverError.NOTHING_FOUND
-//                                is ApiGetTitleItemsExceptions.NoConnectionException ->
-//                                    DiscoverError.NO_INTERNET
-//                            }
-//                        } else {
-//                            DiscoverError.FAILED_API_REQUEST
-//                        }
-//                    _uiState.update {
-//                        it.copy(
-//                            titleItemsFull = emptyList(),
-//                            isLoading = false,
-//                            isSearchFinished = true,
-//                            error = error
-//                        )
-//                    }
-//                }
-//            }
-//        }
+    // Used to store the search string for when 'Retry' button is clicked
+    private val _searchString = MutableStateFlow("")
+    val searchString = _searchString.asStateFlow()
+
+    fun setSearchString(value: String) {
+        _searchString.update { value }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
+    fun initializeSearch() {
+        _uiState.update { DiscoverUiState.Loading }
+        viewModelScope.launch {
+            // TODO: must adjust debounce somewhat to make it smooth. Remove logs later.
+            val titles = searchString.flatMapLatest { searchString ->
+                titlesManager.searchAllPaginated(query = searchString)
+                    .debounce(300)
+                    .cachedIn(viewModelScope)
+                    .combine(watchlistedTitles) { pagingData, watchlistedTitles ->
+                        Log.d(TAG, "combining search: uistate currently = ${_uiState.value}")
+                        pagingData.map { pagedTitle ->
+                            pagedTitle.copy(
+                                isWatchlisted = watchlistedTitles.any { title ->
+                                    title.mediaId == pagedTitle.mediaId &&
+                                            title.type == pagedTitle.type
+                                }
+                            )
+                        }
+                    }
+                    .cachedIn(viewModelScope)
+            }
+            if (searchString.value.isEmpty()) {
+                _uiState.update { DiscoverUiState.FreshStart }
+            } else {
+                _uiState.update {
+                    DiscoverUiState.Ready(titles = titles)
+                }
+            }
+            Log.d(TAG, "initializeSearch: uistate updated = ${_uiState.value}")
+        }
+    }
+
+    /**
+     * @return [DiscoverError] based on provided [throwable]
+     */
+    fun getErrorFromResultThrowable(throwable: Throwable?): DiscoverError {
+        return if (throwable is ApiGetTitleItemsExceptions) {
+            when (throwable) {
+                is ApiGetTitleItemsExceptions.FailedApiRequestException ->
+                    DiscoverError.FAILED_API_REQUEST
+                is ApiGetTitleItemsExceptions.NoConnectionException ->
+                    DiscoverError.NO_INTERNET
+                is ApiGetTitleItemsExceptions.NothingFoundException ->
+                    DiscoverError.NOTHING_FOUND
+            }
+        } else {
+            DiscoverError.UNKNOWN
+        }
     }
 
     fun onWatchlistClicked(title: TitleItemFull) {
@@ -86,6 +97,6 @@ class DiscoverViewModel @Inject constructor(
     }
 
     fun retrySearch() {
-        searchTitleClicked(searchString)
+        initializeSearch()
     }
 }

@@ -113,7 +113,7 @@ fun TitleListScreen(
                         Crossfade(targetState = titleListUiState) { titleListUiState ->
                             when (titleListUiState) {
                                 is TitleListUiState.Error -> {
-                                    FullScreenErrorMessage(
+                                    FullScreenTitleListErrorMessage(
                                         error = (titleListUiState).error,
                                         onButtonRetryClick = { viewModel.retryGetData() }
                                     )
@@ -124,7 +124,7 @@ fun TitleListScreen(
                                 is TitleListUiState.Ready -> {
                                     val titles = (titleListUiState).titles.collectAsLazyPagingItems()
                                     TitleListScreenContentNew(
-                                        trendingTitles = titles,
+                                        titlesList = titles,
                                         filterState = filterState,
                                         placeholderPoster = placeholderPoster,
                                         onRetryAppendPrependClick = { titles.retry() },
@@ -154,7 +154,7 @@ fun TitleListScreen(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TitleListScreenContentNew(
-    trendingTitles: LazyPagingItems<TitleItemFull>,
+    titlesList: LazyPagingItems<TitleItemFull>,
     filterState: TitleListUiFilter,
     placeholderPoster: Painter,
     onRetryAppendPrependClick: () -> Unit,
@@ -174,13 +174,13 @@ fun TitleListScreenContentNew(
             onAllFiltersClicked = onAllFiltersClicked,
             onTypeFilterSelected = onTitleTypeFilterSelected
         )
-        Crossfade(targetState = trendingTitles.loadState.refresh) { loadState ->
+        Crossfade(targetState = titlesList.loadState.refresh) { loadState ->
             when (loadState) {
                 LoadState.Loading -> {
                     FullScreenLoadingCircle()
                 }
                 is LoadState.Error -> {
-                    FullScreenErrorMessage(
+                    FullScreenTitleListErrorMessage(
                         error = onLoadingError( loadState.error),
                         onButtonRetryClick = onRetryEntireListClick
                     )
@@ -194,7 +194,7 @@ fun TitleListScreenContentNew(
                     ) {
                         // Prepend load or error item
                         pagingLoadStateItem(
-                            loadState = trendingTitles.loadState.prepend,
+                            loadState = titlesList.loadState.prepend,
                             keySuffix = "prepend",
                             loading = { AppendPrependLoading() },
                             error = {
@@ -207,7 +207,7 @@ fun TitleListScreenContentNew(
 
                         // Main Content
                         items(
-                            items = trendingTitles,
+                            items = titlesList,
                             key = { titleItem -> titleItem.id }
                         ) { titleItem: TitleItemFull? ->
                             titleItem?.let { titleItemFull ->
@@ -223,7 +223,7 @@ fun TitleListScreenContentNew(
 
                         // Append load or error item
                         pagingLoadStateItem(
-                            loadState = trendingTitles.loadState.append,
+                            loadState = titlesList.loadState.append,
                             keySuffix = "append",
                             loading = { AppendPrependLoading() },
                             error = {
@@ -248,7 +248,7 @@ fun FullScreenLoadingCircle(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun FullScreenErrorMessage(
+fun FullScreenTitleListErrorMessage(
     error: TitleListError,
     onButtonRetryClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -626,7 +626,7 @@ fun getScreenTitle(titleListType: TitleListType?): String {
     }
 }
 
-private fun LazyListScope.pagingLoadStateItem(
+fun LazyListScope.pagingLoadStateItem(
     loadState: LoadState,
     keySuffix: String? = null,
     loading: (@Composable LazyItemScope.() -> Unit)? = null,

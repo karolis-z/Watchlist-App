@@ -4,7 +4,9 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -32,26 +34,29 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.paging.LoadState
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.items
 import com.myapplications.mywatchlist.R
 import com.myapplications.mywatchlist.core.util.extensions.isScrollingUp
 import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 import com.myapplications.mywatchlist.ui.components.ErrorText
 import com.myapplications.mywatchlist.ui.components.LoadingCircle
-import com.myapplications.mywatchlist.ui.components.TitleItemsList
+import com.myapplications.mywatchlist.ui.components.TitleItemCard
+import com.myapplications.mywatchlist.ui.titlelist.*
 import kotlinx.coroutines.launch
 
 private const val TAG = "SEARCH_SCREEN"
 
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun DiscoverScreen(
-    placeholderImage: Painter,
+    placeHolderPoster: Painter,
     onTitleClicked: (TitleItemFull) -> Unit,
     modifier: Modifier
 ) {
     val viewModel = hiltViewModel<DiscoverViewModel>()
-    val uiState = viewModel.uiState.collectAsState()
-    val error = uiState.value.error
+    val uiState by viewModel.uiState.collectAsState()
 
     // Remember a CoroutineScope to be able to scroll the list
     val coroutineScope = rememberCoroutineScope()
@@ -61,17 +66,13 @@ fun DiscoverScreen(
     val focusRequester = remember { FocusRequester() }
 
     val listState = rememberLazyListState()
-
+    
     Box(modifier = modifier.fillMaxSize()) {
-        Column(modifier = Modifier.padding(vertical = 10.dp, horizontal = 16.dp)) {
-
-            val isLoading = uiState.value.isLoading
-            val isError = uiState.value.error != null
-            val isTitlesAvailable = !uiState.value.titleItemsFull.isNullOrEmpty()
-            val isNewSearch = !uiState.value.isSearchFinished && !uiState.value.isLoading
-
+        Column(modifier = Modifier.padding(top = 10.dp, start = 16.dp, end = 16.dp)) {
+            
             SearchTextField(
-                onSearchClicked = { viewModel.searchTitleClicked(it) },
+                viewModel = viewModel,
+                onSearchClicked = viewModel::initializeSearch,
                 focusManager = focusManager,
                 focusRequester = focusRequester,
                 keyboardController = keyboardController,
@@ -79,91 +80,134 @@ fun DiscoverScreen(
             )
             Spacer(modifier = Modifier.height(10.dp))
 
-            AnimatedVisibility(
-                visible = isNewSearch,
-                enter = fadeIn(),
-                exit = fadeOut()
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(start = 10.dp, end = 10.dp, bottom = 20.dp)
-                        .weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.search_not_searched_yet),
-                        style = MaterialTheme.typography.headlineMedium,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
-
-            AnimatedVisibility(
-                visible = isLoading,
-                enter = fadeIn(),
-                exit = fadeOut()
-            ) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    LoadingCircle()
-                }
-            }
-
-            AnimatedVisibility(
-                visible = isError,
-                enter = fadeIn(),
-                exit = fadeOut()
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    when (error) {
-                        DiscoverError.NO_INTERNET -> {
-                            val errorMessage =
-                                stringResource(id = R.string.error_no_internet_connection)
-                            ErrorText(
-                                errorMessage = errorMessage,
-                                onButtonRetryClick = { viewModel.retrySearch() })
+            Crossfade(targetState = uiState) { discoverUiState ->
+                when (discoverUiState) {
+                    DiscoverUiState.Loading -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            LoadingCircle()
                         }
-                        DiscoverError.FAILED_API_REQUEST -> {
-                            val errorMessage =
-                                stringResource(id = R.string.error_something_went_wrong)
-                            ErrorText(
-                                errorMessage = errorMessage,
-                                onButtonRetryClick = { viewModel.retrySearch() })
-                        }
-                        DiscoverError.NOTHING_FOUND -> {
-                            val errorMessage = stringResource(id = R.string.search_nothing_found)
-                            ErrorText(errorMessage = errorMessage)
-                        }
-                        null -> Unit // Should never happen because isError already controls this
                     }
-                }
-            }
-            AnimatedVisibility(
-                visible = isTitlesAvailable,
-                enter = fadeIn(),
-                exit = fadeOut()
-            ) {
-                val titleItems = uiState.value.titleItemsFull
-                if (titleItems != null) {
-                    TitleItemsList(
-                        titleItemsFull = titleItems,
-                        placeholderImage = placeholderImage,
-                        onWatchlistClicked = { viewModel.onWatchlistClicked(it) },
-                        onTitleClicked = { onTitleClicked(it) },
-                        state = listState
-                    )
-                    LaunchedEffect(titleItems.isNotEmpty()) {
-                        coroutineScope.launch {
-                            listState.animateScrollToItem(0)
+                    is DiscoverUiState.Error -> {
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            when (discoverUiState.error) {
+                                DiscoverError.NO_INTERNET -> {
+                                    val errorMessage =
+                                        stringResource(id = R.string.error_no_internet_connection)
+                                    ErrorText(
+                                        errorMessage = errorMessage,
+                                        onButtonRetryClick = { viewModel.retrySearch() })
+                                }
+                                DiscoverError.NOTHING_FOUND -> {
+                                    val errorMessage = stringResource(id = R.string.search_nothing_found)
+                                    ErrorText(errorMessage = errorMessage)
+                                }
+                                DiscoverError.UNKNOWN,
+                                DiscoverError.FAILED_API_REQUEST -> {
+                                    val errorMessage =
+                                        stringResource(id = R.string.error_something_went_wrong)
+                                    ErrorText(
+                                        errorMessage = errorMessage,
+                                        onButtonRetryClick = { viewModel.retrySearch() })
+                                }
+                            }
+                        }
+                    }
+                    DiscoverUiState.FreshStart -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(start = 10.dp, end = 10.dp, bottom = 20.dp)
+                                .weight(1f),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = stringResource(id = R.string.search_not_searched_yet),
+                                style = MaterialTheme.typography.headlineMedium,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                    is DiscoverUiState.Ready -> {
+
+                        val titles = discoverUiState.titles.collectAsLazyPagingItems()
+
+                        Crossfade(targetState = titles.loadState.refresh) { loadState ->
+                            when (loadState) {
+                                LoadState.Loading -> {
+                                    FullScreenLoadingCircle()
+                                }
+                                is LoadState.Error -> {
+                                    FullScreenDiscoverErrorMessage(
+                                        error = viewModel.getErrorFromResultThrowable(loadState.error),
+                                        onButtonRetryClick = { viewModel.retrySearch() }
+                                    )
+                                }
+                                is LoadState.NotLoading -> {
+                                    LazyColumn(
+                                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                                        contentPadding = PaddingValues(vertical = 10.dp),
+                                        state = rememberLazyListState(),
+
+                                    ) {
+                                        // Prepend load or error item
+                                        pagingLoadStateItem(
+                                            loadState = titles.loadState.prepend,
+                                            keySuffix = "prepend",
+                                            loading = { AppendPrependLoading() },
+                                            error = {
+                                                AppendPrependError(
+                                                    errorText = "Could not load more data",
+                                                    onButtonRetryClick = { titles.retry() }
+                                                )
+                                            }
+                                        )
+
+                                        // Main Content
+                                        items(
+                                            items = titles,
+                                            key = { titleItem -> titleItem.id }
+                                        ) { titleItem: TitleItemFull? ->
+                                            titleItem?.let { titleItemFull ->
+                                                TitleItemCard(
+                                                    title = titleItemFull,
+                                                    onWatchlistClicked = { viewModel.onWatchlistClicked(titleItemFull) },
+                                                    onTitleClicked = { onTitleClicked(it) },
+                                                    placeholderImage = placeHolderPoster,
+                                                    modifier = Modifier.animateItemPlacement()
+                                                )
+                                            }
+                                        }
+
+                                        // Append load or error item
+                                        pagingLoadStateItem(
+                                            loadState = titles.loadState.append,
+                                            keySuffix = "append",
+                                            loading = { AppendPrependLoading() },
+                                            error = {
+                                                AppendPrependError(
+                                                    errorText = "Could not load more data",
+                                                    onButtonRetryClick = { titles.retry() }
+                                                )
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                            LaunchedEffect(key1 = loadState is LoadState.NotLoading) {
+                                coroutineScope.launch {
+                                    listState.animateScrollToItem(0)
+                                }
+                            }
                         }
                     }
                 }
             }
         }
+        // TODO: Should remove FAB when Search Bar is implemented. Test the new SearchBar
         SearchFAB(
             isFabVisible = listState.isScrollingUp(),
             onFabClicked = {
@@ -177,6 +221,42 @@ fun DiscoverScreen(
     }
 }
 
+@Composable
+fun FullScreenDiscoverErrorMessage(
+    error: DiscoverError,
+    onButtonRetryClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        when (error) {
+            DiscoverError.NO_INTERNET -> {
+                ErrorText(
+                    errorMessage =
+                    stringResource(id = R.string.error_no_internet_connection),
+                    onButtonRetryClick = onButtonRetryClick
+                )
+            }
+            DiscoverError.FAILED_API_REQUEST,
+            DiscoverError.UNKNOWN -> {
+                ErrorText(
+                    errorMessage =
+                    stringResource(id = R.string.error_something_went_wrong),
+                    onButtonRetryClick = onButtonRetryClick
+                )
+            }
+            DiscoverError.NOTHING_FOUND -> {
+                ErrorText(
+                    errorMessage = stringResource(id = R.string.search_nothing_found)
+                )
+            }
+        }
+    }
+}
+
 @OptIn(
     ExperimentalMaterial3Api::class,
     ExperimentalComposeUiApi::class,
@@ -184,18 +264,19 @@ fun DiscoverScreen(
 )
 @Composable
 fun SearchTextField(
-    onSearchClicked: (String) -> Unit,
+    viewModel: DiscoverViewModel,
+    onSearchClicked: () -> Unit,
     focusManager: FocusManager,
     focusRequester: FocusRequester,
     keyboardController: SoftwareKeyboardController?,
     modifier: Modifier = Modifier
 ) {
-    var searchValue by remember { mutableStateOf("") }
+    val searchValue by viewModel.searchString.collectAsState()
     val showClearButton = searchValue.isNotEmpty()
 
     TextField(
         value = searchValue,
-        onValueChange = { searchValue = it },
+        onValueChange = { viewModel.setSearchString(it) },
         modifier = modifier
             .focusRequester(focusRequester)
             .onFocusChanged {
@@ -216,7 +297,7 @@ fun SearchTextField(
                 exit = fadeOut() + scaleOut()
             ) {
                 IconButton(onClick = {
-                    searchValue = ""
+                    viewModel.setSearchString("")
                     focusManager.clearFocus()
                 }) {
                     Icon(
@@ -229,7 +310,7 @@ fun SearchTextField(
         keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
         keyboardActions = KeyboardActions(onSearch = {
             keyboardController?.hide()
-            onSearchClicked(searchValue)
+            onSearchClicked()
             focusManager.clearFocus()
         })
     )
@@ -268,6 +349,7 @@ fun SearchFAB(
 @Composable
 fun SearchTextFieldPreview() {
     SearchTextField(
+        viewModel = hiltViewModel<DiscoverViewModel>(),
         onSearchClicked = {},
         focusManager = LocalFocusManager.current,
         keyboardController = null,
