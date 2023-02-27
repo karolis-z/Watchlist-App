@@ -132,7 +132,7 @@ dependencies {
 
     // PAGINATION
     implementation "androidx.paging:paging-runtime:$paging_version"
-    implementation "androidx.paging:paging-compose:1.0.0-alpha17"
+    implementation "androidx.paging:paging-compose:1.0.0-alpha18"
 
     // TESTING
     testImplementation 'junit:junit:4.13.2'

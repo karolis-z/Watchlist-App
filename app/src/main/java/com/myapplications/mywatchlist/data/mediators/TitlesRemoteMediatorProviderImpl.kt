@@ -349,8 +349,6 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
         requestType: TitleItemsRequestType,
         genres: List<Genre>
     ): RemoteMediator.MediatorResult {
-        Log.d(TAG, "loadData: loadtype = $loadType. Request Type: $requestType")
-        Log.d(TAG, "loadData: state = $state.")
         val page: Int = when (loadType) {
             LoadType.REFRESH -> {
                 val remoteKeys = getRemoteKeyClosestToCurrentPosition(
@@ -462,7 +460,6 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
 
             database.withTransaction {
                 if (loadType == LoadType.REFRESH) {
-                    Log.d(TAG, "loadData: clearing data on refresh")
                     clearDataOnRefresh(requestType = requestType)
                 }
 
@@ -629,26 +626,22 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
             is TitleItemsRequestType.PopularMovies -> {
                 when (networkStatusManager.isOnline()) {
                     true -> {
-                        val result = if (requestType.filter == lastSuccessfulFilter || lastSuccessfulFilter == null) {
+                        return if (requestType.filter == lastSuccessfulFilter || lastSuccessfulFilter == null) {
                             checkIfSkipBasedOnCreationTime(
                                 creationTime = database.popularMoviesCacheDao().getCreationTime() ?: 0
                             )
                         } else {
                             RemoteMediator.InitializeAction.LAUNCH_INITIAL_REFRESH
                         }
-                        Log.d(TAG, "initializeMediator: PopularMovies. ONLINE. returned result = $result")
-                        return result
                     }
                     false -> {
-                        val result = if (requestType.filter != TitleListFilter.noConstraintsFilter()) {
+                        return if (requestType.filter != TitleListFilter.noConstraintsFilter()) {
                             RemoteMediator.InitializeAction.LAUNCH_INITIAL_REFRESH
                         } else {
                             checkIfSkipBasedOnCreationTime(
                                 creationTime = database.popularMoviesCacheDao().getCreationTime() ?: 0
                             )
                         }
-                        Log.d(TAG, "initializeMediator: PopularMovies. OFFLINE. returned result = $result")
-                        return result
                     }
                 }
             }
@@ -787,26 +780,22 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
             is TitleItemsRequestType.UpcomingMovies -> {
                 when (networkStatusManager.isOnline()) {
                     true -> {
-                        val result = if (requestType.filter == lastSuccessfulFilter) {
+                        return if (requestType.filter == lastSuccessfulFilter) {
                             checkIfSkipBasedOnCreationTime(
                                 creationTime = database.upcomingMoviesDao().getCreationTime() ?: 0
                             )
                         } else {
                             RemoteMediator.InitializeAction.LAUNCH_INITIAL_REFRESH
                         }
-                        Log.d(TAG, "initializeMediator: UpcomingMovies. ONLINE. returned result = $result")
-                        return result
                     }
                     false -> {
-                        val result = if (requestType.filter != TitleListFilter.noConstraintsFilter()) {
+                        return if (requestType.filter != TitleListFilter.noConstraintsFilter()) {
                             RemoteMediator.InitializeAction.LAUNCH_INITIAL_REFRESH
                         } else {
                             checkIfSkipBasedOnCreationTime(
                                 creationTime = database.upcomingMoviesDao().getCreationTime() ?: 0
                             )
                         }
-                        Log.d(TAG, "initializeMediator: UpcomingMovies. OFFLINE. returned result = $result")
-                        return result
                     }
                 }
             }
@@ -816,10 +805,8 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
     private fun checkIfSkipBasedOnCreationTime(creationTime: Long): RemoteMediator.InitializeAction {
         val timeDifference = Instant.now().toEpochMilli() - creationTime
         return if (timeDifference < CACHING_TIMEOUT) {
-            Log.d(TAG, "initializeMediator: SKIP_INITIAL_REFRESH. time difference = $timeDifference")
             RemoteMediator.InitializeAction.SKIP_INITIAL_REFRESH
         } else {
-            Log.d(TAG, "initializeMediator: LAUNCH_INITIAL_REFRESH. time difference = $timeDifference ")
             RemoteMediator.InitializeAction.LAUNCH_INITIAL_REFRESH
         }
     }

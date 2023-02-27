@@ -49,7 +49,7 @@ fun TitleListScreen(
 
     val viewModel = hiltViewModel<TitleListViewModel>()
     val screenTitle by viewModel.screenTitle.collectAsState()
-    val titleListUiState by viewModel.uiState.collectAsState()
+    val titleListUiState by viewModel.titleListState.collectAsState()
     val filterState by viewModel.filterState.collectAsState()
 
     val showFilterState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -110,36 +110,38 @@ fun TitleListScreen(
                                 top = paddingValues.calculateTopPadding()
                             )
                     ) {
-                        when (titleListUiState) {
-                            is TitleListUiState.Error -> {
-                                FullScreenErrorMessage(
-                                    error = (titleListUiState as TitleListUiState.Error).error,
-                                    onButtonRetryClick = { viewModel.retryGetData() }
-                                )
-                            }
-                            TitleListUiState.Loading -> {
-                                FullScreenLoadingCircle()
-                            }
-                            is TitleListUiState.Ready -> {
-                                val titles = viewModel.titlesFlow.collectAsLazyPagingItems()
-                                TitleListScreenContentNew(
-                                    trendingTitles = titles,
-                                    filterState = filterState,
-                                    placeholderPoster = placeholderPoster,
-                                    onRetryAppendPrependClick = { titles.retry() },
-                                    onRetryEntireListClick = { viewModel.retryGetData() },
-                                    onWatchlistClicked = viewModel::onWatchlistClicked,
-                                    onTitleClicked = onTitleClicked,
-                                    onLoadingError = { viewModel.getErrorFromResultThrowable(it) },
-                                    onAllFiltersClicked = {
-                                        scope.launch { showFilterState.open() }
-                                    },
-                                    onTitleTypeFilterSelected = {
-                                        viewModel.setFilter(filterState.copy(titleType = it))
-                                        titles.refresh()
-                                    },
-                                    modifier = Modifier
-                                )
+                        Crossfade(targetState = titleListUiState) { titleListUiState ->
+                            when (titleListUiState) {
+                                is TitleListUiState.Error -> {
+                                    FullScreenErrorMessage(
+                                        error = (titleListUiState).error,
+                                        onButtonRetryClick = { viewModel.retryGetData() }
+                                    )
+                                }
+                                TitleListUiState.Loading -> {
+                                    FullScreenLoadingCircle()
+                                }
+                                is TitleListUiState.Ready -> {
+                                    val titles = (titleListUiState).titles.collectAsLazyPagingItems()
+                                    TitleListScreenContentNew(
+                                        trendingTitles = titles,
+                                        filterState = filterState,
+                                        placeholderPoster = placeholderPoster,
+                                        onRetryAppendPrependClick = { titles.retry() },
+                                        onRetryEntireListClick = { viewModel.retryGetData() },
+                                        onWatchlistClicked = viewModel::onWatchlistClicked,
+                                        onTitleClicked = onTitleClicked,
+                                        onLoadingError = { viewModel.getErrorFromResultThrowable(it) },
+                                        onAllFiltersClicked = {
+                                            scope.launch { showFilterState.open() }
+                                        },
+                                        onTitleTypeFilterSelected = {
+                                            viewModel.setFilter(filterState.copy(titleType = it))
+                                            titles.refresh()
+                                        },
+                                        modifier = Modifier
+                                    )
+                                }
                             }
                         }
                     }
@@ -172,135 +174,38 @@ fun TitleListScreenContentNew(
             onAllFiltersClicked = onAllFiltersClicked,
             onTypeFilterSelected = onTitleTypeFilterSelected
         )
-        when (val refreshState = trendingTitles.loadState.refresh) {
-            LoadState.Loading ->
-                FullScreenLoadingCircle()
-            is LoadState.Error -> {
-                FullScreenErrorMessage(
-                    error = onLoadingError(refreshState.error),
-                    onButtonRetryClick = onRetryEntireListClick
-                )
-            }
-            is LoadState.NotLoading -> {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    contentPadding = PaddingValues(vertical = 10.dp),
-                    state = rememberLazyListState(),
-                    modifier = modifier
-                ) {
-                    // Prepend load or error item
-                    pagingLoadStateItem(
-                        loadState = trendingTitles.loadState.prepend,
-                        keySuffix = "prepend",
-                        loading = { AppendPrependLoading() },
-                        error = {
-                            AppendPrependError(
-                                errorText = "Could not load more data",
-                                onButtonRetryClick = onRetryAppendPrependClick
-                            )
-                        }
-                    )
-
-                    // Main Content
-                    items(
-                        items = trendingTitles,
-                        key = { titleItem -> titleItem.id }
-                    ) { titleItem: TitleItemFull? ->
-                        titleItem?.let { titleItemFull ->
-                            TitleItemCard(
-                                title = titleItemFull,
-                                onWatchlistClicked = { onWatchlistClicked(titleItemFull) },
-                                onTitleClicked = { onTitleClicked(it) },
-                                placeholderImage = placeholderPoster,
-                                modifier = Modifier.animateItemPlacement()
-                            )
-                        }
-                    }
-
-                    // Append load or error item
-                    pagingLoadStateItem(
-                        loadState = trendingTitles.loadState.append,
-                        keySuffix = "append",
-                        loading = { AppendPrependLoading() },
-                        error = {
-                            AppendPrependError(
-                                errorText = "Could not load more data",
-                                onButtonRetryClick = onRetryAppendPrependClick
-                            )
-                        }
+        Crossfade(targetState = trendingTitles.loadState.refresh) { loadState ->
+            when (loadState) {
+                LoadState.Loading -> {
+                    FullScreenLoadingCircle()
+                }
+                is LoadState.Error -> {
+                    FullScreenErrorMessage(
+                        error = onLoadingError( loadState.error),
+                        onButtonRetryClick = onRetryEntireListClick
                     )
                 }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun TitleListScreenContent(
-    titleListUiState: TitleListUiState,
-    trendingTitles: LazyPagingItems<TitleItemFull>,
-    filterState: TitleListUiFilter,
-    onButtonRetryClick: () -> Unit,
-    onWatchlistClicked: (TitleItemFull) -> Unit,
-    onTitleClicked: (TitleItemFull) -> Unit,
-    onAllFiltersClicked: () -> Unit,
-    onTitleTypeFilterSelected: (TitleType?) -> Unit,
-    placeholderPoster: Painter,
-    modifier: Modifier = Modifier
-) {
-    val listState = rememberLazyListState()
-
-    Crossfade(targetState = titleListUiState, modifier = modifier) { uiState ->
-        when (uiState) {
-            TitleListUiState.Loading -> {
-
-            }
-            is TitleListUiState.Error -> {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    when (uiState.error) {
-                        TitleListError.NO_INTERNET -> {
-                            ErrorText(
-                                errorMessage =
-                                stringResource(id = R.string.error_no_internet_connection),
-                                onButtonRetryClick = onButtonRetryClick
-                            )
-                        }
-                        TitleListError.FAILED_API_REQUEST,
-                        TitleListError.UNKNOWN -> {
-                            ErrorText(
-                                errorMessage =
-                                stringResource(id = R.string.error_something_went_wrong),
-                                onButtonRetryClick = onButtonRetryClick
-                            )
-                        }
-                        TitleListError.NO_TITLES -> {
-                            ErrorText(
-                                errorMessage = stringResource(id = R.string.titlelist_no_data)
-                            )
-                        }
-                    }
-                }
-            }
-            is TitleListUiState.Ready -> {
-                Column(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    FilterButtonsRow(
-                        filterState = filterState,
-                        onAllFiltersClicked = onAllFiltersClicked,
-                        onTypeFilterSelected = onTitleTypeFilterSelected
-                    )
+                is LoadState.NotLoading -> {
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                         contentPadding = PaddingValues(vertical = 10.dp),
                         state = rememberLazyListState(),
                         modifier = modifier
                     ) {
+                        // Prepend load or error item
+                        pagingLoadStateItem(
+                            loadState = trendingTitles.loadState.prepend,
+                            keySuffix = "prepend",
+                            loading = { AppendPrependLoading() },
+                            error = {
+                                AppendPrependError(
+                                    errorText = "Could not load more data",
+                                    onButtonRetryClick = onRetryAppendPrependClick
+                                )
+                            }
+                        )
+
+                        // Main Content
                         items(
                             items = trendingTitles,
                             key = { titleItem -> titleItem.id }
@@ -315,15 +220,20 @@ fun TitleListScreenContent(
                                 )
                             }
                         }
+
+                        // Append load or error item
+                        pagingLoadStateItem(
+                            loadState = trendingTitles.loadState.append,
+                            keySuffix = "append",
+                            loading = { AppendPrependLoading() },
+                            error = {
+                                AppendPrependError(
+                                    errorText = "Could not load more data",
+                                    onButtonRetryClick = onRetryAppendPrependClick
+                                )
+                            }
+                        )
                     }
-//                    TitleItemsList(
-//                        titleItemsFull = uiState.titleItems,
-//                        placeholderImage = placeholderPoster,
-//                        onWatchlistClicked = onWatchlistClicked,
-//                        onTitleClicked = onTitleClicked,
-//                        contentPadding = PaddingValues(vertical = 10.dp),
-//                        state = listState
-//                    )
                 }
             }
         }
@@ -722,12 +632,7 @@ private fun LazyListScope.pagingLoadStateItem(
     if (loading != null && loadState == LoadState.Loading) {
         item(
             key = keySuffix?.let { "loadingItem_$it" },
-            content = {
-                // TODO: Needs a test, will probably not work
-                AnimatedVisibility(visible = true) {
-                    loading()
-                }
-            },
+            content = { loading() }
         )
     }
     if (error != null && loadState is LoadState.Error) {

@@ -440,7 +440,8 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
         return@withContext when (parsedResult) {
             is ResultOf.Failure -> parsedResult
             is ResultOf.Success -> {
-                if (requestType is TitleItemsRequestType.TopRatedMoviesPaginated || requestType is TitleItemsRequestType.TopRatedTVPaginated) {
+                if (requestType is TitleItemsRequestType.TopRatedMoviesPaginated ||
+                    requestType is TitleItemsRequestType.TopRatedTVPaginated) {
                     /* Sorting top rated by voteAverage but also by vote count to list titles higher
                     with same vote average but higher vote count */
                     parsedResult.copy(
@@ -517,7 +518,8 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
         data class PopularMoviesPaginated(val page: Int, val filter: TitleListFilter) :
             TitleItemsRequestType()
         object PopularMovies : TitleItemsRequestType()
-        data class PopularTVPaginated(val page: Int, val filter: TitleListFilter) : TitleItemsRequestType()
+        data class PopularTVPaginated(val page: Int, val filter: TitleListFilter) :
+            TitleItemsRequestType()
         object PopularTV : TitleItemsRequestType()
         data class UpcomingMoviesPaginated(val page: Int, val filter: TitleListFilter) :
             TitleItemsRequestType()
@@ -525,13 +527,15 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
         data class TopRatedMoviesPaginated(val page: Int, val filter: TitleListFilter) :
             TitleItemsRequestType()
         object TopRatedMovies : TitleItemsRequestType()
-        data class TopRatedTVPaginated(val page: Int, val filter: TitleListFilter) : TitleItemsRequestType()
+        data class TopRatedTVPaginated(val page: Int, val filter: TitleListFilter) :
+            TitleItemsRequestType()
         object TopRatedTV : TitleItemsRequestType()
         data class SearchAllPaginated(val query: String, val page: Int) : TitleItemsRequestType()
         data class SearchMoviesPaginated(val query: String, val page: Int) : TitleItemsRequestType()
         data class SearchTVPaginated(val query: String, val page: Int) : TitleItemsRequestType()
         data class DiscoverMoviesPaginated(val page: Int, val filter: TitleListFilter) :
             TitleItemsRequestType()
-        data class DiscoverTVPaginated(val page: Int, val filter: TitleListFilter) : TitleItemsRequestType()
+        data class DiscoverTVPaginated(val page: Int, val filter: TitleListFilter) :
+            TitleItemsRequestType()
     }
 }

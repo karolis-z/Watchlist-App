@@ -33,27 +33,14 @@ class TitleListViewModel @Inject constructor(
     private val _screenTitle: MutableStateFlow<TitleListType?> = MutableStateFlow(null)
     val screenTitle: StateFlow<TitleListType?> = _screenTitle.asStateFlow()
 
-    private val titleListState: MutableStateFlow<TitleListUiState> =
+    private val _titleListState: MutableStateFlow<TitleListUiState> =
         MutableStateFlow(TitleListUiState.Loading)
+    val titleListState: StateFlow<TitleListUiState> = _titleListState.asStateFlow()
+
     private val _filterState: MutableStateFlow<TitleListUiFilter> = MutableStateFlow(TitleListUiFilter())
     val filterState = _filterState.asStateFlow()
 
     lateinit var titlesFlow: Flow<PagingData<TitleItemFull>>
-
-    val uiState: StateFlow<TitleListUiState> =
-        combine(titleListState, filterState) { titleListState, filter ->
-            when (titleListState) {
-                is TitleListUiState.Error -> titleListState
-                TitleListUiState.Loading -> titleListState
-                is TitleListUiState.Ready -> {
-                    TitleListUiState.Ready
-                }
-            }
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = TitleListUiState.Loading
-        )
 
     private var titleListType: TitleListType? = null
     private var allGenres: List<Genre>? = null
@@ -67,12 +54,12 @@ class TitleListViewModel @Inject constructor(
     }
 
     private fun getTitleListType(){
-        titleListState.update { TitleListUiState.Loading }
+        _titleListState.update { TitleListUiState.Loading }
         try {
             val titleListTypeString = savedStateHandle.get<String>(NavigationArgument.TITLE_LIST_TYPE.value)
             if (titleListTypeString == null) {
                 // Unknown why it failed to parse the provided title, so should show general error
-                titleListState.update { TitleListUiState.Error(TitleListError.UNKNOWN) }
+                _titleListState.update { TitleListUiState.Error(TitleListError.UNKNOWN) }
                 return
             } else {
                 titleListType = TitleListType.valueOf(titleListTypeString)
@@ -81,18 +68,17 @@ class TitleListViewModel @Inject constructor(
         } catch (e: Exception) {
             Log.e(TAG, "Failed to get TitleListType from savedStateHandle. Reason: $e", e)
             // Unknown why it failed to parse the provided title, so should show general error
-            titleListState.update { TitleListUiState.Error(TitleListError.UNKNOWN) }
+            _titleListState.update { TitleListUiState.Error(TitleListError.UNKNOWN) }
         }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun getTitleList() {
-        titleListState.update { TitleListUiState.Loading }
+        _titleListState.update { TitleListUiState.Loading }
         viewModelScope.launch {
             val listType = screenTitle.value
             if (listType != null) {
                 titlesFlow = filterState.flatMapLatest { filter ->
-                    Log.d(TAG, "getTitleList: listtype = $listType. filter set: $filter")
                     when (listType) {
                         TitleListType.PopularMovies -> titlesManager.getPopularMoviesPaginated(
                             filter = filter.toTitleListFilter()
@@ -112,10 +98,13 @@ class TitleListViewModel @Inject constructor(
                     }
                 }.cachedIn(viewModelScope)
             }
-            titleListState.update { TitleListUiState.Ready }
+            _titleListState.update { TitleListUiState.Ready(titles = titlesFlow) }
         }
     }
 
+    /**
+     * @return [TitleListError] based on provided [throwable]
+     */
     fun getErrorFromResultThrowable(throwable: Throwable?): TitleListError {
         return if (throwable is ApiGetTitleItemsExceptions) {
             when (throwable) {
@@ -162,6 +151,9 @@ class TitleListViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Re-initiates getting the data
+     */
     fun retryGetData(){
         getTitleList()
     }

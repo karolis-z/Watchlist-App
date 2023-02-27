@@ -1,7 +1,11 @@
 package com.myapplications.mywatchlist.ui.titlelist
 
+import androidx.paging.PagingData
+import com.myapplications.mywatchlist.domain.entities.TitleItemFull
+import kotlinx.coroutines.flow.Flow
+
 sealed class TitleListUiState {
-    object Ready : TitleListUiState()
+    data class Ready(val titles: Flow<PagingData<TitleItemFull>>) : TitleListUiState()
     data class Error(val error: TitleListError) : TitleListUiState()
     object Loading : TitleListUiState()
 }

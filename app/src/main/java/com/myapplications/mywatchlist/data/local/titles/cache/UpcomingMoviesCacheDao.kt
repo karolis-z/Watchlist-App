@@ -1,6 +1,5 @@
 package com.myapplications.mywatchlist.data.local.titles.cache
 
-import android.util.Log
 import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Query
@@ -23,15 +22,10 @@ abstract class UpcomingMoviesCacheDao :
         createdOn: Long
     ) {
         // Inserts titles and get their ids
-        // TODO: NEED A CHECK IF THIS ACTUALLY WORKS
-        val ids =
-            insertListTitleItemCache(titleItemCacheList = titlesList.toTitleItemCacheList(page = page))
-        ids.forEachIndexed { index, l ->
-            Log.d(
-                "CACHE_DAO",
-                "ids after insert titles: id #$index:$l. For title ${titlesList[index].name}"
-            )
-        }
+        val ids = insertListTitleItemCache(
+            titleItemCacheList = titlesList.toTitleItemCacheList(page = page)
+        )
+
         // Insert genres for each of inserted titles
         titlesList.forEachIndexed { index, title ->
             insertGenresForCache(
