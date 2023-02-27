@@ -609,6 +609,9 @@ fun FilterSectionDivider(
 @Composable
 fun getScreenTitle(titleListType: TitleListType?): String {
     return when (titleListType) {
+        TitleListType.DiscoverMovies,
+        TitleListType.DiscoverTV ->
+            stringResource(id = R.string.titlelist_screen_title_discover)
         TitleListType.PopularMovies ->
             stringResource(id = R.string.titlelist_screen_title_popular_movies)
         TitleListType.PopularTV ->
