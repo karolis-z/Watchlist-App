@@ -25,12 +25,11 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
     private val networkStatusManager: NetworkStatusManager
 ) : TitlesRemoteMediatorProvider {
 
-    /* These two values get set if a call to the api is successful. These get set in the loadData
+    /* lastSuccessfulFilter gets set if a call to the api is successful. It gets set in the loadData
     * method. initializeMediator method uses these to check if a new initialization of the Mediator
-    * is with the same filter/query to determine if a REFRESH should be launched or PREPEND which
+    * is with the same filter to determine if a REFRESH should be launched or PREPEND which
     * gets triggered if we just load data from the local database */
     private var lastSuccessfulFilter: TitleListFilter? = null
-    private var lastSuccessfulQuery: String? = null
 
     override fun getDiscoverMovieRemoteMediator(
         filter: TitleListFilter,
@@ -225,13 +224,6 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
             loadType: LoadType,
             state: PagingState<Int, TitleItemCacheSearchAllFull>
         ): MediatorResult {
-            try {
-                lastSuccessfulQuery = (requestType as TitleItemsRequestType.SearchAll).query
-            } catch (e: Exception) {
-                val error = "SearchAllRemoteMediator.load(): Could not cast requestType to " +
-                        "expected TitleItemsRequestType.SearchAll. requestType = $requestType"
-                Log.e(TAG, error, e)
-            }
             return loadData(loadType, state, requestType, genres)
         }
 
@@ -246,13 +238,6 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
             loadType: LoadType,
             state: PagingState<Int, TitleItemCacheSearchMovieFull>
         ): MediatorResult {
-            try {
-                lastSuccessfulQuery = (requestType as TitleItemsRequestType.SearchMovies).query
-            } catch (e: Exception) {
-                val error = "SearchMoviesRemoteMediator.load(): Could not cast requestType to " +
-                        "expected TitleItemsRequestType.SearchMovies. requestType = $requestType"
-                Log.e(TAG, error, e)
-            }
             return loadData(loadType, state, requestType, genres)
         }
 
@@ -267,13 +252,6 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
             loadType: LoadType,
             state: PagingState<Int, TitleItemCacheSearchTVFull>
         ): MediatorResult {
-            try {
-                lastSuccessfulQuery = (requestType as TitleItemsRequestType.SearchTV).query
-            } catch (e: Exception) {
-                val error = "SearchTVRemoteMediator.load(): Could not cast requestType to " +
-                        "expected TitleItemsRequestType.SearchTV. requestType = $requestType"
-                Log.e(TAG, error, e)
-            }
             return loadData(loadType, state, requestType, genres)
         }
 
@@ -447,7 +425,11 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
                             return RemoteMediator.MediatorResult.Error(apiResult.throwable)
                         }
                         is ApiGetTitleItemsExceptions.NothingFoundException -> {
-                            true
+                            if (page == 1) {
+                                return RemoteMediator.MediatorResult.Error(apiResult.throwable)
+                            } else {
+                                true
+                            }
                         }
                     }
                 }
@@ -515,7 +497,6 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
                             nextKey = nextKey,
                             createdOn = Instant.now().toEpochMilli()
                         )
-                        lastSuccessfulQuery = requestType.query
                     }
                     is TitleItemsRequestType.SearchMovies -> {
                         database.searchMoviesCacheDao().insertCachedTrendingItems(
@@ -525,7 +506,6 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
                             nextKey = nextKey,
                             createdOn = Instant.now().toEpochMilli()
                         )
-                        lastSuccessfulQuery = requestType.query
                     }
                     is TitleItemsRequestType.SearchTV -> {
                         database.searchTvCacheDao().insertCachedTrendingItems(
@@ -535,7 +515,6 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
                             nextKey = nextKey,
                             createdOn = Instant.now().toEpochMilli()
                         )
-                        lastSuccessfulQuery = requestType.query
                     }
                     is TitleItemsRequestType.TopRatedMovies -> {
                         database.topRatedMoviesCacheDao().insertCachedTrendingItems(
@@ -577,12 +556,11 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
     private suspend fun initializeMediator(
         requestType: TitleItemsRequestType
     ): RemoteMediator.InitializeAction {
-
-        when(requestType) {
+        val initializeAction = when(requestType) {
             is TitleItemsRequestType.DiscoverMovies -> {
                 when (networkStatusManager.isOnline()) {
                     true -> {
-                        return if (requestType.filter == lastSuccessfulFilter) {
+                        if (requestType.filter == lastSuccessfulFilter || lastSuccessfulFilter == null) {
                             checkIfSkipBasedOnCreationTime(
                                 creationTime = database.discoverMoviesCacheDao().getCreationTime() ?: 0
                             )
@@ -591,7 +569,7 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
                         }
                     }
                     false -> {
-                        return if (requestType.filter != TitleListFilter.noConstraintsFilter()) {
+                        if (requestType.filter != TitleListFilter.noConstraintsFilter()) {
                             RemoteMediator.InitializeAction.LAUNCH_INITIAL_REFRESH
                         } else {
                             checkIfSkipBasedOnCreationTime(
@@ -604,7 +582,7 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
             is TitleItemsRequestType.DiscoverTV -> {
                 when (networkStatusManager.isOnline()) {
                     true -> {
-                        return if (requestType.filter == lastSuccessfulFilter) {
+                        if (requestType.filter == lastSuccessfulFilter || lastSuccessfulFilter == null) {
                             checkIfSkipBasedOnCreationTime(
                                 creationTime = database.discoverTvCacheDao().getCreationTime() ?: 0
                             )
@@ -613,7 +591,7 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
                         }
                     }
                     false -> {
-                        return if (requestType.filter != TitleListFilter.noConstraintsFilter()) {
+                        if (requestType.filter != TitleListFilter.noConstraintsFilter()) {
                             RemoteMediator.InitializeAction.LAUNCH_INITIAL_REFRESH
                         } else {
                             checkIfSkipBasedOnCreationTime(
@@ -626,7 +604,7 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
             is TitleItemsRequestType.PopularMovies -> {
                 when (networkStatusManager.isOnline()) {
                     true -> {
-                        return if (requestType.filter == lastSuccessfulFilter || lastSuccessfulFilter == null) {
+                        if (requestType.filter == lastSuccessfulFilter || lastSuccessfulFilter == null) {
                             checkIfSkipBasedOnCreationTime(
                                 creationTime = database.popularMoviesCacheDao().getCreationTime() ?: 0
                             )
@@ -635,7 +613,7 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
                         }
                     }
                     false -> {
-                        return if (requestType.filter != TitleListFilter.noConstraintsFilter()) {
+                        if (requestType.filter != TitleListFilter.noConstraintsFilter()) {
                             RemoteMediator.InitializeAction.LAUNCH_INITIAL_REFRESH
                         } else {
                             checkIfSkipBasedOnCreationTime(
@@ -648,7 +626,7 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
             is TitleItemsRequestType.PopularTV -> {
                 when (networkStatusManager.isOnline()) {
                     true -> {
-                        return if (requestType.filter == lastSuccessfulFilter) {
+                        if (requestType.filter == lastSuccessfulFilter || lastSuccessfulFilter == null) {
                             checkIfSkipBasedOnCreationTime(
                                 creationTime = database.popularTvCacheDao().getCreationTime() ?: 0
                             )
@@ -657,7 +635,7 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
                         }
                     }
                     false -> {
-                        return if (requestType.filter != TitleListFilter.noConstraintsFilter()) {
+                        if (requestType.filter != TitleListFilter.noConstraintsFilter()) {
                             RemoteMediator.InitializeAction.LAUNCH_INITIAL_REFRESH
                         } else {
                             checkIfSkipBasedOnCreationTime(
@@ -667,76 +645,17 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
                     }
                 }
             }
-            is TitleItemsRequestType.SearchAll -> {
-                when (networkStatusManager.isOnline()) {
-                    true -> {
-                        return if (requestType.query == lastSuccessfulQuery) {
-                            checkIfSkipBasedOnCreationTime(
-                                creationTime = database.searchAllCacheDao().getCreationTime() ?: 0
-                            )
-                        } else {
-                            RemoteMediator.InitializeAction.LAUNCH_INITIAL_REFRESH
-                        }
-                    }
-                    false -> {
-                        return if (requestType.query != "") {
-                            RemoteMediator.InitializeAction.LAUNCH_INITIAL_REFRESH
-                        } else {
-                            checkIfSkipBasedOnCreationTime(
-                                creationTime = database.searchAllCacheDao().getCreationTime() ?: 0
-                            )
-                        }
-                    }
-                }
-            }
-            is TitleItemsRequestType.SearchMovies -> {
-                when (networkStatusManager.isOnline()) {
-                    true -> {
-                        return if (requestType.query == lastSuccessfulQuery) {
-                            checkIfSkipBasedOnCreationTime(
-                                creationTime = database.searchMoviesCacheDao().getCreationTime() ?: 0
-                            )
-                        } else {
-                            RemoteMediator.InitializeAction.LAUNCH_INITIAL_REFRESH
-                        }
-                    }
-                    false -> {
-                        return if (requestType.query != "") {
-                            RemoteMediator.InitializeAction.LAUNCH_INITIAL_REFRESH
-                        } else {
-                            checkIfSkipBasedOnCreationTime(
-                                creationTime = database.searchMoviesCacheDao().getCreationTime() ?: 0
-                            )
-                        }
-                    }
-                }
-            }
+            /* For search - we will always launch new requests as it makes no sense to display
+            * cached data when the data always depends on a query that is an input from the user */
+            is TitleItemsRequestType.SearchAll,
+            is TitleItemsRequestType.SearchMovies,
             is TitleItemsRequestType.SearchTV -> {
-                when (networkStatusManager.isOnline()) {
-                    true -> {
-                        return if (requestType.query == lastSuccessfulQuery) {
-                            checkIfSkipBasedOnCreationTime(
-                                creationTime = database.searchTvCacheDao().getCreationTime() ?: 0
-                            )
-                        } else {
-                            RemoteMediator.InitializeAction.LAUNCH_INITIAL_REFRESH
-                        }
-                    }
-                    false -> {
-                        return if (requestType.query != "") {
-                            RemoteMediator.InitializeAction.LAUNCH_INITIAL_REFRESH
-                        } else {
-                            checkIfSkipBasedOnCreationTime(
-                                creationTime = database.searchTvCacheDao().getCreationTime() ?: 0
-                            )
-                        }
-                    }
-                }
+                RemoteMediator.InitializeAction.LAUNCH_INITIAL_REFRESH
             }
             is TitleItemsRequestType.TopRatedMovies -> {
                 when (networkStatusManager.isOnline()) {
                     true -> {
-                        return if (requestType.filter == lastSuccessfulFilter) {
+                        if (requestType.filter == lastSuccessfulFilter || lastSuccessfulFilter == null) {
                             checkIfSkipBasedOnCreationTime(
                                 creationTime = database.topRatedMoviesCacheDao().getCreationTime() ?: 0
                             )
@@ -745,7 +664,7 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
                         }
                     }
                     false -> {
-                        return if (requestType.filter != TitleListFilter.noConstraintsFilter()) {
+                        if (requestType.filter != TitleListFilter.noConstraintsFilter()) {
                             RemoteMediator.InitializeAction.LAUNCH_INITIAL_REFRESH
                         } else {
                             checkIfSkipBasedOnCreationTime(
@@ -758,7 +677,7 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
             is TitleItemsRequestType.TopRatedTV -> {
                 when (networkStatusManager.isOnline()) {
                     true -> {
-                        return if (requestType.filter == lastSuccessfulFilter) {
+                        if (requestType.filter == lastSuccessfulFilter || lastSuccessfulFilter == null) {
                             checkIfSkipBasedOnCreationTime(
                                 creationTime = database.topRatedTvCacheDao().getCreationTime() ?: 0
                             )
@@ -767,7 +686,7 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
                         }
                     }
                     false -> {
-                        return if (requestType.filter != TitleListFilter.noConstraintsFilter()) {
+                        if (requestType.filter != TitleListFilter.noConstraintsFilter()) {
                             RemoteMediator.InitializeAction.LAUNCH_INITIAL_REFRESH
                         } else {
                             checkIfSkipBasedOnCreationTime(
@@ -780,7 +699,7 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
             is TitleItemsRequestType.UpcomingMovies -> {
                 when (networkStatusManager.isOnline()) {
                     true -> {
-                        return if (requestType.filter == lastSuccessfulFilter) {
+                        if (requestType.filter == lastSuccessfulFilter || lastSuccessfulFilter == null) {
                             checkIfSkipBasedOnCreationTime(
                                 creationTime = database.upcomingMoviesDao().getCreationTime() ?: 0
                             )
@@ -789,7 +708,7 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
                         }
                     }
                     false -> {
-                        return if (requestType.filter != TitleListFilter.noConstraintsFilter()) {
+                        if (requestType.filter != TitleListFilter.noConstraintsFilter()) {
                             RemoteMediator.InitializeAction.LAUNCH_INITIAL_REFRESH
                         } else {
                             checkIfSkipBasedOnCreationTime(
@@ -800,6 +719,10 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
                 }
             }
         }
+        if (initializeAction == RemoteMediator.InitializeAction.LAUNCH_INITIAL_REFRESH) {
+            clearDataOnRefresh(requestType = requestType)
+        }
+        return initializeAction
     }
 
     private fun checkIfSkipBasedOnCreationTime(creationTime: Long): RemoteMediator.InitializeAction {

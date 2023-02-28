@@ -1,6 +1,5 @@
 package com.myapplications.mywatchlist.ui.discover
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.cachedIn
@@ -39,32 +38,30 @@ class DiscoverViewModel @Inject constructor(
     fun initializeSearch() {
         _uiState.update { DiscoverUiState.Loading }
         viewModelScope.launch {
-            // TODO: must adjust debounce somewhat to make it smooth. Remove logs later.
-            val titles = searchString.flatMapLatest { searchString ->
-                titlesManager.searchAllPaginated(query = searchString)
-                    .debounce(300)
-                    .cachedIn(viewModelScope)
-                    .combine(watchlistedTitles) { pagingData, watchlistedTitles ->
-                        Log.d(TAG, "combining search: uistate currently = ${_uiState.value}")
-                        pagingData.map { pagedTitle ->
-                            pagedTitle.copy(
-                                isWatchlisted = watchlistedTitles.any { title ->
-                                    title.mediaId == pagedTitle.mediaId &&
-                                            title.type == pagedTitle.type
-                                }
-                            )
-                        }
-                    }
-                    .cachedIn(viewModelScope)
-            }
             if (searchString.value.isEmpty()) {
                 _uiState.update { DiscoverUiState.FreshStart }
             } else {
-                _uiState.update {
-                    DiscoverUiState.Ready(titles = titles)
+                val titles = searchString.flatMapLatest { searchString ->
+                    if (searchString.isBlank() && uiState.value !is DiscoverUiState.FreshStart) {
+                        _uiState.update { DiscoverUiState.FreshStart }
+                    }
+                    titlesManager.searchAllPaginated(query = searchString)
+                        .debounce(300)
+                        .cachedIn(viewModelScope)
+                        .combine(watchlistedTitles) { pagingData, watchlistedTitles ->
+                            pagingData.map { pagedTitle ->
+                                pagedTitle.copy(
+                                    isWatchlisted = watchlistedTitles.any { title ->
+                                        title.mediaId == pagedTitle.mediaId &&
+                                                title.type == pagedTitle.type
+                                    }
+                                )
+                            }
+                        }
+                        .cachedIn(viewModelScope)
                 }
+                _uiState.update { DiscoverUiState.Ready(titles = titles) }
             }
-            Log.d(TAG, "initializeSearch: uistate updated = ${_uiState.value}")
         }
     }
 

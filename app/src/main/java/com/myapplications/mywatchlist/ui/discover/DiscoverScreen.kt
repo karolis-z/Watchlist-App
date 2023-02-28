@@ -6,7 +6,6 @@ import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -34,17 +33,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.items
 import com.myapplications.mywatchlist.R
 import com.myapplications.mywatchlist.core.util.extensions.isScrollingUp
 import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 import com.myapplications.mywatchlist.ui.components.ErrorText
 import com.myapplications.mywatchlist.ui.components.LoadingCircle
-import com.myapplications.mywatchlist.ui.components.TitleItemCard
+import com.myapplications.mywatchlist.ui.components.TitleItemsListPaginated
+import com.myapplications.mywatchlist.ui.entities.UiError
 import com.myapplications.mywatchlist.ui.titlelist.*
-import kotlinx.coroutines.launch
 
 private const val TAG = "SEARCH_SCREEN"
 
@@ -135,74 +132,94 @@ fun DiscoverScreen(
 
                         val titles = discoverUiState.titles.collectAsLazyPagingItems()
 
-                        Crossfade(targetState = titles.loadState.refresh) { loadState ->
-                            when (loadState) {
-                                LoadState.Loading -> {
-                                    FullScreenLoadingCircle()
-                                }
-                                is LoadState.Error -> {
-                                    FullScreenDiscoverErrorMessage(
-                                        error = viewModel.getErrorFromResultThrowable(loadState.error),
-                                        onButtonRetryClick = { viewModel.retrySearch() }
-                                    )
-                                }
-                                is LoadState.NotLoading -> {
-                                    LazyColumn(
-                                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                                        contentPadding = PaddingValues(vertical = 10.dp),
-                                        state = rememberLazyListState(),
 
-                                    ) {
-                                        // Prepend load or error item
-                                        pagingLoadStateItem(
-                                            loadState = titles.loadState.prepend,
-                                            keySuffix = "prepend",
-                                            loading = { AppendPrependLoading() },
-                                            error = {
-                                                AppendPrependError(
-                                                    errorText = "Could not load more data",
-                                                    onButtonRetryClick = { titles.retry() }
-                                                )
-                                            }
-                                        )
+                        TitleItemsListPaginated(
+                            titles = titles,
+                            error = {
+                                viewModel.getErrorFromResultThrowable(it)
+                            },
+                            errorComposable = {
+                                DiscoverListCenteredErrorMessage(
+                                    error = it,
+                                    onButtonRetryClick = { viewModel.retrySearch() }
+                                )
+                            },
+                            onWatchlistClicked = {
+                                viewModel.onWatchlistClicked(it)
+                             },
+                            onTitleClicked = { onTitleClicked(it) },
+                            placeHolderPoster = placeHolderPoster,
+                            listState = listState,
+                            scope = coroutineScope
+                        )
 
-                                        // Main Content
-                                        items(
-                                            items = titles,
-                                            key = { titleItem -> titleItem.id }
-                                        ) { titleItem: TitleItemFull? ->
-                                            titleItem?.let { titleItemFull ->
-                                                TitleItemCard(
-                                                    title = titleItemFull,
-                                                    onWatchlistClicked = { viewModel.onWatchlistClicked(titleItemFull) },
-                                                    onTitleClicked = { onTitleClicked(it) },
-                                                    placeholderImage = placeHolderPoster,
-                                                    modifier = Modifier.animateItemPlacement()
-                                                )
-                                            }
-                                        }
-
-                                        // Append load or error item
-                                        pagingLoadStateItem(
-                                            loadState = titles.loadState.append,
-                                            keySuffix = "append",
-                                            loading = { AppendPrependLoading() },
-                                            error = {
-                                                AppendPrependError(
-                                                    errorText = "Could not load more data",
-                                                    onButtonRetryClick = { titles.retry() }
-                                                )
-                                            }
-                                        )
-                                    }
-                                }
-                            }
-                            LaunchedEffect(key1 = loadState is LoadState.NotLoading) {
-                                coroutineScope.launch {
-                                    listState.animateScrollToItem(0)
-                                }
-                            }
-                        }
+//                        Crossfade(targetState = titles.loadState.refresh) { loadState ->
+//                            when (loadState) {
+//                                LoadState.Loading -> {
+//                                    FullScreenLoadingCircle()
+//                                }
+//                                is LoadState.Error -> {
+//                                    DiscoverListCenteredErrorMessage(
+//                                        error = viewModel.getErrorFromResultThrowable(loadState.error),
+//                                        onButtonRetryClick = { viewModel.retrySearch() }
+//                                    )
+//                                }
+//                                is LoadState.NotLoading -> {
+//                                    LazyColumn(
+//                                        verticalArrangement = Arrangement.spacedBy(10.dp),
+//                                        contentPadding = PaddingValues(vertical = 10.dp),
+//                                        state = listState
+//                                    ) {
+//                                        // Prepend load or error item
+//                                        pagingLoadStateItem(
+//                                            loadState = titles.loadState.prepend,
+//                                            keySuffix = "prepend",
+//                                            loading = { AppendPrependLoading() },
+//                                            error = {
+//                                                AppendPrependError(
+//                                                    errorText = "Could not load more data",
+//                                                    onButtonRetryClick = { titles.retry() }
+//                                                )
+//                                            }
+//                                        )
+//
+//                                        // Main Content
+//                                        items(
+//                                            items = titles,
+//                                            key = { titleItem -> titleItem.id }
+//                                        ) { titleItem: TitleItemFull? ->
+//                                            titleItem?.let { titleItemFull ->
+//                                                TitleItemCard(
+//                                                    title = titleItemFull,
+//                                                    onWatchlistClicked = { viewModel.onWatchlistClicked(titleItemFull) },
+//                                                    onTitleClicked = { onTitleClicked(it) },
+//                                                    placeholderImage = placeHolderPoster,
+//                                                    modifier = Modifier.animateItemPlacement()
+//                                                )
+//                                            }
+//                                        }
+//
+//                                        // Append load or error item
+//                                        pagingLoadStateItem(
+//                                            loadState = titles.loadState.append,
+//                                            keySuffix = "append",
+//                                            loading = { AppendPrependLoading() },
+//                                            error = {
+//                                                AppendPrependError(
+//                                                    errorText = "Could not load more data",
+//                                                    onButtonRetryClick = { titles.retry() }
+//                                                )
+//                                            }
+//                                        )
+//                                    }
+//                                }
+//                            }
+//                            LaunchedEffect(key1 = loadState is LoadState.NotLoading) {
+//                                coroutineScope.launch {
+//                                    listState.animateScrollToItem(0)
+//                                }
+//                            }
+//                        }
                     }
                 }
             }
@@ -222,8 +239,8 @@ fun DiscoverScreen(
 }
 
 @Composable
-fun FullScreenDiscoverErrorMessage(
-    error: DiscoverError,
+fun DiscoverListCenteredErrorMessage(
+    error: UiError,
     onButtonRetryClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
