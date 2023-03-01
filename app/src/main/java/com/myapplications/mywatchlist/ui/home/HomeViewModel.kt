@@ -105,7 +105,6 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun getTitleItemsList(requestType: TitleItemsRequestType) {
-        // TODO: NEEDS OVERHAUL AFTER PAGINATION IS COMPLETE
         val stateToUpdate = when (requestType) {
             TitleItemsRequestType.TrendingTitles -> trendingState
             TitleItemsRequestType.UpcomingMovies -> upcomingMoviesState

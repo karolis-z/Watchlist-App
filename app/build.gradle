@@ -131,7 +131,8 @@ dependencies {
     implementation "com.github.skydoves:balloon-compose:1.5.2"
 
     // PAGINATION
-    implementation "androidx.paging:paging-runtime:$paging_version"
+    implementation "androidx.paging:paging-common-ktx:$paging_version"
+    implementation "androidx.paging:paging-runtime-ktx:$paging_version"
     implementation "androidx.paging:paging-compose:1.0.0-alpha18"
 
     // TESTING

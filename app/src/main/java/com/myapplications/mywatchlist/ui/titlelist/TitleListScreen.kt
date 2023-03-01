@@ -24,7 +24,6 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.myapplications.mywatchlist.R
 import com.myapplications.mywatchlist.domain.entities.Genre
 import com.myapplications.mywatchlist.domain.entities.TitleItemFull
-import com.myapplications.mywatchlist.domain.entities.TitleType
 import com.myapplications.mywatchlist.ui.MyTopAppBar
 import com.myapplications.mywatchlist.ui.components.*
 import com.myapplications.mywatchlist.ui.entities.TitleListType
@@ -134,10 +133,6 @@ fun TitleListScreen(
                                         onAllFiltersClicked = {
                                             scope.launch { showFilterState.open() }
                                         },
-                                        onTitleTypeFilterSelected = {
-                                            viewModel.setFilter(filterState.copy(titleType = it))
-                                            titles.refresh()
-                                        },
                                         modifier = Modifier,
                                         listState = listState
                                     )
@@ -162,7 +157,6 @@ fun TitleListScreenContentNew(
     onWatchlistClicked: (TitleItemFull) -> Unit,
     onTitleClicked: (TitleItemFull) -> Unit,
     onAllFiltersClicked: () -> Unit,
-    onTitleTypeFilterSelected: (TitleType?) -> Unit,
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState()
 ) {
@@ -171,8 +165,7 @@ fun TitleListScreenContentNew(
     ) {
         FilterButtonsRow(
             filterState = filterState,
-            onAllFiltersClicked = onAllFiltersClicked,
-            onTypeFilterSelected = onTitleTypeFilterSelected
+            onAllFiltersClicked = onAllFiltersClicked
         )
 
         TitleItemsListPaginated(
@@ -244,7 +237,6 @@ fun TitleListCenteredErrorMessage(
 fun FilterButtonsRow(
     filterState: TitleListUiFilter,
     onAllFiltersClicked: () -> Unit,
-    onTypeFilterSelected: (TitleType?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var titleTypeFilterSelected by remember { mutableStateOf(filterState.titleType) }
@@ -260,33 +252,36 @@ fun FilterButtonsRow(
         OutlinedButton(onClick = onAllFiltersClicked) {
             Text(text = stringResource(id = R.string.titlelist_filter_label_all_filters))
         }
-        Spacer(modifier = Modifier.width(15.dp))
-        Spacer( modifier = Modifier
-            .height(ButtonDefaults.MinHeight)
-            .padding(vertical = 2.dp)
-            .width(0.5.dp)
-            .background(MaterialTheme.colorScheme.onSurfaceVariant)
-        )
-        Spacer(modifier = Modifier.width(10.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-            FilterChipGroup(
-                onFilterSelected = { titleTypeFilter ->
-                    titleTypeFilterSelected = when (titleTypeFilter) {
-                        TitleTypeFilter.All -> null
-                        TitleTypeFilter.Movies -> TitleType.MOVIE
-                        TitleTypeFilter.TV -> TitleType.TV
-                    }
-                    onTypeFilterSelected(titleTypeFilterSelected)
-                },
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier,
-                filter = when (titleTypeFilterSelected) {
-                    TitleType.MOVIE -> TitleTypeFilter.Movies
-                    TitleType.TV -> TitleTypeFilter.TV
-                    null -> TitleTypeFilter.All
-                },
-            )
-        }
+        /* TODO: commented out quick TV/Movie filter Chip group because currently displayed lists
+        *   are only separate movies OR tv lists. Need to review this and delete / remake once
+        *   Discover / Custom Filter screen is implemented.  */
+//        Spacer(modifier = Modifier.width(15.dp))
+//        Spacer( modifier = Modifier
+//            .height(ButtonDefaults.MinHeight)
+//            .padding(vertical = 2.dp)
+//            .width(0.5.dp)
+//            .background(MaterialTheme.colorScheme.onSurfaceVariant)
+//        )
+//        Spacer(modifier = Modifier.width(10.dp))
+//        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+//            FilterChipGroup(
+//                onFilterSelected = { titleTypeFilter ->
+//                    titleTypeFilterSelected = when (titleTypeFilter) {
+//                        TitleTypeFilter.All -> null
+//                        TitleTypeFilter.Movies -> TitleType.MOVIE
+//                        TitleTypeFilter.TV -> TitleType.TV
+//                    }
+//                    onTypeFilterSelected(titleTypeFilterSelected)
+//                },
+//                horizontalArrangement = Arrangement.spacedBy(10.dp),
+//                modifier = Modifier,
+//                filter = when (titleTypeFilterSelected) {
+//                    TitleType.MOVIE -> TitleTypeFilter.Movies
+//                    TitleType.TV -> TitleTypeFilter.TV
+//                    null -> TitleTypeFilter.All
+//                },
+//            )
+//        }
     }
 }
 
@@ -363,24 +358,27 @@ fun FilterSection(
         ) {
             FilterSectionDivider(paddingValues = PaddingValues(bottom = 5.dp))
 
-            // Type Filter
-            FilterLabel(label = stringResource(id = R.string.titlelist_filter_label_type))
-            FilterChipGroup(
-                onFilterSelected = { titleTypeFilter ->
-                    titleTypeFilterSelected = when (titleTypeFilter) {
-                        TitleTypeFilter.All -> null
-                        TitleTypeFilter.Movies -> TitleType.MOVIE
-                        TitleTypeFilter.TV -> TitleType.TV
-                    }
-                },
-                modifier = Modifier,
-                filter = when (titleTypeFilterSelected) {
-                    TitleType.MOVIE -> TitleTypeFilter.Movies
-                    TitleType.TV -> TitleTypeFilter.TV
-                    null -> TitleTypeFilter.All
-                },
-            )
-            FilterSectionDivider()
+            /* TODO: Commenting out because currently lists shall not be filtered by type because
+            *   we are displaying only movies or tv lists separately. This should be remade later
+            *   once Discover / Custom Filter screen is implemented */
+//            // Type Filter
+//            FilterLabel(label = stringResource(id = R.string.titlelist_filter_label_type))
+//            FilterChipGroup(
+//                onFilterSelected = { titleTypeFilter ->
+//                    titleTypeFilterSelected = when (titleTypeFilter) {
+//                        TitleTypeFilter.All -> null
+//                        TitleTypeFilter.Movies -> TitleType.MOVIE
+//                        TitleTypeFilter.TV -> TitleType.TV
+//                    }
+//                },
+//                modifier = Modifier,
+//                filter = when (titleTypeFilterSelected) {
+//                    TitleType.MOVIE -> TitleTypeFilter.Movies
+//                    TitleType.TV -> TitleTypeFilter.TV
+//                    null -> TitleTypeFilter.All
+//                },
+//            )
+//            FilterSectionDivider()
 
             // Score Slider
             FilterLabel(
@@ -524,9 +522,6 @@ fun FilterLabel(
         )
     }
 }
-
-
-
 
 @Composable
 fun FilterSectionDivider(

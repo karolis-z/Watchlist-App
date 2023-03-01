@@ -41,24 +41,54 @@ interface TitlesLocalDataSource {
      */
     fun allWatchlistedTitlesFlow(): Flow<List<TitleItemFull>>
 
+    /**
+     * @return a [PagingSource] for cached Discovered Movies.
+     */
     fun getCachedDiscoverMovies(): PagingSource<Int, TitleItemCacheDiscoverMovieFull>
 
+    /**
+     * @return a [PagingSource] for cached Discovered TV Shows.
+     */
     fun getCachedDiscoverTV(): PagingSource<Int, TitleItemCacheDiscoverTVFull>
 
+    /**
+     * @return a [PagingSource] for cached Popular Movies.
+     */
     fun getCachedPopularMovies(): PagingSource<Int, TitleItemCachePopularMovieFull>
 
+    /**
+     * @return a [PagingSource] for cached Popular TV Shows.
+     */
     fun getCachedPopularTV(): PagingSource<Int, TitleItemCachePopularTVFull>
 
+    /**
+     * @return a [PagingSource] for cached searched all titles.
+     */
     fun getCachedSearchAll(): PagingSource<Int, TitleItemCacheSearchAllFull>
 
+    /**
+     * @return a [PagingSource] for cached searched Movies.
+     */
     fun getCachedSearchMovies(): PagingSource<Int, TitleItemCacheSearchMovieFull>
 
+    /**
+     * @return a [PagingSource] for cached searched TV shows.
+     */
     fun getCachedSearchTV(): PagingSource<Int, TitleItemCacheSearchTVFull>
 
+    /**
+     * @return a [PagingSource] for cached TopRated Movies.
+     */
     fun getCachedTopRatedMovies(): PagingSource<Int, TitleItemCacheTopRatedMovieFull>
 
+    /**
+     * @return a [PagingSource] for cached TopRated TV.
+     */
     fun getCachedTopRatedTV(): PagingSource<Int, TitleItemCacheTopRatedTVFull>
 
+    /**
+     * @return a [PagingSource] for cached Upcoming Movies.
+     */
     fun getCachedUpcomingMovies(): PagingSource<Int, TitleItemCacheUpcomingMovieFull>
 }
 

@@ -22,7 +22,6 @@ class TitlesManagerImpl @Inject constructor(
     @IoDispatcher private val dispatcher: CoroutineDispatcher
 ) : TitlesManager {
 
-
     override suspend fun bookmarkTitleItem(titleItemFull: TitleItemFull) = withContext(dispatcher) {
         val titleResult =
             detailsRepository.getTitle(mediaId = titleItemFull.mediaId, type = titleItemFull.type)

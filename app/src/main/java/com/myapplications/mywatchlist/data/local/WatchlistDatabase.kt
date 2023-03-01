@@ -28,7 +28,7 @@ import com.myapplications.mywatchlist.data.local.titles.cache.*
         TitleItemSimilarMovieEntity::class,
         TitleItemRecommendedTvEntity::class,
         TitleItemSimilarTvEntity::class,
-
+        // Cache entities
         TitleItemCacheDiscoverMovie::class,
         TitleItemCacheDiscoverTV::class,
         TitleItemCachePopularMovie::class,
@@ -73,6 +73,7 @@ abstract class WatchlistDatabase : RoomDatabase() {
     abstract fun movieDao(): MovieDao
     abstract fun tvDao(): TvDao
 
+    // Cache Daos
     abstract fun discoverMoviesCacheDao(): DiscoverMovieCacheDao
     abstract fun discoverTvCacheDao(): DiscoverTVCacheDao
     abstract fun popularMoviesCacheDao(): PopularMoviesCacheDao

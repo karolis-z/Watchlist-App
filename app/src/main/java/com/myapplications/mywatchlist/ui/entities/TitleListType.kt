@@ -9,9 +9,6 @@ enum class TitleListType {
     TopRatedMovies,
     TopRatedTV,
     UpcomingMovies,
-//    SearchAll,
-//    SearchMovies,
-//    SearchTV,
     DiscoverMovies,
     DiscoverTV
 }

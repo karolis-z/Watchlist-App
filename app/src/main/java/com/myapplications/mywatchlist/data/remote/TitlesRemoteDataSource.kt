@@ -489,6 +489,9 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
         )
     }
 
+    /**
+     * @return a [String] of [Genre] ids separated by a vertical dash "|". E.g. "1|35|18".
+     */
     private fun getGenresListString(genres: List<Genre>): String {
         return if (genres.isEmpty()) {
             ""
