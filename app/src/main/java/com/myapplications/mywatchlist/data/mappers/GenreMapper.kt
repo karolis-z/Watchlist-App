@@ -1,9 +1,7 @@
 package com.myapplications.mywatchlist.data.mappers
 
-import com.myapplications.mywatchlist.data.entities.GenreEntity
-import com.myapplications.mywatchlist.data.entities.GenreForMovieEntity
-import com.myapplications.mywatchlist.data.entities.GenreForTitleEntity
-import com.myapplications.mywatchlist.data.entities.GenreForTvEntity
+import com.myapplications.mywatchlist.data.entities.*
+import com.myapplications.mywatchlist.data.entities.cached.*
 import com.myapplications.mywatchlist.domain.entities.Genre
 
 /**
@@ -90,4 +88,79 @@ fun List<Genre>.toListOfGenreForTvEntity(tvId: Long): List<GenreForTvEntity> {
     return this.map {
         it.toGenreForTvEntity(tvId)
     }
+}
+
+/**
+ * Generic method to convert a [Genre] to a [G] of type [GenreForCacheItem]
+ * @throws IllegalArgumentException if there is no mapping provided for subtype [G]
+ */
+inline fun <reified G: GenreForCacheItem> Genre.toGenreForCacheItem(titleId: Long): G {
+    return when (G::class) {
+        GenreForCacheItemDiscoverMovie::class -> GenreForCacheItemDiscoverMovie(
+            id = this.id,
+            name = this.name,
+            titleId = titleId
+        ) as G
+        GenreForCacheItemDiscoverTV::class -> GenreForCacheItemDiscoverTV(
+            id = this.id,
+            name = this.name,
+            titleId = titleId
+        ) as G
+        GenreForCacheItemPopularMovie::class -> GenreForCacheItemPopularMovie(
+            id = this.id,
+            name = this.name,
+            titleId = titleId
+        ) as G
+        GenreForCacheItemPopularTV::class -> GenreForCacheItemPopularTV(
+            id = this.id,
+            name = this.name,
+            titleId = titleId
+        ) as G
+        GenreForCacheItemSearchAll::class -> GenreForCacheItemSearchAll(
+            id = this.id,
+            name = this.name,
+            titleId = titleId
+        ) as G
+        GenreForCacheItemSearchMovie::class -> GenreForCacheItemSearchMovie(
+            id = this.id,
+            name = this.name,
+            titleId = titleId
+        ) as G
+        GenreForCacheItemSearchTV::class -> GenreForCacheItemSearchTV(
+            id = this.id,
+            name = this.name,
+            titleId = titleId
+        ) as G
+        GenreForCacheItemTopRatedMovie::class -> GenreForCacheItemTopRatedMovie(
+            id = this.id,
+            name = this.name,
+            titleId = titleId
+        ) as G
+        GenreForCacheItemTopRatedTV::class -> GenreForCacheItemTopRatedTV(
+            id = this.id,
+            name = this.name,
+            titleId = titleId
+        ) as G
+        GenreForCacheItemUpcomingMovie::class -> GenreForCacheItemUpcomingMovie(
+            id = this.id,
+            name = this.name,
+            titleId = titleId
+        ) as G
+        GenreForCacheItemTrending::class -> GenreForCacheItemTrending(
+            id = this.id,
+            name = this.name,
+            titleId = titleId
+        ) as G
+        else ->
+            throw IllegalArgumentException("Unsupported mapping of GenreForCacheItem implementation")
+
+    }
+}
+
+/**
+ * Generic method to convert a list of [Genre] to a list of [G]s of type [GenreForCacheItem]
+ * @throws IllegalArgumentException if there is no mapping provided for subtype [G]
+ */
+inline fun <reified G: GenreForCacheItem> List<Genre>.toGenreForCacheItemList(titleId: Long): List<G> {
+    return this.map { it.toGenreForCacheItem(titleId = titleId) }
 }

@@ -8,8 +8,8 @@ import java.time.LocalDate
 
 @Entity
 data class TitleItemEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    @PrimaryKey(autoGenerate = false)
+    val id: Long,
     val name: String,
     val type: TitleType,
     val mediaId: Long,

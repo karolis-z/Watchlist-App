@@ -235,7 +235,7 @@ class MainActivity : ComponentActivity() {
                             }
                         ) {
                             DiscoverScreen(
-                                placeholderImage = placeholderPoster,
+                                placeHolderPoster = placeholderPoster,
                                 onTitleClicked = { title ->
                                     navController.navigate(route = OtherScreens.Details.route +
                                             "/${title.mediaId}&${title.type.name}")

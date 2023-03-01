@@ -1,6 +1,7 @@
 package com.myapplications.mywatchlist.data.repositories
 
 import android.util.Log
+import androidx.paging.PagingData
 import com.myapplications.mywatchlist.core.di.IoDispatcher
 import com.myapplications.mywatchlist.data.mappers.toTitleItemFull
 import com.myapplications.mywatchlist.domain.entities.*
@@ -20,11 +21,6 @@ class TitlesManagerImpl @Inject constructor(
     private val titleItemsRepository: TitleItemsRepository,
     @IoDispatcher private val dispatcher: CoroutineDispatcher
 ) : TitlesManager {
-
-    override suspend fun searchTitles(query: String): ResultOf<List<TitleItemFull>> =
-        withContext(dispatcher) {
-            titleItemsRepository.searchTitles(query)
-        }
 
     override suspend fun bookmarkTitleItem(titleItemFull: TitleItemFull) = withContext(dispatcher) {
         val titleResult =
@@ -81,20 +77,85 @@ class TitlesManagerImpl @Inject constructor(
             titleItemsRepository.getTrendingTitles()
         }
 
-    override suspend fun getPopularTitles(): ResultOf<List<TitleItemFull>> =
+    override suspend fun getDiscoverMoviesPaginated(
+        filter: TitleListFilter
+    ): Flow<PagingData<TitleItemFull>> = withContext(dispatcher) {
+            titleItemsRepository.getDiscoverMoviesPaginated(filter = filter)
+    }
+
+    override suspend fun getDiscoverTVPaginated(
+        filter: TitleListFilter
+    ): Flow<PagingData<TitleItemFull>> = withContext(dispatcher) {
+        titleItemsRepository.getDiscoverTVPaginated(filter = filter)
+    }
+
+    override suspend fun searchAllPaginated(query: String): Flow<PagingData<TitleItemFull>> =
         withContext(dispatcher) {
-            titleItemsRepository.getPopularTitles()
+            titleItemsRepository.searchAllPaginated(query = query)
         }
 
-    override suspend fun getTopRatedTitles(): ResultOf<List<TitleItemFull>> =
+    override suspend fun searchMoviesPaginated(query: String): Flow<PagingData<TitleItemFull>> =
         withContext(dispatcher) {
-            titleItemsRepository.getTopRatedTitles()
+            titleItemsRepository.searchMoviesPaginated(query = query)
         }
+
+    override suspend fun searchTVPaginated(query: String): Flow<PagingData<TitleItemFull>> =
+        withContext(dispatcher) {
+            titleItemsRepository.searchTVPaginated(query = query)
+        }
+
+    override suspend fun getPopularMovies(): ResultOf<List<TitleItemFull>> =
+        withContext(dispatcher) {
+            titleItemsRepository.getPopularMovies()
+        }
+
+    override suspend fun getPopularMoviesPaginated(
+        filter: TitleListFilter
+    ): Flow<PagingData<TitleItemFull>> = withContext(dispatcher) {
+        titleItemsRepository.getPopularMoviesPaginated(filter = filter)
+    }
+
+    override suspend fun getPopularTV(): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        titleItemsRepository.getPopularTV()
+    }
+
+    override suspend fun getPopularTvPaginated(
+        filter: TitleListFilter
+    ): Flow<PagingData<TitleItemFull>> = withContext(dispatcher) {
+        titleItemsRepository.getPopularTvPaginated(filter = filter)
+    }
+
+    override suspend fun getTopRatedMovies(): ResultOf<List<TitleItemFull>> =
+        withContext(dispatcher) {
+            titleItemsRepository.getTopRatedMovies()
+        }
+
+    override suspend fun getTopRatedMoviesPaginated(
+        filter: TitleListFilter
+    ): Flow<PagingData<TitleItemFull>> = withContext(dispatcher) {
+        titleItemsRepository.getTopRatedMoviesPaginated(filter = filter)
+    }
+
+    override suspend fun getTopRatedTV(): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        titleItemsRepository.getTopRatedTV()
+    }
+
+    override suspend fun getTopRatedTVPaginated(
+        filter: TitleListFilter
+    ): Flow<PagingData<TitleItemFull>> = withContext(dispatcher) {
+        titleItemsRepository.getTopRatedTVPaginated(filter = filter)
+    }
 
     override suspend fun getUpcomingMovies(): ResultOf<List<TitleItemFull>> =
         withContext(dispatcher) {
             titleItemsRepository.getUpcomingMovies()
         }
+
+    override suspend fun getUpcomingMoviesPaginated(
+        filter: TitleListFilter
+    ): Flow<PagingData<TitleItemFull>> = withContext(dispatcher) {
+        titleItemsRepository.getUpcomingMoviesPaginated(filter = filter)
+    }
 
     override suspend fun getTitle(mediaId: Long, type: TitleType): ResultOf<Title> =
         withContext(dispatcher) {

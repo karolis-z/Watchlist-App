@@ -79,52 +79,66 @@ fun HomeScreen(
                             .fillMaxSize()
                             .verticalScroll(rememberScrollState())
                     ) {
-                        //#region TRENDING TITLES
-                        SectionHeadlineWithSeeAll(
-                            label = stringResource(id = R.string.home_trending_label),
-                            onSeeAllClicked = { onSeeAllClicked(TitleListType.Trending) }
-                        )
-                        TitleItemsLazyRow(
-                            titleItemsFull = uiState.trendingItems,
-                            placeholderPoster = placeholderPoster,
-                            onTitleClicked = onTitleClicked
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        //#endregion
-
-                        //#region POPULAR TITLES
-                        SectionHeadlineWithSeeAll(
-                            label = stringResource(id = R.string.home_popular_label),
-                            onSeeAllClicked = { onSeeAllClicked(TitleListType.Popular) }
-                        )
-                        TitleItemsLazyRow(
-                            titleItemsFull = uiState.popularItems,
-                            placeholderPoster = placeholderPoster,
-                            onTitleClicked = onTitleClicked
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        //#endregion
 
                         //#region UPCOMING MOVIES
                         SectionHeadlineWithSeeAll(
-                            label = stringResource(id = R.string.home_upcoming_label),
+                            label = stringResource(id = R.string.home_upcoming_movies_label),
                             onSeeAllClicked = { onSeeAllClicked(TitleListType.UpcomingMovies) }
                         )
                         TitleItemsLazyRow(
-                            titleItemsFull = uiState.upcomingItems,
+                            titleItemsFull = uiState.upcomingMovies,
                             placeholderPoster = placeholderPoster,
                             onTitleClicked = onTitleClicked
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         //#endregion
 
-                        //#region TOPRATED TITLES
+                        //#region POPULAR MOVIES
                         SectionHeadlineWithSeeAll(
-                            label = stringResource(id = R.string.home_top_rated_label),
-                            onSeeAllClicked = { onSeeAllClicked(TitleListType.TopRated) }
+                            label = stringResource(id = R.string.home_popular_movies_label),
+                            onSeeAllClicked = { onSeeAllClicked(TitleListType.PopularMovies) }
                         )
                         TitleItemsLazyRow(
-                            titleItemsFull = uiState.topRatedItems,
+                            titleItemsFull = uiState.popularMovies,
+                            placeholderPoster = placeholderPoster,
+                            onTitleClicked = onTitleClicked
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        //#endregion
+
+                        //#region POPULAR TV SHOWS
+                        SectionHeadlineWithSeeAll(
+                            label = stringResource(id = R.string.home_popular_tv_label),
+                            onSeeAllClicked = { onSeeAllClicked(TitleListType.PopularTV) }
+                        )
+                        TitleItemsLazyRow(
+                            titleItemsFull = uiState.popularTV,
+                            placeholderPoster = placeholderPoster,
+                            onTitleClicked = onTitleClicked
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        //#endregion
+
+                        //#region TOP RATED MOVIES
+                        SectionHeadlineWithSeeAll(
+                            label = stringResource(id = R.string.home_top_rated_movies_label),
+                            onSeeAllClicked = { onSeeAllClicked(TitleListType.TopRatedMovies) }
+                        )
+                        TitleItemsLazyRow(
+                            titleItemsFull = uiState.topRatedMovies,
+                            placeholderPoster = placeholderPoster,
+                            onTitleClicked = onTitleClicked
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        //#endregion
+
+                        //#region TOP RATED TV SHOWS
+                        SectionHeadlineWithSeeAll(
+                            label = stringResource(id = R.string.home_top_rated_tv_label),
+                            onSeeAllClicked = { onSeeAllClicked(TitleListType.TopRatedTV) }
+                        )
+                        TitleItemsLazyRow(
+                            titleItemsFull = uiState.topRatedTV,
                             placeholderPoster = placeholderPoster,
                             onTitleClicked = onTitleClicked
                         )

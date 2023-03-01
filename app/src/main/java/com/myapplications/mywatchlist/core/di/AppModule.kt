@@ -56,4 +56,48 @@ object AppModule {
     @Provides
     fun provideTvDao(db: WatchlistDatabase) = db.tvDao()
 
+    @Singleton
+    @Provides
+    fun provideDiscoverMoviesCacheDao(db: WatchlistDatabase) = db.discoverMoviesCacheDao()
+
+    @Singleton
+    @Provides
+    fun provideDiscoverTVCacheDao(db: WatchlistDatabase) = db.discoverTvCacheDao()
+
+    @Singleton
+    @Provides
+    fun providePopularMoviesCacheDao(db: WatchlistDatabase) = db.popularMoviesCacheDao()
+
+    @Singleton
+    @Provides
+    fun providePopularTVCacheDao(db: WatchlistDatabase) = db.popularTvCacheDao()
+
+    @Singleton
+    @Provides
+    fun provideSearchAllCacheDao(db: WatchlistDatabase) = db.searchAllCacheDao()
+
+    @Singleton
+    @Provides
+    fun provideSearchMoviesCacheDao(db: WatchlistDatabase) = db.searchMoviesCacheDao()
+
+    @Singleton
+    @Provides
+    fun provideSearchTVCacheDao(db: WatchlistDatabase) = db.searchTvCacheDao()
+
+    @Singleton
+    @Provides
+    fun provideTopRatedMoviesCacheDao(db: WatchlistDatabase) = db.topRatedMoviesCacheDao()
+
+    @Singleton
+    @Provides
+    fun provideTopRatedTVCacheDao(db: WatchlistDatabase) = db.topRatedTvCacheDao()
+
+    @Singleton
+    @Provides
+    fun provideUpcomingMoviesCacheDao(db: WatchlistDatabase) = db.upcomingMoviesDao()
+
+    @Singleton
+    @Provides
+    fun provideTrendingCacheDao(db: WatchlistDatabase) = db.trendingCacheDao()
+
 }

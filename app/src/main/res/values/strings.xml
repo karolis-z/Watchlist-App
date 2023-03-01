@@ -23,15 +23,20 @@
     <!-- HOME SCREEN -->
     <string name="home_no_data">No data available…</string>
     <string name="home_trending_label">Trending</string>
-    <string name="home_popular_label">Popular</string>
-    <string name="home_top_rated_label">Top Rated</string>
-    <string name="home_upcoming_label">Upcoming Movies</string>
+    <string name="home_popular_movies_label">Popular Movies</string>
+    <string name="home_popular_tv_label">Popular TV Shows</string>
+    <string name="home_top_rated_movies_label">Top Rated Movies</string>
+    <string name="home_top_rated_tv_label">Top Rated TV Shows</string>
+    <string name="home_upcoming_movies_label">Upcoming Movies</string>
 
     <!-- TITLE LIST SCREEN-->
     <string name="titlelist_screen_title_trending">Trending Movies &amp; TV</string>
-    <string name="titlelist_screen_title_popular">Popular Movies &amp; TV</string>
+    <string name="titlelist_screen_title_discover">Discover</string>
+    <string name="titlelist_screen_title_popular_movies">Popular Movies</string>
+    <string name="titlelist_screen_title_popular_tv">Popular TV Shows</string>
     <string name="titlelist_screen_title_upcoming_movies">Upcoming Movies</string>
-    <string name="titlelist_screen_title_toprated">Top Rated Movies &amp; TV</string>
+    <string name="titlelist_screen_title_toprated_movies">Top Rated Movies</string>
+    <string name="titlelist_screen_title_toprated_tv">Top Rated TV Shows</string>
     <string name="titlelist_no_data">No data available…</string>
     <string name="titlelist_filter_label_all_filters">All Filters</string>
     <string name="titlelist_filter_button_apply">Show Results</string>
@@ -102,6 +107,7 @@
     <!-- GENERAL BUTTON LABELS -->
     <string name="button_retry">Retry</string>
     <string name="button_see_all">See all</string>
+    <string name="button_back_to_top">Back to top</string>
 
     <!-- FILTER LABELS -->
     <string name="filter_all">All</string>
@@ -124,5 +130,6 @@
     <string name="cd_similar_help_text">This list shows similar titles for currently viewed title.</string>
     <string name="cd_see_all">See all</string>
     <string name="cd_close_filter">Close Filter</string>
+    <string name="cd_back_to_top">Back to top</string>
 
 </resources>

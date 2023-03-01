@@ -6,9 +6,12 @@ import com.myapplications.mywatchlist.data.ApiGetTitleItemsExceptions
 import com.myapplications.mywatchlist.data.datastore.UserPrefsRepository
 import com.myapplications.mywatchlist.data.mappers.toTitleItemsFull
 import com.myapplications.mywatchlist.data.remote.api.ApiResponse
+import com.myapplications.mywatchlist.data.remote.api.SortMoviesBy
+import com.myapplications.mywatchlist.data.remote.api.SortTvBy
 import com.myapplications.mywatchlist.data.remote.api.TmdbApi
 import com.myapplications.mywatchlist.domain.entities.Genre
 import com.myapplications.mywatchlist.domain.entities.TitleItemFull
+import com.myapplications.mywatchlist.domain.entities.TitleListFilter
 import com.myapplications.mywatchlist.domain.result.ResultOf
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
@@ -22,8 +25,41 @@ interface TitlesRemoteDataSource {
      * if not.
      * @param allGenres required to map genre ids received from API to to a list of [Genre] used in
      * [TitleItemFull]
+     * @param page page number of the Api's results
      */
-    suspend fun searchTitles(query: String, allGenres: List<Genre>): ResultOf<List<TitleItemFull>>
+    suspend fun searchAllTitles(
+        query: String,
+        allGenres: List<Genre>,
+        page: Int
+    ): ResultOf<List<TitleItemFull>>
+
+    /**
+     * Searches for the given query among Movies in The Movie Database.
+     * @return [ResultOf.Success] containing List of [TitleItemFull] if successful and [ResultOf.Failure]
+     * if not.
+     * @param allGenres required to map genre ids received from API to to a list of [Genre] used in
+     * [TitleItemFull]
+     * @param page page number of the Api's results
+     */
+    suspend fun searchMovies(
+        query: String,
+        allGenres: List<Genre>,
+        page: Int
+    ): ResultOf<List<TitleItemFull>>
+
+    /**
+     * Searches for the given query among TV Shows in The Movie Database.
+     * @return [ResultOf.Success] containing List of [TitleItemFull] if successful and [ResultOf.Failure]
+     * if not.
+     * @param allGenres required to map genre ids received from API to to a list of [Genre] used in
+     * [TitleItemFull]
+     * @param page page number of the Api's results
+     */
+    suspend fun searchTV(
+        query: String,
+        allGenres: List<Genre>,
+        page: Int
+    ): ResultOf<List<TitleItemFull>>
 
     /**
      * Retrieves the titles that are trending this week from TMDB.
@@ -35,28 +71,95 @@ interface TitlesRemoteDataSource {
     suspend fun getTrendingTitles(allGenres: List<Genre>): ResultOf<List<TitleItemFull>>
 
     /**
-     * Retrieves titles that are popular today from TMDB
+     * Retrieves Movies that are popular today from TMDB
      * @return [ResultOf.Success] containing List of [TitleItemFull] if successful and [ResultOf.Failure]
      * @param allGenres required to map genre ids received from API to to a list of [Genre] used in
      * [TitleItemFull]
+     * @param page page number of the Api's results
      */
-    suspend fun getPopularTitles(allGenres: List<Genre>): ResultOf<List<TitleItemFull>>
+    suspend fun getPopularMovies(
+        allGenres: List<Genre>,
+        page: Int = 1,
+        filter: TitleListFilter? = null
+    ): ResultOf<List<TitleItemFull>>
 
     /**
-     * Retrieves titles that are top rated from TMDB
+     * Retrieves TV Shows that are popular today from TMDB
      * @return [ResultOf.Success] containing List of [TitleItemFull] if successful and [ResultOf.Failure]
      * @param allGenres required to map genre ids received from API to to a list of [Genre] used in
      * [TitleItemFull]
+     * @param page page number of the Api's results
      */
-    suspend fun getTopRatedTitles(allGenres: List<Genre>): ResultOf<List<TitleItemFull>>
+    suspend fun getPopularTV(
+        allGenres: List<Genre>,
+        page: Int = 1,
+        filter: TitleListFilter? = null
+    ): ResultOf<List<TitleItemFull>>
 
     /**
-     * Retrieves titles that are upcoming movies from TMDB
+     * Retrieves Movies that are top rated from TMDB
      * @return [ResultOf.Success] containing List of [TitleItemFull] if successful and [ResultOf.Failure]
      * @param allGenres required to map genre ids received from API to to a list of [Genre] used in
      * [TitleItemFull]
+     * @param page page number of the Api's results
      */
-    suspend fun getUpcomingMovies(allGenres: List<Genre>): ResultOf<List<TitleItemFull>>
+    suspend fun getTopRatedMovies(
+        allGenres: List<Genre>,
+        page: Int = 1,
+        filter: TitleListFilter? = null
+    ): ResultOf<List<TitleItemFull>>
+
+    /**
+     * Retrieves TV Shows that are top rated from TMDB
+     * @return [ResultOf.Success] containing List of [TitleItemFull] if successful and [ResultOf.Failure]
+     * @param allGenres required to map genre ids received from API to to a list of [Genre] used in
+     * [TitleItemFull]
+     * @param page page number of the Api's results
+     */
+    suspend fun getTopRatedTV(
+        allGenres: List<Genre>,
+        page: Int = 1,
+        filter: TitleListFilter? = null
+    ): ResultOf<List<TitleItemFull>>
+
+    /**
+     * Retrieves upcoming movies from TMDB sorted by popularity
+     * @return [ResultOf.Success] containing List of [TitleItemFull] if successful and [ResultOf.Failure]
+     * @param allGenres required to map genre ids received from API to to a list of [Genre] used in
+     * [TitleItemFull]
+     * @param page page number of the Api's results
+     */
+    suspend fun getUpcomingMovies(
+        allGenres: List<Genre>,
+        page: Int = 1,
+        filter: TitleListFilter? = null
+    ): ResultOf<List<TitleItemFull>>
+
+    /**
+     * Retrieves custom filtered Movies sorted by popularity from TMDB
+     * @return [ResultOf.Success] containing List of [TitleItemFull] if successful and [ResultOf.Failure]
+     * @param allGenres required to map genre ids received from API to to a list of [Genre] used in
+     * [TitleItemFull]
+     * @param page page number of the Api's results
+     */
+    suspend fun getDiscoverMovies(
+        allGenres: List<Genre>,
+        page: Int,
+        filter: TitleListFilter
+    ): ResultOf<List<TitleItemFull>>
+
+    /**
+     * Retrieves custom filtered TV Shows sorted by popularity from TMDB
+     * @return [ResultOf.Success] containing List of [TitleItemFull] if successful and [ResultOf.Failure]
+     * @param allGenres required to map genre ids received from API to to a list of [Genre] used in
+     * [TitleItemFull]
+     * @param page page number of the Api's results
+     */
+    suspend fun getDiscoverTV(
+        allGenres: List<Genre>,
+        page: Int,
+        filter: TitleListFilter
+    ): ResultOf<List<TitleItemFull>>
 }
 
 private const val TAG = "TITLES_REMOTE_DATASRC"
@@ -67,16 +170,38 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
     @IoDispatcher private val dispatcher: CoroutineDispatcher
 ) : TitlesRemoteDataSource {
 
-    override suspend fun searchTitles(
+    override suspend fun searchAllTitles(
         query: String,
-        allGenres: List<Genre>
-    ): ResultOf<List<TitleItemFull>> =
-        withContext(dispatcher) {
-            return@withContext getTitleItemsFullResult(
-                requestType = TitleItemsRequestType.SearchQuery(query),
-                allGenres = allGenres
-            )
-        }
+        allGenres: List<Genre>,
+        page: Int
+    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        return@withContext getTitleItemsFullResult(
+            requestType = TitleItemsRequestType.SearchAllPaginated(query = query, page = page),
+            allGenres = allGenres
+        )
+    }
+
+    override suspend fun searchMovies(
+        query: String,
+        allGenres: List<Genre>,
+        page: Int
+    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        return@withContext getTitleItemsFullResult(
+            requestType = TitleItemsRequestType.SearchMoviesPaginated(query = query, page = page),
+            allGenres = allGenres
+        )
+    }
+
+    override suspend fun searchTV(
+        query: String,
+        allGenres: List<Genre>,
+        page: Int
+    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        return@withContext getTitleItemsFullResult(
+            requestType = TitleItemsRequestType.SearchTVPaginated(query = query, page = page),
+            allGenres = allGenres
+        )
+    }
 
     override suspend fun getTrendingTitles(allGenres: List<Genre>): ResultOf<List<TitleItemFull>> =
         withContext(dispatcher) {
@@ -86,29 +211,95 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
             )
         }
 
-    override suspend fun getPopularTitles(allGenres: List<Genre>): ResultOf<List<TitleItemFull>> =
-        withContext(dispatcher) {
-            return@withContext getTitleItemsFullResult(
-                requestType = TitleItemsRequestType.PopularMoviesAndTV,
-                allGenres = allGenres
-            )
+    override suspend fun getPopularMovies(
+        allGenres: List<Genre>,
+        page: Int,
+        filter: TitleListFilter?
+    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        val requestType = if (filter == null) {
+            TitleItemsRequestType.PopularMovies
+        } else {
+            TitleItemsRequestType.PopularMoviesPaginated(page = page, filter = filter)
         }
+        return@withContext getTitleItemsFullResult(requestType = requestType, allGenres = allGenres)
+    }
 
-    override suspend fun getTopRatedTitles(allGenres: List<Genre>): ResultOf<List<TitleItemFull>> =
-        withContext(dispatcher) {
-            return@withContext getTitleItemsFullResult(
-                requestType = TitleItemsRequestType.TopRatedMoviesAndTV,
-                allGenres = allGenres
-            )
+    override suspend fun getPopularTV(
+        allGenres: List<Genre>,
+        page: Int,
+        filter: TitleListFilter?
+    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        val requestType = if (filter == null) {
+            TitleItemsRequestType.PopularTV
+        } else {
+            TitleItemsRequestType.PopularTVPaginated(page = page, filter = filter)
         }
+        return@withContext getTitleItemsFullResult(requestType = requestType, allGenres = allGenres)
+    }
 
-    override suspend fun getUpcomingMovies(allGenres: List<Genre>): ResultOf<List<TitleItemFull>> =
-        withContext(dispatcher) {
-            return@withContext getTitleItemsFullResult(
-                requestType = TitleItemsRequestType.UpcomingMovies,
-                allGenres = allGenres
-            )
+    override suspend fun getTopRatedMovies(
+        allGenres: List<Genre>,
+        page: Int,
+        filter: TitleListFilter?
+    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        val requestType = if (filter == null) {
+            TitleItemsRequestType.TopRatedMovies
+        } else {
+            TitleItemsRequestType.TopRatedMoviesPaginated(page = page, filter = filter)
         }
+        return@withContext getTitleItemsFullResult(requestType = requestType, allGenres = allGenres)
+    }
+
+    override suspend fun getTopRatedTV(
+        allGenres: List<Genre>,
+        page: Int,
+        filter: TitleListFilter?
+    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        val requestType = if (filter == null) {
+            TitleItemsRequestType.TopRatedTV
+        } else {
+            TitleItemsRequestType.TopRatedTVPaginated(page = page, filter = filter)
+        }
+        return@withContext getTitleItemsFullResult(requestType = requestType, allGenres = allGenres)
+    }
+
+    override suspend fun getUpcomingMovies(
+        allGenres: List<Genre>,
+        page: Int,
+        filter: TitleListFilter?
+    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        val requestType = if (filter == null) {
+            TitleItemsRequestType.UpcomingMovies
+        } else {
+            TitleItemsRequestType.UpcomingMoviesPaginated(page = page, filter = filter)
+        }
+        return@withContext getTitleItemsFullResult(requestType = requestType, allGenres = allGenres)
+    }
+
+    override suspend fun getDiscoverMovies(
+        allGenres: List<Genre>,
+        page: Int,
+        filter: TitleListFilter
+    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        return@withContext getTitleItemsFullResult(
+            requestType = TitleItemsRequestType.DiscoverMoviesPaginated(
+                page = page,
+                filter = filter
+            ),
+            allGenres = allGenres
+        )
+    }
+
+    override suspend fun getDiscoverTV(
+        allGenres: List<Genre>,
+        page: Int,
+        filter: TitleListFilter
+    ): ResultOf<List<TitleItemFull>> = withContext(dispatcher) {
+        return@withContext getTitleItemsFullResult(
+            requestType = TitleItemsRequestType.DiscoverTVPaginated(page = page, filter = filter),
+            allGenres = allGenres
+        )
+    }
 
     private suspend fun getTitleItemsFullResult(
         requestType: TitleItemsRequestType,
@@ -119,20 +310,109 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
             when (requestType) {
                 TitleItemsRequestType.TrendingMoviesAndTV ->
                     apiResponses.add(api.getTrendingTitles())
-                TitleItemsRequestType.PopularMoviesAndTV -> {
+                is TitleItemsRequestType.DiscoverMoviesPaginated ->
+                    apiResponses.add(
+                        api.getDiscoverMoviesFiltered(
+                            page = requestType.page,
+                            releaseDateFrom = requestType.filter.releaseDateFrom?.toString() ?: "",
+                            releaseDateTo = requestType.filter.releaseDateTo?.toString() ?: "",
+                            scoreFrom = requestType.filter.scoreFrom,
+                            scoreTo = requestType.filter.scoreTo,
+                            genresListString = getGenresListString(requestType.filter.withGenres),
+                            sortBy = requestType.filter.sortBy?.propertyName
+                                ?: SortMoviesBy.Popularity_Descending.propertyName
+                        )
+                    )
+                is TitleItemsRequestType.DiscoverTVPaginated ->
+                    apiResponses.add(
+                        api.getDiscoverTvFiltered(
+                            page = requestType.page,
+                            releaseDateFrom = requestType.filter.releaseDateFrom?.toString() ?: "",
+                            releaseDateTo = requestType.filter.releaseDateTo?.toString() ?: "",
+                            scoreFrom = requestType.filter.scoreFrom,
+                            scoreTo = requestType.filter.scoreTo,
+                            genresListString = getGenresListString(requestType.filter.withGenres),
+                            sortBy = requestType.filter.sortBy?.propertyName
+                                ?: SortTvBy.Popularity_Descending.propertyName
+                        )
+                    )
+                is TitleItemsRequestType.PopularMoviesPaginated ->
+                    apiResponses.add(
+                        api.getPopularMoviesFiltered(
+                            page = requestType.page,
+                            releaseDateFrom = requestType.filter.releaseDateFrom?.toString() ?: "",
+                            releaseDateTo = requestType.filter.releaseDateTo?.toString() ?: "",
+                            scoreFrom = requestType.filter.scoreFrom,
+                            scoreTo = requestType.filter.scoreTo,
+                            genresListString = getGenresListString(requestType.filter.withGenres)
+                        )
+                    )
+                TitleItemsRequestType.PopularMovies ->
                     apiResponses.add(api.getPopularMovies())
+                is TitleItemsRequestType.PopularTVPaginated ->
+                    apiResponses.add(
+                        api.getPopularTvFiltered(
+                            page = requestType.page,
+                            releaseDateFrom = requestType.filter.releaseDateFrom?.toString() ?: "",
+                            releaseDateTo = requestType.filter.releaseDateTo?.toString() ?: "",
+                            scoreFrom = requestType.filter.scoreFrom,
+                            scoreTo = requestType.filter.scoreTo,
+                            genresListString = getGenresListString(requestType.filter.withGenres)
+                        )
+                    )
+                TitleItemsRequestType.PopularTV ->
                     apiResponses.add(api.getPopularTV())
-                }
-                is TitleItemsRequestType.SearchQuery -> {
-                    apiResponses.add(api.search(requestType.query))
-                }
-                TitleItemsRequestType.TopRatedMoviesAndTV -> {
-                    apiResponses.add(api.getTopRatedTV())
+                is TitleItemsRequestType.TopRatedMoviesPaginated ->
+                    apiResponses.add(
+                        api.getTopRatedMoviesFiltered(
+                            page = requestType.page,
+                            releaseDateFrom = requestType.filter.releaseDateFrom?.toString() ?: "",
+                            releaseDateTo = requestType.filter.releaseDateTo?.toString() ?: "",
+                            scoreFrom = requestType.filter.scoreFrom,
+                            scoreTo = requestType.filter.scoreTo,
+                            genresListString = getGenresListString(requestType.filter.withGenres)
+                        )
+                    )
+                TitleItemsRequestType.TopRatedMovies ->
                     apiResponses.add(api.getTopRatedMovies())
-                }
-                TitleItemsRequestType.UpcomingMovies -> {
+                is TitleItemsRequestType.TopRatedTVPaginated ->
+                    apiResponses.add(
+                        api.getTopRatedTvFiltered(
+                            page = requestType.page,
+                            releaseDateFrom = requestType.filter.releaseDateFrom?.toString() ?: "",
+                            releaseDateTo = requestType.filter.releaseDateTo?.toString() ?: "",
+                            scoreFrom = requestType.filter.scoreFrom,
+                            scoreTo = requestType.filter.scoreTo,
+                            genresListString = getGenresListString(requestType.filter.withGenres)
+                        )
+                    )
+                TitleItemsRequestType.TopRatedTV ->
+                    apiResponses.add(api.getTopRatedTV())
+                is TitleItemsRequestType.UpcomingMoviesPaginated ->
+                    apiResponses.add(
+                        api.getUpcomingMoviesFiltered(
+                            page = requestType.page,
+                            releaseDateFrom = requestType.filter.releaseDateFrom?.toString() ?: "",
+                            releaseDateTo = requestType.filter.releaseDateTo?.toString() ?: "",
+                            scoreFrom = requestType.filter.scoreFrom,
+                            scoreTo = requestType.filter.scoreTo,
+                            genresListString = getGenresListString(requestType.filter.withGenres)
+                        )
+                    )
+                TitleItemsRequestType.UpcomingMovies ->
                     apiResponses.add(api.getUpcomingMovies())
-                }
+                is TitleItemsRequestType.SearchAllPaginated ->
+                    apiResponses.add(
+                        api.searchAll(query = requestType.query, page = requestType.page)
+                    )
+                is TitleItemsRequestType.SearchMoviesPaginated ->
+                    apiResponses.add(
+                        api.searchMovies(query = requestType.query, page = requestType.page)
+                    )
+                is TitleItemsRequestType.SearchTVPaginated ->
+                    apiResponses.add(
+                        api.searchTV(query = requestType.query, page = requestType.page)
+                    )
             }
         } catch (e: Exception) {
             return@withContext getFailedApiResponseResult(exception = e)
@@ -152,36 +432,12 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
         }
 
         // Returning the parsed result
-        val parsedResult = parseTitleItemsFullApiResponse(
+        return@withContext parseTitleItemsFullApiResponse(
             /* Filtering not null to not have an error, but we already checked for null in the
             loop above and if the method reached this point, all responseBodies will be non-null */
-            responseBodies = responseBodies.filterNotNull(),
+            responseBodies = responseBodies.filterNotNull<ApiResponse.TitlesListResponse>(),
             allGenres = allGenres
         )
-        return@withContext when (parsedResult) {
-            is ResultOf.Failure -> parsedResult
-            is ResultOf.Success -> {
-                when (requestType) {
-                    TitleItemsRequestType.PopularMoviesAndTV -> parsedResult.copy(
-                        data = parsedResult.data.sortedByDescending { it.popularity }
-                    )
-                    /* Sorting top rated by voteAverage but also by vote count to list titles higher
-                    with same vote average but higher vote count */
-                    TitleItemsRequestType.TopRatedMoviesAndTV -> parsedResult.copy(
-                        data = parsedResult.data.sortedWith(
-                            compareBy(
-                                { -it.voteAverage },
-                                { -it.voteCount })
-                        )
-                    )
-                    is TitleItemsRequestType.SearchQuery,
-                    TitleItemsRequestType.TrendingMoviesAndTV,
-                    TitleItemsRequestType.UpcomingMovies -> parsedResult.copy(
-                        data = parsedResult.data.sortedBy { it.releaseDate }
-                    )
-                }
-            }
-        }
     }
 
     /**
@@ -233,11 +489,40 @@ class TitlesRemoteDataSourceImpl @Inject constructor(
         )
     }
 
+    /**
+     * @return a [String] of [Genre] ids separated by a vertical dash "|". E.g. "1|35|18".
+     */
+    private fun getGenresListString(genres: List<Genre>): String {
+        return if (genres.isEmpty()) {
+            ""
+        } else {
+            genres.map { it.id }.joinToString(separator = "|")
+        }
+    }
+
     private sealed class TitleItemsRequestType {
         object TrendingMoviesAndTV : TitleItemsRequestType()
-        object PopularMoviesAndTV : TitleItemsRequestType()
+        data class PopularMoviesPaginated(val page: Int, val filter: TitleListFilter) :
+            TitleItemsRequestType()
+        object PopularMovies : TitleItemsRequestType()
+        data class PopularTVPaginated(val page: Int, val filter: TitleListFilter) :
+            TitleItemsRequestType()
+        object PopularTV : TitleItemsRequestType()
+        data class UpcomingMoviesPaginated(val page: Int, val filter: TitleListFilter) :
+            TitleItemsRequestType()
         object UpcomingMovies : TitleItemsRequestType()
-        object TopRatedMoviesAndTV : TitleItemsRequestType()
-        data class SearchQuery(val query: String): TitleItemsRequestType()
+        data class TopRatedMoviesPaginated(val page: Int, val filter: TitleListFilter) :
+            TitleItemsRequestType()
+        object TopRatedMovies : TitleItemsRequestType()
+        data class TopRatedTVPaginated(val page: Int, val filter: TitleListFilter) :
+            TitleItemsRequestType()
+        object TopRatedTV : TitleItemsRequestType()
+        data class SearchAllPaginated(val query: String, val page: Int) : TitleItemsRequestType()
+        data class SearchMoviesPaginated(val query: String, val page: Int) : TitleItemsRequestType()
+        data class SearchTVPaginated(val query: String, val page: Int) : TitleItemsRequestType()
+        data class DiscoverMoviesPaginated(val page: Int, val filter: TitleListFilter) :
+            TitleItemsRequestType()
+        data class DiscoverTVPaginated(val page: Int, val filter: TitleListFilter) :
+            TitleItemsRequestType()
     }
 }

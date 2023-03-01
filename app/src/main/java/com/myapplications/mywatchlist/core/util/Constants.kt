@@ -1,5 +1,7 @@
 package com.myapplications.mywatchlist.core.util
 
+import java.util.concurrent.TimeUnit
+
 object Constants {
 
     // API CONSTANTS
@@ -29,4 +31,8 @@ object Constants {
     
     // WORK REQUEST NAMES
     const val PERIODIC_WORK_REQUEST_UPDATE_CONFIGURATION = "update_configuration_periodically"
+
+    // PAGINATION VALUES
+    const val PAGE_SIZE = 20
+    val CACHING_TIMEOUT = TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS)
 }

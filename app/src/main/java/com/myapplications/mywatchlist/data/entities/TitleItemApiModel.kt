@@ -1,5 +1,7 @@
 package com.myapplications.mywatchlist.data.entities
 
+import com.myapplications.mywatchlist.domain.entities.MOVIE_CODE
+import com.myapplications.mywatchlist.domain.entities.TV_CODE
 import java.time.LocalDate
 
 interface ITitleItemApiModel {
@@ -28,9 +30,9 @@ data class TitleItemApiModel(
     override val voteAverage: Double,
 ) : ITitleItemApiModel
 
-enum class TitleTypeApiModel(val propertyName: String) {
-    MOVIE(propertyName = "movie"),
-    TV(propertyName = "tv"),
+enum class TitleTypeApiModel(val propertyName: String, val typeCode: Long) {
+    MOVIE(propertyName = "movie", typeCode = MOVIE_CODE),
+    TV(propertyName = "tv", typeCode = TV_CODE),
 }
 
 /**

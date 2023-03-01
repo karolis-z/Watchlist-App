@@ -62,7 +62,7 @@ fun List<MovieApiModel>.toMovies(
  */
 fun Movie.toTitleItemFull(): TitleItemFull {
     return TitleItemFull(
-        id = 0,
+        id = ("${TitleType.MOVIE.typeCode}${this.id}").toLong(),
         name = this.name,
         type = TitleType.MOVIE,
         mediaId = this.id,

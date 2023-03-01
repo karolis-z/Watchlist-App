@@ -4,19 +4,24 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.myapplications.mywatchlist.data.ApiGetDetailsException
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import androidx.paging.map
+import com.myapplications.mywatchlist.data.ApiGetTitleItemsExceptions
 import com.myapplications.mywatchlist.domain.entities.Genre
 import com.myapplications.mywatchlist.domain.entities.TitleItemFull
+import com.myapplications.mywatchlist.domain.entities.TitleType
 import com.myapplications.mywatchlist.domain.repositories.GenresRepository
 import com.myapplications.mywatchlist.domain.repositories.TitlesManager
-import com.myapplications.mywatchlist.domain.result.ResultOf
 import com.myapplications.mywatchlist.ui.NavigationArgument
-import com.myapplications.mywatchlist.ui.entities.TitleListFilter
 import com.myapplications.mywatchlist.ui.entities.TitleListType
+import com.myapplications.mywatchlist.ui.entities.TitleListUiFilter
+import com.myapplications.mywatchlist.ui.mappers.toSortByParameter
+import com.myapplications.mywatchlist.ui.mappers.toTitleListFilter
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 import javax.inject.Inject
 
 private const val TAG = "TITLE_LIST_VIEWMODEL"
@@ -31,30 +36,15 @@ class TitleListViewModel @Inject constructor(
     private val _screenTitle: MutableStateFlow<TitleListType?> = MutableStateFlow(null)
     val screenTitle: StateFlow<TitleListType?> = _screenTitle.asStateFlow()
 
-    private val titleListState: MutableStateFlow<TitleListUiState> =
+    private val _titleListState: MutableStateFlow<TitleListUiState> =
         MutableStateFlow(TitleListUiState.Loading)
-    private val _filterState: MutableStateFlow<TitleListFilter> = MutableStateFlow(TitleListFilter())
+    val titleListState: StateFlow<TitleListUiState> = _titleListState.asStateFlow()
+
+    private val _filterState: MutableStateFlow<TitleListUiFilter> = MutableStateFlow(TitleListUiFilter())
     val filterState = _filterState.asStateFlow()
 
-    val uiState: StateFlow<TitleListUiState> =
-        combine(titleListState, filterState) { titleListState, filter ->
-            when (titleListState) {
-                is TitleListUiState.Error -> titleListState
-                TitleListUiState.Loading -> titleListState
-                is TitleListUiState.Ready -> {
-                    TitleListUiState.Ready(
-                        titleItems = filterTitles(
-                            titles = titleListState.titleItems,
-                            filter = filter
-                        )
-                    )
-                }
-            }
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = TitleListUiState.Loading
-        )
+    private val watchlistedTitles = titlesManager.allWatchlistedTitleItems()
+    lateinit var titlesFlow: Flow<PagingData<TitleItemFull>>
 
     private var titleListType: TitleListType? = null
     private var allGenres: List<Genre>? = null
@@ -68,12 +58,12 @@ class TitleListViewModel @Inject constructor(
     }
 
     private fun getTitleListType(){
-        titleListState.update { TitleListUiState.Loading }
+        _titleListState.update { TitleListUiState.Loading }
         try {
             val titleListTypeString = savedStateHandle.get<String>(NavigationArgument.TITLE_LIST_TYPE.value)
             if (titleListTypeString == null) {
                 // Unknown why it failed to parse the provided title, so should show general error
-                titleListState.update { TitleListUiState.Error(TitleListError.UNKNOWN) }
+                _titleListState.update { TitleListUiState.Error(TitleListError.UNKNOWN) }
                 return
             } else {
                 titleListType = TitleListType.valueOf(titleListTypeString)
@@ -82,107 +72,81 @@ class TitleListViewModel @Inject constructor(
         } catch (e: Exception) {
             Log.e(TAG, "Failed to get TitleListType from savedStateHandle. Reason: $e", e)
             // Unknown why it failed to parse the provided title, so should show general error
-            titleListState.update { TitleListUiState.Error(TitleListError.UNKNOWN) }
+            _titleListState.update { TitleListUiState.Error(TitleListError.UNKNOWN) }
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun getTitleList() {
-        titleListState.update { TitleListUiState.Loading }
+        _titleListState.update { TitleListUiState.Loading }
         viewModelScope.launch {
-            val result = when (titleListType) {
-                null -> {
-                    Log.e(TAG, "getTitleList: titleListType is null. Unable to infer which list to get")
-                    titleListState.update { TitleListUiState.Error(TitleListError.UNKNOWN) }
-                    return@launch
-                }
-                TitleListType.Trending -> titlesManager.getTrendingTitles()
-                TitleListType.Popular -> titlesManager.getPopularTitles()
-                TitleListType.TopRated -> titlesManager.getTopRatedTitles()
-                TitleListType.UpcomingMovies -> titlesManager.getUpcomingMovies()
-            }
-            when (result) {
-                is ResultOf.Failure -> titleListState.update {
-                    TitleListUiState.Error(
-                        error = getErrorFromResultThrowable(
-                            result.throwable
+            val listType = screenTitle.value
+            if (listType != null) {
+                titlesFlow = filterState.flatMapLatest { filter ->
+                    when (listType) {
+                        TitleListType.PopularMovies -> titlesManager.getPopularMoviesPaginated(
+                            filter = filter.toTitleListFilter()
                         )
-                    )
-                }
-                is ResultOf.Success -> titleListState.update {
-                    TitleListUiState.Ready(titleItems = result.data)
-                }
+                        TitleListType.PopularTV -> titlesManager.getPopularTvPaginated(
+                            filter = filter.toTitleListFilter()
+                        )
+                        TitleListType.TopRatedMovies -> titlesManager.getTopRatedMoviesPaginated(
+                            filter = filter.toTitleListFilter()
+                        )
+                        TitleListType.TopRatedTV -> titlesManager.getTopRatedTVPaginated(
+                            filter = filter.toTitleListFilter()
+                        )
+                        TitleListType.UpcomingMovies -> titlesManager.getUpcomingMoviesPaginated(
+                            filter = filter.toTitleListFilter()
+                        )
+                        TitleListType.DiscoverMovies -> titlesManager.getDiscoverMoviesPaginated(
+                            filter = filter.toTitleListFilter(
+                                sortByParameter = filter.sortByApiParam?.toSortByParameter(
+                                    titleType = TitleType.MOVIE
+                                )
+                            )
+                        )
+                        TitleListType.DiscoverTV -> titlesManager.getDiscoverTVPaginated(
+                            filter = filter.toTitleListFilter(
+                                sortByParameter = filter.sortByApiParam?.toSortByParameter(
+                                    titleType = TitleType.TV
+                                )
+                            )
+                        )
+                    }
+                }.cachedIn(viewModelScope)
+                    .combine(watchlistedTitles) { pagingData, watchlistedTitles ->
+                        pagingData.map { pagedTitle ->
+                            pagedTitle.copy(
+                                isWatchlisted = watchlistedTitles.any { title ->
+                                    title.mediaId == pagedTitle.mediaId &&
+                                            title.type == pagedTitle.type
+                                }
+                            )
+                        }
+                    }
+                    .cachedIn(viewModelScope)
             }
+            _titleListState.update { TitleListUiState.Ready(titles = titlesFlow) }
         }
     }
 
-    private fun getErrorFromResultThrowable(throwable: Throwable?): TitleListError {
-        return if (throwable is ApiGetDetailsException) {
+    /**
+     * @return [TitleListError] based on provided [throwable]
+     */
+    fun getErrorFromResultThrowable(throwable: Throwable?): TitleListError {
+        return if (throwable is ApiGetTitleItemsExceptions) {
             when (throwable) {
-                is ApiGetDetailsException.FailedApiRequestException ->
+                is ApiGetTitleItemsExceptions.FailedApiRequestException ->
                     TitleListError.FAILED_API_REQUEST
-                is ApiGetDetailsException.NoConnectionException ->
+                is ApiGetTitleItemsExceptions.NoConnectionException ->
                     TitleListError.NO_INTERNET
-                is ApiGetDetailsException.NothingFoundException ->
+                is ApiGetTitleItemsExceptions.NothingFoundException ->
                     TitleListError.NO_TITLES
             }
         } else {
             TitleListError.UNKNOWN
         }
-    }
-
-    /**
-     * Filters the given list of [TitleItemFull] by given [TitleListFilter]
-     */
-    private fun filterTitles(
-        titles: List<TitleItemFull>,
-        filter: TitleListFilter
-    ): List<TitleItemFull> {
-
-        var titlesList = titles
-
-        // Apply TitleType filer
-        if (filter.titleType != null) {
-            titlesList = titlesList.filter { it.type == filter.titleType }
-        }
-
-        // Apply score range filter
-        if (filter.scoreRange != Pair(0, 10)) {
-            titlesList = titlesList.filter {
-                (it.voteAverage >= filter.scoreRange.first) &&
-                        (it.voteAverage <= filter.scoreRange.second)
-            }
-        }
-
-        // Apply years range filter
-        if (filter.yearsRange != Pair(1900, LocalDate.now().year)) {
-            val showFutureTitles = filter.yearsRange.second == LocalDate.now().year
-            val titlesWithNoReleaseDate = titlesList.filter { it.releaseDate == null }
-            var titlesWithReleaseDate = if (titlesWithNoReleaseDate.isNotEmpty()) {
-                titlesList.minus(titlesWithNoReleaseDate.toSet())
-            } else {
-                titlesList
-            }
-            titlesWithReleaseDate = titlesWithReleaseDate.filter {
-                /* Non-null assertion here because we already filtered out items with
-                null release date */
-                if (showFutureTitles) {
-                    it.releaseDate!!.year >= filter.yearsRange.first
-                } else {
-                    (it.releaseDate!!.year >= filter.yearsRange.first) &&
-                            (it.releaseDate.year <= filter.yearsRange.second)
-                }
-            }
-            titlesList = titlesWithReleaseDate + titlesWithNoReleaseDate
-        }
-
-        // Apply genres filter
-        if (filter.genres.isNotEmpty()) {
-            titlesList = titlesList.filter { title ->
-                title.genres.any { filter.genres.contains(it) }
-            }
-        }
-
-        return titlesList
     }
 
     fun onWatchlistClicked(title: TitleItemFull) {
@@ -205,17 +169,21 @@ class TitleListViewModel @Inject constructor(
     /**
      * Updates the [_filterState] with newly selected filter.
      */
-    fun setFilter(filter: TitleListFilter) {
+    fun setFilter(filter: TitleListUiFilter) {
         _filterState.update {
             it.copy(
                 genres = filter.genres.toList(),
                 scoreRange = filter.scoreRange,
                 titleType = filter.titleType,
-                yearsRange = filter.yearsRange
+                yearsRange = filter.yearsRange,
+                sortByApiParam = filter.sortByApiParam
             )
         }
     }
 
+    /**
+     * Re-initiates getting the data
+     */
     fun retryGetData(){
         getTitleList()
     }

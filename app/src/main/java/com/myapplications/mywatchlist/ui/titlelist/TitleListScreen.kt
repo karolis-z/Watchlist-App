@@ -3,7 +3,7 @@ package com.myapplications.mywatchlist.ui.titlelist
 import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
@@ -19,14 +19,16 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.myapplications.mywatchlist.R
 import com.myapplications.mywatchlist.domain.entities.Genre
 import com.myapplications.mywatchlist.domain.entities.TitleItemFull
-import com.myapplications.mywatchlist.domain.entities.TitleType
 import com.myapplications.mywatchlist.ui.MyTopAppBar
 import com.myapplications.mywatchlist.ui.components.*
-import com.myapplications.mywatchlist.ui.entities.TitleListFilter
 import com.myapplications.mywatchlist.ui.entities.TitleListType
+import com.myapplications.mywatchlist.ui.entities.TitleListUiFilter
+import com.myapplications.mywatchlist.ui.entities.UiError
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -42,10 +44,11 @@ fun TitleListScreen(
     modifier: Modifier = Modifier
 ) {
     val scope = rememberCoroutineScope()
+    val listState = rememberLazyListState()
 
     val viewModel = hiltViewModel<TitleListViewModel>()
     val screenTitle by viewModel.screenTitle.collectAsState()
-    val titleListUiState by viewModel.uiState.collectAsState()
+    val titleListUiState by viewModel.titleListState.collectAsState()
     val filterState by viewModel.filterState.collectAsState()
 
     val showFilterState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -59,7 +62,7 @@ fun TitleListScreen(
             drawerContent = {
                 CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
                     BoxWithConstraints {
-                        val defaultFilter = TitleListFilter()
+                        val defaultFilter = TitleListUiFilter()
                         /* Need to have the FilterSection invisible when it's closed because during
                         * transition of 'sliding to the left' it is briefly visible because it
                         * actually exists on the right side of this screen when closed */
@@ -106,21 +109,36 @@ fun TitleListScreen(
                                 top = paddingValues.calculateTopPadding()
                             )
                     ) {
-                        TitleListScreenContent(
-                            titleListUiState = titleListUiState,
-                            filterState = filterState,
-                            onAllFiltersClicked = {
-                                scope.launch { showFilterState.open() }
-                            },
-                            onButtonRetryClick = viewModel::retryGetData,
-                            onWatchlistClicked = viewModel::onWatchlistClicked,
-                            onTitleClicked = onTitleClicked,
-                            placeholderPoster = placeholderPoster,
-                            onTitleTypeFilterSelected = {
-                                viewModel.setFilter(filterState.copy(titleType = it))
-                            },
-                            modifier = Modifier
-                        )
+                        Crossfade(targetState = titleListUiState) { titleListUiState ->
+                            when (titleListUiState) {
+                                is TitleListUiState.Error -> {
+                                    TitleListCenteredErrorMessage(
+                                        error = (titleListUiState).error,
+                                        onButtonRetryClick = { viewModel.retryGetData() }
+                                    )
+                                }
+                                TitleListUiState.Loading -> {
+                                    FullScreenLoadingCircle()
+                                }
+                                is TitleListUiState.Ready -> {
+                                    val titles = (titleListUiState).titles.collectAsLazyPagingItems()
+                                    TitleListScreenContentNew(
+                                        titlesList = titles,
+                                        filterState = filterState,
+                                        error = { viewModel.getErrorFromResultThrowable(it) },
+                                        placeholderPoster = placeholderPoster,
+                                        onRetryEntireListClick = { viewModel.retryGetData() },
+                                        onWatchlistClicked = viewModel::onWatchlistClicked,
+                                        onTitleClicked = onTitleClicked,
+                                        onAllFiltersClicked = {
+                                            scope.launch { showFilterState.open() }
+                                        },
+                                        modifier = Modifier,
+                                        listState = listState
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -128,88 +146,97 @@ fun TitleListScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun TitleListScreenContent(
-    titleListUiState: TitleListUiState,
-    filterState: TitleListFilter,
-    onButtonRetryClick: () -> Unit,
+fun TitleListScreenContentNew(
+    titlesList: LazyPagingItems<TitleItemFull>,
+    filterState: TitleListUiFilter,
+    error: (Throwable) -> UiError,
+    placeholderPoster: Painter,
+    onRetryEntireListClick: () -> Unit,
     onWatchlistClicked: (TitleItemFull) -> Unit,
     onTitleClicked: (TitleItemFull) -> Unit,
     onAllFiltersClicked: () -> Unit,
-    onTitleTypeFilterSelected: (TitleType?) -> Unit,
-    placeholderPoster: Painter,
+    modifier: Modifier = Modifier,
+    listState: LazyListState = rememberLazyListState()
+) {
+    Column(
+        modifier = modifier.fillMaxSize()
+    ) {
+        FilterButtonsRow(
+            filterState = filterState,
+            onAllFiltersClicked = onAllFiltersClicked
+        )
+
+        TitleItemsListPaginated(
+            titles = titlesList,
+            error = error,
+            errorComposable = {
+                TitleListCenteredErrorMessage(
+                    error = it,
+                    onButtonRetryClick = onRetryEntireListClick
+                )
+            },
+            onWatchlistClicked = onWatchlistClicked,
+            onTitleClicked = { onTitleClicked(it) },
+            placeHolderPoster = placeholderPoster,
+            listState = listState
+        )
+    }
+}
+
+@Composable
+fun FullScreenLoadingCircle(modifier: Modifier = Modifier) {
+    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        LoadingCircle()
+    }
+}
+
+@Composable
+fun TitleListCenteredErrorMessage(
+    error: UiError,
+    onButtonRetryClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val listState = rememberLazyListState()
-
-    Crossfade(targetState = titleListUiState, modifier = modifier) { uiState ->
-        when (uiState) {
-            TitleListUiState.Loading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    LoadingCircle()
-                }
+    Column(
+        modifier = modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        when (error) {
+            TitleListError.NO_INTERNET -> {
+                ErrorText(
+                    errorMessage =
+                    stringResource(id = R.string.error_no_internet_connection),
+                    onButtonRetryClick = onButtonRetryClick
+                )
             }
-            is TitleListUiState.Error -> {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    when (uiState.error) {
-                        TitleListError.NO_INTERNET -> {
-                            ErrorText(
-                                errorMessage =
-                                stringResource(id = R.string.error_no_internet_connection),
-                                onButtonRetryClick = onButtonRetryClick
-                            )
-                        }
-                        TitleListError.FAILED_API_REQUEST,
-                        TitleListError.UNKNOWN -> {
-                            ErrorText(
-                                errorMessage =
-                                stringResource(id = R.string.error_something_went_wrong),
-                                onButtonRetryClick = onButtonRetryClick
-                            )
-                        }
-                        TitleListError.NO_TITLES -> {
-                            ErrorText(
-                                errorMessage = stringResource(id = R.string.titlelist_no_data)
-                            )
-                        }
-                    }
-                }
+            TitleListError.FAILED_API_REQUEST,
+            TitleListError.UNKNOWN -> {
+                ErrorText(
+                    errorMessage =
+                    stringResource(id = R.string.error_something_went_wrong),
+                    onButtonRetryClick = onButtonRetryClick
+                )
             }
-            is TitleListUiState.Ready -> {
-                Column(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    FilterButtonsRow(
-                        filterState = filterState,
-                        onAllFiltersClicked = onAllFiltersClicked,
-                        onTypeFilterSelected = onTitleTypeFilterSelected
-                    )
-                    TitleItemsList(
-                        titleItemsFull = uiState.titleItems,
-                        placeholderImage = placeholderPoster,
-                        onWatchlistClicked = onWatchlistClicked,
-                        onTitleClicked = onTitleClicked,
-                        contentPadding = PaddingValues(vertical = 10.dp),
-                        state = listState
-                    )
-                }
+            TitleListError.NO_TITLES -> {
+                ErrorText(
+                    errorMessage = stringResource(id = R.string.titlelist_no_data)
+                )
             }
+            else -> ErrorText(
+                errorMessage =
+                stringResource(id = R.string.error_something_went_wrong),
+                onButtonRetryClick = onButtonRetryClick
+            )
         }
     }
 }
 
 @Composable
 fun FilterButtonsRow(
-    filterState: TitleListFilter,
+    filterState: TitleListUiFilter,
     onAllFiltersClicked: () -> Unit,
-    onTypeFilterSelected: (TitleType?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var titleTypeFilterSelected by remember { mutableStateOf(filterState.titleType) }
@@ -225,44 +252,47 @@ fun FilterButtonsRow(
         OutlinedButton(onClick = onAllFiltersClicked) {
             Text(text = stringResource(id = R.string.titlelist_filter_label_all_filters))
         }
-        Spacer(modifier = Modifier.width(15.dp))
-        Spacer( modifier = Modifier
-            .height(ButtonDefaults.MinHeight)
-            .padding(vertical = 2.dp)
-            .width(0.5.dp)
-            .background(MaterialTheme.colorScheme.onSurfaceVariant)
-        )
-        Spacer(modifier = Modifier.width(10.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-            FilterChipGroup(
-                onFilterSelected = { titleTypeFilter ->
-                    titleTypeFilterSelected = when (titleTypeFilter) {
-                        TitleTypeFilter.All -> null
-                        TitleTypeFilter.Movies -> TitleType.MOVIE
-                        TitleTypeFilter.TV -> TitleType.TV
-                    }
-                    onTypeFilterSelected(titleTypeFilterSelected)
-                },
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier,
-                filter = when (titleTypeFilterSelected) {
-                    TitleType.MOVIE -> TitleTypeFilter.Movies
-                    TitleType.TV -> TitleTypeFilter.TV
-                    null -> TitleTypeFilter.All
-                },
-            )
-        }
+        /* TODO: commented out quick TV/Movie filter Chip group because currently displayed lists
+        *   are only separate movies OR tv lists. Need to review this and delete / remake once
+        *   Discover / Custom Filter screen is implemented.  */
+//        Spacer(modifier = Modifier.width(15.dp))
+//        Spacer( modifier = Modifier
+//            .height(ButtonDefaults.MinHeight)
+//            .padding(vertical = 2.dp)
+//            .width(0.5.dp)
+//            .background(MaterialTheme.colorScheme.onSurfaceVariant)
+//        )
+//        Spacer(modifier = Modifier.width(10.dp))
+//        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+//            FilterChipGroup(
+//                onFilterSelected = { titleTypeFilter ->
+//                    titleTypeFilterSelected = when (titleTypeFilter) {
+//                        TitleTypeFilter.All -> null
+//                        TitleTypeFilter.Movies -> TitleType.MOVIE
+//                        TitleTypeFilter.TV -> TitleType.TV
+//                    }
+//                    onTypeFilterSelected(titleTypeFilterSelected)
+//                },
+//                horizontalArrangement = Arrangement.spacedBy(10.dp),
+//                modifier = Modifier,
+//                filter = when (titleTypeFilterSelected) {
+//                    TitleType.MOVIE -> TitleTypeFilter.Movies
+//                    TitleType.TV -> TitleTypeFilter.TV
+//                    null -> TitleTypeFilter.All
+//                },
+//            )
+//        }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun FilterSection(
-    filterState: TitleListFilter,
+    filterState: TitleListUiFilter,
     defaultScoreRange: ClosedFloatingPointRange<Float>,
     defaultYearsRange: ClosedFloatingPointRange<Float>,
     allGenres: List<Genre>,
-    onFilterApplied: (TitleListFilter) -> Unit,
+    onFilterApplied: (TitleListUiFilter) -> Unit,
     onCloseClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -328,24 +358,27 @@ fun FilterSection(
         ) {
             FilterSectionDivider(paddingValues = PaddingValues(bottom = 5.dp))
 
-            // Type Filter
-            FilterLabel(label = stringResource(id = R.string.titlelist_filter_label_type))
-            FilterChipGroup(
-                onFilterSelected = { titleTypeFilter ->
-                    titleTypeFilterSelected = when (titleTypeFilter) {
-                        TitleTypeFilter.All -> null
-                        TitleTypeFilter.Movies -> TitleType.MOVIE
-                        TitleTypeFilter.TV -> TitleType.TV
-                    }
-                },
-                modifier = Modifier,
-                filter = when (titleTypeFilterSelected) {
-                    TitleType.MOVIE -> TitleTypeFilter.Movies
-                    TitleType.TV -> TitleTypeFilter.TV
-                    null -> TitleTypeFilter.All
-                },
-            )
-            FilterSectionDivider()
+            /* TODO: Commenting out because currently lists shall not be filtered by type because
+            *   we are displaying only movies or tv lists separately. This should be remade later
+            *   once Discover / Custom Filter screen is implemented */
+//            // Type Filter
+//            FilterLabel(label = stringResource(id = R.string.titlelist_filter_label_type))
+//            FilterChipGroup(
+//                onFilterSelected = { titleTypeFilter ->
+//                    titleTypeFilterSelected = when (titleTypeFilter) {
+//                        TitleTypeFilter.All -> null
+//                        TitleTypeFilter.Movies -> TitleType.MOVIE
+//                        TitleTypeFilter.TV -> TitleType.TV
+//                    }
+//                },
+//                modifier = Modifier,
+//                filter = when (titleTypeFilterSelected) {
+//                    TitleType.MOVIE -> TitleTypeFilter.Movies
+//                    TitleType.TV -> TitleTypeFilter.TV
+//                    null -> TitleTypeFilter.All
+//                },
+//            )
+//            FilterSectionDivider()
 
             // Score Slider
             FilterLabel(
@@ -424,7 +457,7 @@ fun FilterSection(
                 }
                 Button(
                     onClick = {
-                        val mFilter = TitleListFilter(
+                        val mFilter = TitleListUiFilter(
                             genres = selectedGenres,
                             scoreRange = Pair(
                                 scoreRange.start.roundToInt(),
@@ -503,15 +536,19 @@ fun FilterSectionDivider(
 @Composable
 fun getScreenTitle(titleListType: TitleListType?): String {
     return when (titleListType) {
-        TitleListType.Trending ->
-            stringResource(id = R.string.titlelist_screen_title_trending)
-        TitleListType.Popular ->
-            stringResource(id = R.string.titlelist_screen_title_popular)
-        TitleListType.TopRated ->
-            stringResource(id = R.string.titlelist_screen_title_toprated)
+        TitleListType.DiscoverMovies,
+        TitleListType.DiscoverTV ->
+            stringResource(id = R.string.titlelist_screen_title_discover)
+        TitleListType.PopularMovies ->
+            stringResource(id = R.string.titlelist_screen_title_popular_movies)
+        TitleListType.PopularTV ->
+            stringResource(id = R.string.titlelist_screen_title_popular_tv)
+        TitleListType.TopRatedMovies ->
+            stringResource(id = R.string.titlelist_screen_title_toprated_movies)
+        TitleListType.TopRatedTV ->
+            stringResource(id = R.string.titlelist_screen_title_toprated_tv)
         TitleListType.UpcomingMovies ->
             stringResource(id = R.string.titlelist_screen_title_upcoming_movies)
         null -> ""
     }
 }
-
