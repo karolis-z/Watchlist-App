@@ -4,7 +4,6 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardActions
@@ -45,7 +44,7 @@ import com.myapplications.mywatchlist.ui.titlelist.*
 
 private const val TAG = "SEARCH_SCREEN"
 
-@OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun DiscoverScreen(
     placeHolderPoster: Painter,
@@ -85,33 +84,10 @@ fun DiscoverScreen(
                         }
                     }
                     is DiscoverUiState.Error -> {
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            when (discoverUiState.error) {
-                                DiscoverError.NO_INTERNET -> {
-                                    val errorMessage =
-                                        stringResource(id = R.string.error_no_internet_connection)
-                                    ErrorText(
-                                        errorMessage = errorMessage,
-                                        onButtonRetryClick = { viewModel.retrySearch() })
-                                }
-                                DiscoverError.NOTHING_FOUND -> {
-                                    val errorMessage = stringResource(id = R.string.search_nothing_found)
-                                    ErrorText(errorMessage = errorMessage)
-                                }
-                                DiscoverError.UNKNOWN,
-                                DiscoverError.FAILED_API_REQUEST -> {
-                                    val errorMessage =
-                                        stringResource(id = R.string.error_something_went_wrong)
-                                    ErrorText(
-                                        errorMessage = errorMessage,
-                                        onButtonRetryClick = { viewModel.retrySearch() })
-                                }
-                            }
-                        }
+                        DiscoverListCenteredErrorMessage(
+                            error = discoverUiState.error,
+                            onButtonRetryClick = viewModel::retrySearch,
+                        )
                     }
                     DiscoverUiState.FreshStart -> {
                         Box(
@@ -129,10 +105,7 @@ fun DiscoverScreen(
                         }
                     }
                     is DiscoverUiState.Ready -> {
-
                         val titles = discoverUiState.titles.collectAsLazyPagingItems()
-
-
                         TitleItemsListPaginated(
                             titles = titles,
                             error = {
@@ -152,74 +125,6 @@ fun DiscoverScreen(
                             listState = listState,
                             scope = coroutineScope
                         )
-
-//                        Crossfade(targetState = titles.loadState.refresh) { loadState ->
-//                            when (loadState) {
-//                                LoadState.Loading -> {
-//                                    FullScreenLoadingCircle()
-//                                }
-//                                is LoadState.Error -> {
-//                                    DiscoverListCenteredErrorMessage(
-//                                        error = viewModel.getErrorFromResultThrowable(loadState.error),
-//                                        onButtonRetryClick = { viewModel.retrySearch() }
-//                                    )
-//                                }
-//                                is LoadState.NotLoading -> {
-//                                    LazyColumn(
-//                                        verticalArrangement = Arrangement.spacedBy(10.dp),
-//                                        contentPadding = PaddingValues(vertical = 10.dp),
-//                                        state = listState
-//                                    ) {
-//                                        // Prepend load or error item
-//                                        pagingLoadStateItem(
-//                                            loadState = titles.loadState.prepend,
-//                                            keySuffix = "prepend",
-//                                            loading = { AppendPrependLoading() },
-//                                            error = {
-//                                                AppendPrependError(
-//                                                    errorText = "Could not load more data",
-//                                                    onButtonRetryClick = { titles.retry() }
-//                                                )
-//                                            }
-//                                        )
-//
-//                                        // Main Content
-//                                        items(
-//                                            items = titles,
-//                                            key = { titleItem -> titleItem.id }
-//                                        ) { titleItem: TitleItemFull? ->
-//                                            titleItem?.let { titleItemFull ->
-//                                                TitleItemCard(
-//                                                    title = titleItemFull,
-//                                                    onWatchlistClicked = { viewModel.onWatchlistClicked(titleItemFull) },
-//                                                    onTitleClicked = { onTitleClicked(it) },
-//                                                    placeholderImage = placeHolderPoster,
-//                                                    modifier = Modifier.animateItemPlacement()
-//                                                )
-//                                            }
-//                                        }
-//
-//                                        // Append load or error item
-//                                        pagingLoadStateItem(
-//                                            loadState = titles.loadState.append,
-//                                            keySuffix = "append",
-//                                            loading = { AppendPrependLoading() },
-//                                            error = {
-//                                                AppendPrependError(
-//                                                    errorText = "Could not load more data",
-//                                                    onButtonRetryClick = { titles.retry() }
-//                                                )
-//                                            }
-//                                        )
-//                                    }
-//                                }
-//                            }
-//                            LaunchedEffect(key1 = loadState is LoadState.NotLoading) {
-//                                coroutineScope.launch {
-//                                    listState.animateScrollToItem(0)
-//                                }
-//                            }
-//                        }
                     }
                 }
             }
@@ -270,6 +175,11 @@ fun DiscoverListCenteredErrorMessage(
                     errorMessage = stringResource(id = R.string.search_nothing_found)
                 )
             }
+            else -> ErrorText(
+                errorMessage =
+                stringResource(id = R.string.error_something_went_wrong),
+                onButtonRetryClick = onButtonRetryClick
+            )
         }
     }
 }

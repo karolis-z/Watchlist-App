@@ -2,26 +2,24 @@ package com.myapplications.mywatchlist.ui.components
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.items
+import com.myapplications.mywatchlist.core.util.extensions.pagingLoadStateItem
 import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 import com.myapplications.mywatchlist.ui.entities.UiError
-import com.myapplications.mywatchlist.ui.titlelist.AppendPrependError
-import com.myapplications.mywatchlist.ui.titlelist.AppendPrependLoading
 import com.myapplications.mywatchlist.ui.titlelist.FullScreenLoadingCircle
-import com.myapplications.mywatchlist.ui.titlelist.pagingLoadStateItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -38,7 +36,6 @@ fun TitleItemsListPaginated(
     listState: LazyListState = rememberLazyListState(),
     scope: CoroutineScope = rememberCoroutineScope()
 ) {
-
     Crossfade(targetState = titles.loadState.refresh, modifier = modifier) { loadState ->
         when (loadState) {
             LoadState.Loading -> {
@@ -102,5 +99,33 @@ fun TitleItemsListPaginated(
                 listState.animateScrollToItem(0)
             }
         }
+    }
+}
+
+@Composable
+fun AppendPrependError(
+    errorText: String,
+    onButtonRetryClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    rowHorizontalArrangement: Arrangement.Horizontal = Arrangement.Center,
+    errorTextStyle: TextStyle = MaterialTheme.typography.bodyMedium
+) {
+    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = rowHorizontalArrangement) {
+        ErrorText(
+            errorMessage = errorText,
+            onButtonRetryClick = onButtonRetryClick,
+            errorTextStyle = errorTextStyle
+        )
+    }
+}
+
+@Composable
+fun AppendPrependLoading(
+    modifier: Modifier = Modifier,
+    rowHorizontalArrangement: Arrangement.Horizontal = Arrangement.Center,
+    circleSize: Dp = 40.dp
+) {
+    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = rowHorizontalArrangement) {
+        LoadingCircle(modifier = Modifier.size(circleSize))
     }
 }

@@ -19,10 +19,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.items
 import com.myapplications.mywatchlist.R
 import com.myapplications.mywatchlist.domain.entities.Genre
 import com.myapplications.mywatchlist.domain.entities.TitleItemFull
@@ -31,6 +29,8 @@ import com.myapplications.mywatchlist.ui.MyTopAppBar
 import com.myapplications.mywatchlist.ui.components.*
 import com.myapplications.mywatchlist.ui.entities.TitleListType
 import com.myapplications.mywatchlist.ui.entities.TitleListUiFilter
+import com.myapplications.mywatchlist.ui.entities.UiError
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -113,7 +113,7 @@ fun TitleListScreen(
                         Crossfade(targetState = titleListUiState) { titleListUiState ->
                             when (titleListUiState) {
                                 is TitleListUiState.Error -> {
-                                    FullScreenTitleListErrorMessage(
+                                    TitleListCenteredErrorMessage(
                                         error = (titleListUiState).error,
                                         onButtonRetryClick = { viewModel.retryGetData() }
                                     )
@@ -126,12 +126,11 @@ fun TitleListScreen(
                                     TitleListScreenContentNew(
                                         titlesList = titles,
                                         filterState = filterState,
+                                        error = { viewModel.getErrorFromResultThrowable(it) },
                                         placeholderPoster = placeholderPoster,
-                                        onRetryAppendPrependClick = { titles.retry() },
                                         onRetryEntireListClick = { viewModel.retryGetData() },
                                         onWatchlistClicked = viewModel::onWatchlistClicked,
                                         onTitleClicked = onTitleClicked,
-                                        onLoadingError = { viewModel.getErrorFromResultThrowable(it) },
                                         onAllFiltersClicked = {
                                             scope.launch { showFilterState.open() }
                                         },
@@ -139,7 +138,9 @@ fun TitleListScreen(
                                             viewModel.setFilter(filterState.copy(titleType = it))
                                             titles.refresh()
                                         },
-                                        modifier = Modifier
+                                        modifier = Modifier,
+                                        listState = rememberLazyListState(),
+                                        coroutineScope = scope
                                     )
                                 }
                             }
@@ -156,87 +157,41 @@ fun TitleListScreen(
 fun TitleListScreenContentNew(
     titlesList: LazyPagingItems<TitleItemFull>,
     filterState: TitleListUiFilter,
+    error: (Throwable) -> UiError,
     placeholderPoster: Painter,
-    onRetryAppendPrependClick: () -> Unit,
     onRetryEntireListClick: () -> Unit,
-    onLoadingError: (throwable: Throwable) -> TitleListError,
     onWatchlistClicked: (TitleItemFull) -> Unit,
     onTitleClicked: (TitleItemFull) -> Unit,
     onAllFiltersClicked: () -> Unit,
     onTitleTypeFilterSelected: (TitleType?) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    listState: LazyListState = rememberLazyListState(),
+    coroutineScope: CoroutineScope = rememberCoroutineScope()
 ) {
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize()
     ) {
         FilterButtonsRow(
             filterState = filterState,
             onAllFiltersClicked = onAllFiltersClicked,
             onTypeFilterSelected = onTitleTypeFilterSelected
         )
-        Crossfade(targetState = titlesList.loadState.refresh) { loadState ->
-            when (loadState) {
-                LoadState.Loading -> {
-                    FullScreenLoadingCircle()
-                }
-                is LoadState.Error -> {
-                    FullScreenTitleListErrorMessage(
-                        error = onLoadingError( loadState.error),
-                        onButtonRetryClick = onRetryEntireListClick
-                    )
-                }
-                is LoadState.NotLoading -> {
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                        contentPadding = PaddingValues(vertical = 10.dp),
-                        state = rememberLazyListState(),
-                        modifier = modifier
-                    ) {
-                        // Prepend load or error item
-                        pagingLoadStateItem(
-                            loadState = titlesList.loadState.prepend,
-                            keySuffix = "prepend",
-                            loading = { AppendPrependLoading() },
-                            error = {
-                                AppendPrependError(
-                                    errorText = "Could not load more data",
-                                    onButtonRetryClick = onRetryAppendPrependClick
-                                )
-                            }
-                        )
 
-                        // Main Content
-                        items(
-                            items = titlesList,
-                            key = { titleItem -> titleItem.id }
-                        ) { titleItem: TitleItemFull? ->
-                            titleItem?.let { titleItemFull ->
-                                TitleItemCard(
-                                    title = titleItemFull,
-                                    onWatchlistClicked = { onWatchlistClicked(titleItemFull) },
-                                    onTitleClicked = { onTitleClicked(it) },
-                                    placeholderImage = placeholderPoster,
-                                    modifier = Modifier.animateItemPlacement()
-                                )
-                            }
-                        }
-
-                        // Append load or error item
-                        pagingLoadStateItem(
-                            loadState = titlesList.loadState.append,
-                            keySuffix = "append",
-                            loading = { AppendPrependLoading() },
-                            error = {
-                                AppendPrependError(
-                                    errorText = "Could not load more data",
-                                    onButtonRetryClick = onRetryAppendPrependClick
-                                )
-                            }
-                        )
-                    }
-                }
-            }
-        }
+        TitleItemsListPaginated(
+            titles = titlesList,
+            error = error,
+            errorComposable = {
+                TitleListCenteredErrorMessage(
+                    error = it,
+                    onButtonRetryClick = onRetryEntireListClick
+                )
+            },
+            onWatchlistClicked = onWatchlistClicked,
+            onTitleClicked = { onTitleClicked(it) },
+            placeHolderPoster = placeholderPoster,
+            listState = listState,
+            scope = coroutineScope
+        )
     }
 }
 
@@ -248,8 +203,8 @@ fun FullScreenLoadingCircle(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun FullScreenTitleListErrorMessage(
-    error: TitleListError,
+fun TitleListCenteredErrorMessage(
+    error: UiError,
     onButtonRetryClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -279,6 +234,11 @@ fun FullScreenTitleListErrorMessage(
                     errorMessage = stringResource(id = R.string.titlelist_no_data)
                 )
             }
+            else -> ErrorText(
+                errorMessage =
+                stringResource(id = R.string.error_something_went_wrong),
+                onButtonRetryClick = onButtonRetryClick
+            )
         }
     }
 }
@@ -568,33 +528,8 @@ fun FilterLabel(
     }
 }
 
-@Composable
-fun AppendPrependLoading(
-    modifier: Modifier = Modifier,
-    rowHorizontalArrangement: Arrangement.Horizontal = Arrangement.Center,
-    circleSize: Dp = 40.dp
-) {
-    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = rowHorizontalArrangement) {
-        LoadingCircle(modifier = Modifier.size(circleSize))
-    }
-}
 
-@Composable
-fun AppendPrependError(
-    errorText: String,
-    onButtonRetryClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    rowHorizontalArrangement: Arrangement.Horizontal = Arrangement.Center,
-    errorTextStyle: TextStyle = MaterialTheme.typography.bodyMedium
-) {
-    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = rowHorizontalArrangement) {
-        ErrorText(
-            errorMessage = errorText,
-            onButtonRetryClick = onButtonRetryClick,
-            errorTextStyle = errorTextStyle
-        )
-    }
-}
+
 
 @Composable
 fun FilterSectionDivider(
@@ -623,25 +558,5 @@ fun getScreenTitle(titleListType: TitleListType?): String {
         TitleListType.UpcomingMovies ->
             stringResource(id = R.string.titlelist_screen_title_upcoming_movies)
         null -> ""
-    }
-}
-
-fun LazyListScope.pagingLoadStateItem(
-    loadState: LoadState,
-    keySuffix: String? = null,
-    loading: (@Composable LazyItemScope.() -> Unit)? = null,
-    error: (@Composable LazyItemScope.(LoadState.Error) -> Unit)? = null,
-) {
-    if (loading != null && loadState == LoadState.Loading) {
-        item(
-            key = keySuffix?.let { "loadingItem_$it" },
-            content = { loading() }
-        )
-    }
-    if (error != null && loadState is LoadState.Error) {
-        item(
-            key = keySuffix?.let { "errorItem_$it" },
-            content = { error(loadState)},
-        )
     }
 }

@@ -1,7 +1,10 @@
 package com.myapplications.mywatchlist.core.util.extensions
 
+import androidx.compose.foundation.lazy.LazyItemScope
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.*
+import androidx.paging.LoadState
 
 /**
  * Returns whether the lazy list is currently scrolling up.
@@ -22,4 +25,24 @@ fun LazyListState.isScrollingUp(): Boolean {
             }
         }
     }.value
+}
+
+fun LazyListScope.pagingLoadStateItem(
+    loadState: LoadState,
+    keySuffix: String? = null,
+    loading: (@Composable LazyItemScope.() -> Unit)? = null,
+    error: (@Composable LazyItemScope.(LoadState.Error) -> Unit)? = null,
+) {
+    if (loading != null && loadState == LoadState.Loading) {
+        item(
+            key = keySuffix?.let { "loadingItem_$it" },
+            content = { loading() }
+        )
+    }
+    if (error != null && loadState is LoadState.Error) {
+        item(
+            key = keySuffix?.let { "errorItem_$it" },
+            content = { error(loadState)},
+        )
+    }
 }
