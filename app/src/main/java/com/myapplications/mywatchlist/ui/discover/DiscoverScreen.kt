@@ -54,9 +54,6 @@ fun DiscoverScreen(
     val viewModel = hiltViewModel<DiscoverViewModel>()
     val uiState by viewModel.uiState.collectAsState()
 
-    // Remember a CoroutineScope to be able to scroll the list
-    val coroutineScope = rememberCoroutineScope()
-
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
@@ -122,8 +119,7 @@ fun DiscoverScreen(
                              },
                             onTitleClicked = { onTitleClicked(it) },
                             placeHolderPoster = placeHolderPoster,
-                            listState = listState,
-                            scope = coroutineScope
+                            listState = listState
                         )
                     }
                 }
@@ -224,7 +220,7 @@ fun SearchTextField(
                 exit = fadeOut() + scaleOut()
             ) {
                 IconButton(onClick = {
-                    viewModel.setSearchString("")
+                    viewModel.clearSearch()
                     focusManager.clearFocus()
                 }) {
                     Icon(

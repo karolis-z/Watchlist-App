@@ -30,6 +30,10 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
     * is with the same filter to determine if a REFRESH should be launched or PREPEND which
     * gets triggered if we just load data from the local database */
     private var lastSuccessfulFilter: TitleListFilter? = null
+    /* lastSuccessfulQuery is needed to check if query matches when user click on a title in list
+    * and then navigates back so that we can know that user got back and we don't need to refresh
+    * the search results */
+    private var lastSuccessfulQuery: String = ""
 
     override fun getDiscoverMovieRemoteMediator(
         filter: TitleListFilter,
@@ -497,6 +501,7 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
                             nextKey = nextKey,
                             createdOn = Instant.now().toEpochMilli()
                         )
+                        lastSuccessfulQuery = requestType.query
                     }
                     is TitleItemsRequestType.SearchMovies -> {
                         database.searchMoviesCacheDao().insertCachedTrendingItems(
@@ -506,6 +511,7 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
                             nextKey = nextKey,
                             createdOn = Instant.now().toEpochMilli()
                         )
+                        lastSuccessfulQuery = requestType.query
                     }
                     is TitleItemsRequestType.SearchTV -> {
                         database.searchTvCacheDao().insertCachedTrendingItems(
@@ -515,6 +521,7 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
                             nextKey = nextKey,
                             createdOn = Instant.now().toEpochMilli()
                         )
+                        lastSuccessfulQuery = requestType.query
                     }
                     is TitleItemsRequestType.TopRatedMovies -> {
                         database.topRatedMoviesCacheDao().insertCachedTrendingItems(
@@ -645,12 +652,30 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
                     }
                 }
             }
-            /* For search - we will always launch new requests as it makes no sense to display
-            * cached data when the data always depends on a query that is an input from the user */
-            is TitleItemsRequestType.SearchAll,
-            is TitleItemsRequestType.SearchMovies,
+            /* For search - we will always launch new requests except for when the
+            lastSuccessfulQuery matches the requestType.query which will happen when user clicks on
+            a title and then navigates back to the search results. Then we need to display the
+            cached data again so that user doesn't have to search again. */
+            is TitleItemsRequestType.SearchAll -> {
+                if (requestType.query == lastSuccessfulQuery) {
+                    RemoteMediator.InitializeAction.SKIP_INITIAL_REFRESH
+                } else {
+                    RemoteMediator.InitializeAction.LAUNCH_INITIAL_REFRESH
+                }
+            }
+            is TitleItemsRequestType.SearchMovies -> {
+                if (requestType.query == lastSuccessfulQuery) {
+                    RemoteMediator.InitializeAction.SKIP_INITIAL_REFRESH
+                } else {
+                    RemoteMediator.InitializeAction.LAUNCH_INITIAL_REFRESH
+                }
+            }
             is TitleItemsRequestType.SearchTV -> {
-                RemoteMediator.InitializeAction.LAUNCH_INITIAL_REFRESH
+                if (requestType.query == lastSuccessfulQuery) {
+                    RemoteMediator.InitializeAction.SKIP_INITIAL_REFRESH
+                } else {
+                    RemoteMediator.InitializeAction.LAUNCH_INITIAL_REFRESH
+                }
             }
             is TitleItemsRequestType.TopRatedMovies -> {
                 when (networkStatusManager.isOnline()) {

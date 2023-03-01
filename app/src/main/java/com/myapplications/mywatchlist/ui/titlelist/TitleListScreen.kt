@@ -30,7 +30,6 @@ import com.myapplications.mywatchlist.ui.components.*
 import com.myapplications.mywatchlist.ui.entities.TitleListType
 import com.myapplications.mywatchlist.ui.entities.TitleListUiFilter
 import com.myapplications.mywatchlist.ui.entities.UiError
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -46,6 +45,7 @@ fun TitleListScreen(
     modifier: Modifier = Modifier
 ) {
     val scope = rememberCoroutineScope()
+    val listState = rememberLazyListState()
 
     val viewModel = hiltViewModel<TitleListViewModel>()
     val screenTitle by viewModel.screenTitle.collectAsState()
@@ -139,8 +139,7 @@ fun TitleListScreen(
                                             titles.refresh()
                                         },
                                         modifier = Modifier,
-                                        listState = rememberLazyListState(),
-                                        coroutineScope = scope
+                                        listState = listState
                                     )
                                 }
                             }
@@ -165,8 +164,7 @@ fun TitleListScreenContentNew(
     onAllFiltersClicked: () -> Unit,
     onTitleTypeFilterSelected: (TitleType?) -> Unit,
     modifier: Modifier = Modifier,
-    listState: LazyListState = rememberLazyListState(),
-    coroutineScope: CoroutineScope = rememberCoroutineScope()
+    listState: LazyListState = rememberLazyListState()
 ) {
     Column(
         modifier = modifier.fillMaxSize()
@@ -189,8 +187,7 @@ fun TitleListScreenContentNew(
             onWatchlistClicked = onWatchlistClicked,
             onTitleClicked = { onTitleClicked(it) },
             placeHolderPoster = placeholderPoster,
-            listState = listState,
-            scope = coroutineScope
+            listState = listState
         )
     }
 }

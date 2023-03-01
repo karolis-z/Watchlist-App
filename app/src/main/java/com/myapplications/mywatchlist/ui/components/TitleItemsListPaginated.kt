@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.TextStyle
@@ -20,8 +18,6 @@ import com.myapplications.mywatchlist.core.util.extensions.pagingLoadStateItem
 import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 import com.myapplications.mywatchlist.ui.entities.UiError
 import com.myapplications.mywatchlist.ui.titlelist.FullScreenLoadingCircle
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -34,7 +30,6 @@ fun TitleItemsListPaginated(
     placeHolderPoster: Painter,
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
-    scope: CoroutineScope = rememberCoroutineScope()
 ) {
     Crossfade(targetState = titles.loadState.refresh, modifier = modifier) { loadState ->
         when (loadState) {
@@ -92,11 +87,6 @@ fun TitleItemsListPaginated(
                         }
                     )
                 }
-            }
-        }
-        LaunchedEffect(key1 = loadState is LoadState.NotLoading) {
-            scope.launch {
-                listState.animateScrollToItem(0)
             }
         }
     }

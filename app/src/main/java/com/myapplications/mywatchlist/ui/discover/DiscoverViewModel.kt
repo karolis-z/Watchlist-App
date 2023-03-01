@@ -30,10 +30,6 @@ class DiscoverViewModel @Inject constructor(
     private val _searchString = MutableStateFlow("")
     val searchString = _searchString.asStateFlow()
 
-    fun setSearchString(value: String) {
-        _searchString.update { value }
-    }
-
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     fun initializeSearch() {
         _uiState.update { DiscoverUiState.Loading }
@@ -41,25 +37,26 @@ class DiscoverViewModel @Inject constructor(
             if (searchString.value.isEmpty()) {
                 _uiState.update { DiscoverUiState.FreshStart }
             } else {
-                val titles = searchString.flatMapLatest { searchString ->
-                    if (searchString.isBlank() && uiState.value !is DiscoverUiState.FreshStart) {
-                        _uiState.update { DiscoverUiState.FreshStart }
-                    }
-                    titlesManager.searchAllPaginated(query = searchString)
-                        .debounce(300)
-                        .cachedIn(viewModelScope)
-                        .combine(watchlistedTitles) { pagingData, watchlistedTitles ->
-                            pagingData.map { pagedTitle ->
-                                pagedTitle.copy(
-                                    isWatchlisted = watchlistedTitles.any { title ->
-                                        title.mediaId == pagedTitle.mediaId &&
-                                                title.type == pagedTitle.type
-                                    }
-                                )
-                            }
+                val titles = searchString
+                    .debounce(400)
+                    .flatMapLatest { searchString ->
+                        if (searchString.isBlank() && uiState.value !is DiscoverUiState.FreshStart) {
+                            _uiState.update { DiscoverUiState.FreshStart }
                         }
-                        .cachedIn(viewModelScope)
-                }
+                        titlesManager.searchAllPaginated(query = searchString)
+                            .cachedIn(viewModelScope)
+                            .combine(watchlistedTitles) { pagingData, watchlistedTitles ->
+                                pagingData.map { pagedTitle ->
+                                    pagedTitle.copy(
+                                        isWatchlisted = watchlistedTitles.any { title ->
+                                            title.mediaId == pagedTitle.mediaId &&
+                                                    title.type == pagedTitle.type
+                                        }
+                                    )
+                                }
+                            }
+                            .cachedIn(viewModelScope)
+                    }
                 _uiState.update { DiscoverUiState.Ready(titles = titles) }
             }
         }
@@ -91,6 +88,15 @@ class DiscoverViewModel @Inject constructor(
                 titlesManager.bookmarkTitleItem(title)
             }
         }
+    }
+
+    fun setSearchString(value: String) {
+        _searchString.update { value }
+    }
+
+    fun clearSearch() {
+        _searchString.update { "" }
+        _uiState.update { DiscoverUiState.FreshStart }
     }
 
     fun retrySearch() {
