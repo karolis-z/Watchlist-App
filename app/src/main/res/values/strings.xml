@@ -107,6 +107,7 @@
     <!-- GENERAL BUTTON LABELS -->
     <string name="button_retry">Retry</string>
     <string name="button_see_all">See all</string>
+    <string name="button_back_to_top">Back to top</string>
 
     <!-- FILTER LABELS -->
     <string name="filter_all">All</string>
@@ -129,5 +130,6 @@
     <string name="cd_similar_help_text">This list shows similar titles for currently viewed title.</string>
     <string name="cd_see_all">See all</string>
     <string name="cd_close_filter">Close Filter</string>
+    <string name="cd_back_to_top">Back to top</string>
 
 </resources>
