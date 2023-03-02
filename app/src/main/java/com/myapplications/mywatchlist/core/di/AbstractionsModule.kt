@@ -1,5 +1,7 @@
 package com.myapplications.mywatchlist.core.di
 
+import com.myapplications.mywatchlist.core.util.NetworkMonitor
+import com.myapplications.mywatchlist.core.util.NetworkMonitorImpl
 import com.myapplications.mywatchlist.core.util.NetworkStatusManager
 import com.myapplications.mywatchlist.core.util.NetworkStatusManagerImpl
 import com.myapplications.mywatchlist.data.datastore.UserPrefsRepository
@@ -68,4 +70,7 @@ abstract class AbstractionsModule {
 
     @Binds
     abstract fun bindTitlesRemoteMediatorProvider(titlesRemoteMediatorProviderImpl: TitlesRemoteMediatorProviderImpl): TitlesRemoteMediatorProvider
+
+    @Binds
+    abstract fun bindNetworkMonitor(networkMonitorImpl: NetworkMonitorImpl): NetworkMonitor
 }

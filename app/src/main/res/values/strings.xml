@@ -102,6 +102,7 @@
 
     <!-- GENERAL ERRORS -->
     <string name="error_no_internet_connection">Please check if you are connected to the internet</string>
+    <string name="error_no_internet_connection_snackbar">⚠️ You are not connected to the internet</string>
     <string name="error_something_went_wrong">Oops…Something went wrong</string>
 
     <!-- GENERAL BUTTON LABELS -->

@@ -21,6 +21,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -31,6 +33,8 @@ import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.myapplications.mywatchlist.R
+import com.myapplications.mywatchlist.core.util.NetworkMonitor
+import com.myapplications.mywatchlist.domain.result.BasicResult
 import com.myapplications.mywatchlist.ui.details.DetailsScreen
 import com.myapplications.mywatchlist.ui.discover.DiscoverScreen
 import com.myapplications.mywatchlist.ui.entities.TitleListType
@@ -39,7 +43,11 @@ import com.myapplications.mywatchlist.ui.theme.MyWatchlistTheme
 import com.myapplications.mywatchlist.ui.titlelist.TitleListScreen
 import com.myapplications.mywatchlist.ui.watchlist.WatchlistScreen
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 private const val TAG = "MAIN_ACTIVITY"
 private const val TRANSITION_DURATION = 400
@@ -48,6 +56,10 @@ private val TRANSITION_EASING = FastOutSlowInEasing
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject lateinit var watchlistAppStartup: WatchlistAppStartup
+
+    @Inject lateinit var networkMonitor: NetworkMonitor
 
     private val topLevelScreens =
         listOf(TopLevelScreens.Home, TopLevelScreens.Discover, TopLevelScreens.Watchlist)
@@ -60,6 +72,9 @@ class MainActivity : ComponentActivity() {
 
             val showTopAppBar = rememberSaveable { (mutableStateOf(false)) }
             val showUpButton = rememberSaveable { (mutableStateOf(false)) }
+
+            var genresUpdated by rememberSaveable { mutableStateOf(false) }
+            var apiConfigurationUpdated by rememberSaveable { mutableStateOf(false) }
 
             WindowCompat.setDecorFitsSystemWindows(window, false)
 
@@ -121,7 +136,45 @@ class MainActivity : ComponentActivity() {
                 }
 
                 val snackbarHostState = remember { SnackbarHostState() }
-                val scope = rememberCoroutineScope()
+                val coroutineScope = rememberCoroutineScope()
+
+                val networkState = remember {
+                    networkMonitor.isOnline.stateIn(
+                        scope = coroutineScope,
+                        started = SharingStarted.WhileSubscribed(5000),
+                        initialValue = true
+                    )
+                }
+
+                val isOnline by networkState.collectAsStateWithLifecycle()
+
+                LaunchedEffect(key1 = isOnline){
+                    if (isOnline) {
+                        if (!genresUpdated) {
+                            // Update the genres if needed from api
+                            lifecycleScope.launch(Dispatchers.IO) {
+                                val genresResult = watchlistAppStartup.updateGenres()
+                                if (genresResult is BasicResult.Success) {
+                                    genresUpdated = true
+                                }
+                            }
+                        }
+                        if (!apiConfigurationUpdated) {
+                            /* Create and launch a worker that periodically updates configuration
+                            data from the api */
+                            lifecycleScope.launch(Dispatchers.IO) {
+                                watchlistAppStartup.launchPeriodicConfigurationUpdateWorker()
+                                apiConfigurationUpdated = true
+                            }
+                        }
+                    } else {
+                        coroutineScope.launch {
+                            snackbarHostState.showSnackbar(
+                                message = getString(R.string.error_no_internet_connection_snackbar)
+                            )
+                        }
+                    }
+                }
 
                 Scaffold(
                     topBar = {
@@ -263,9 +316,6 @@ class MainActivity : ComponentActivity() {
                                 onTitleClicked = { title ->
                                     navController.navigate(route = OtherScreens.Details.route +
                                             "/${title.mediaId}&${title.type.name}")
-                                },
-                                onShowSnackbar = {
-                                    scope.launch { snackbarHostState.showSnackbar(it) }
                                 },
                                 modifier = Modifier.padding(paddingValues)
                             )
