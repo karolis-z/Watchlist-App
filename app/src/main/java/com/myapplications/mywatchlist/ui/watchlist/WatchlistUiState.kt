@@ -7,10 +7,5 @@ data class WatchlistUiState(
     val titleItemsFull: List<TitleItemFull>? = null,
     val isLoading: Boolean = true,
     val isNoData: Boolean = false,
-    val filter: TitleTypeFilter = TitleTypeFilter.All,
-    val showSnackbar: WatchlistSnackbarType? = null
+    val filter: TitleTypeFilter = TitleTypeFilter.All
 )
-
-enum class WatchlistSnackbarType{
-    NO_INTERNET
-}
