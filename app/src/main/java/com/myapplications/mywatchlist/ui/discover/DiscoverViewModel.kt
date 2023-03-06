@@ -2,6 +2,7 @@ package com.myapplications.mywatchlist.ui.discover
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.map
 import com.myapplications.mywatchlist.data.ApiGetTitleItemsExceptions
@@ -16,67 +17,87 @@ import javax.inject.Inject
 
 private const val TAG = "DISCOVER_VIEWMODEL"
 
+@OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 @HiltViewModel
 class DiscoverViewModel @Inject constructor(
     private val titlesManager: TitlesManager
 ) : ViewModel() {
 
-    private val _uiState: MutableStateFlow<DiscoverUiState> = MutableStateFlow(DiscoverUiState.FreshStart)
-    val uiState = _uiState.asStateFlow()
-
-    private val watchlistedTitles = titlesManager.allWatchlistedTitleItems()
+    // TODO: Create a flow of searched in the TitlesManager
+    private val recentSearchesFlow: StateFlow<List<String>> =
+        titlesManager.getRecentSearches().stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 
     // Used to store the search string for when 'Retry' button is clicked
     private val _searchString = MutableStateFlow("")
     val searchString = _searchString.asStateFlow()
 
-    @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
-    fun initializeSearch() {
-        _uiState.update { DiscoverUiState.Loading }
-        viewModelScope.launch {
-            if (searchString.value.isEmpty()) {
-                _uiState.update { DiscoverUiState.FreshStart }
+    private lateinit var titlesFlow: Flow<PagingData<TitleItemFull>>
+
+    private val watchlistedTitles = titlesManager.allWatchlistedTitleItems()
+
+    val searchViewState: StateFlow<SearchViewState> =
+        combine(
+            recentSearchesFlow,
+            searchString
+        ) { recentSearched, searchString ->
+            if (searchString.isBlank()) {
+                SearchViewState.ShowingRecent(recentSearched = recentSearched)
             } else {
-                val titles = searchString
-                    .debounce(400)
-                    .flatMapLatest { searchString ->
-                        if (searchString.isBlank() && uiState.value !is DiscoverUiState.FreshStart) {
-                            _uiState.update { DiscoverUiState.FreshStart }
-                        }
-                        titlesManager.searchAllPaginated(query = searchString)
-                            .cachedIn(viewModelScope)
-                            .combine(watchlistedTitles) { pagingData, watchlistedTitles ->
-                                pagingData.map { pagedTitle ->
-                                    pagedTitle.copy(
-                                        isWatchlisted = watchlistedTitles.any { title ->
-                                            title.mediaId == pagedTitle.mediaId &&
-                                                    title.type == pagedTitle.type
-                                        }
-                                    )
-                                }
-                            }
-                            .cachedIn(viewModelScope)
-                    }
-                _uiState.update { DiscoverUiState.Ready(titles = titles) }
+                SearchViewState.Ready(titles = titlesFlow)
+
             }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = SearchViewState.ShowingRecent(recentSearched = recentSearchesFlow.value)
+        )
+
+    init {
+        // Initializing titlesFlow
+        initializeSearch()
+    }
+
+    private fun initializeSearch() {
+        viewModelScope.launch {
+            titlesFlow = searchString
+                .debounce(400)
+                .flatMapLatest { searchString ->
+                    titlesManager.searchAllPaginated(query = searchString)
+                        .cachedIn(viewModelScope)
+                        .combine(watchlistedTitles) { pagingData, watchlistedTitles ->
+                            pagingData.map { pagedTitle ->
+                                pagedTitle.copy(
+                                    isWatchlisted = watchlistedTitles.any { title ->
+                                        title.mediaId == pagedTitle.mediaId &&
+                                                title.type == pagedTitle.type
+                                    }
+                                )
+                            }
+                        }
+                        .cachedIn(viewModelScope)
+                }
         }
     }
 
     /**
-     * @return [DiscoverError] based on provided [throwable]
+     * @return [SearchViewError] based on provided [throwable]
      */
-    fun getErrorFromResultThrowable(throwable: Throwable?): DiscoverError {
+    fun getErrorFromResultThrowable(throwable: Throwable?): SearchViewError {
         return if (throwable is ApiGetTitleItemsExceptions) {
             when (throwable) {
                 is ApiGetTitleItemsExceptions.FailedApiRequestException ->
-                    DiscoverError.FAILED_API_REQUEST
+                    SearchViewError.FAILED_API_REQUEST
                 is ApiGetTitleItemsExceptions.NoConnectionException ->
-                    DiscoverError.NO_INTERNET
+                    SearchViewError.NO_INTERNET
                 is ApiGetTitleItemsExceptions.NothingFoundException ->
-                    DiscoverError.NOTHING_FOUND
+                    SearchViewError.NOTHING_FOUND
             }
         } else {
-            DiscoverError.UNKNOWN
+            SearchViewError.UNKNOWN
         }
     }
 
@@ -96,7 +117,6 @@ class DiscoverViewModel @Inject constructor(
 
     fun clearSearch() {
         _searchString.update { "" }
-        _uiState.update { DiscoverUiState.FreshStart }
     }
 
     fun retrySearch() {

@@ -18,7 +18,7 @@
     <!-- SEARCH SCREEN -->
     <string name="search_not_searched_yet">Let\'s find something to watch!</string>
     <string name="search_nothing_found">Oops… No titles found</string>
-    <string name="search_searchfield_label">Search for titles…</string>
+    <string name="search_searchfield_label">Search for movies, tv shows…</string>
 
     <!-- HOME SCREEN -->
     <string name="home_no_data">No data available…</string>
@@ -124,6 +124,7 @@
     <string name="cd_watchlist_button_watchlist">Put title in watchlist</string>
     <string name="cd_watchlist_button_watchlisted">Remove title from watchlist</string>
     <string name="cd_back_arrow">Navigate back</string>
+    <string name="cd_search">Search</string>
     <string name="cd_imdb_link">Link to IMDb</string>
     <string name="cd_expand_more">Expand for more information</string>
     <string name="cd_selected_filter_chip">Selected filter is %s</string>

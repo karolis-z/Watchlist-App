@@ -1,6 +1,7 @@
 package com.myapplications.mywatchlist.ui
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.StringRes
@@ -20,6 +21,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
@@ -70,8 +72,8 @@ class MainActivity : ComponentActivity() {
 
         setContent {
 
-            val showTopAppBar = rememberSaveable { (mutableStateOf(false)) }
-            val showUpButton = rememberSaveable { (mutableStateOf(false)) }
+            var showTopAppBar by rememberSaveable { (mutableStateOf(false)) }
+            var showUpButton by rememberSaveable { (mutableStateOf(false)) }
 
             var genresUpdated by rememberSaveable { mutableStateOf(false) }
             var apiConfigurationUpdated by rememberSaveable { mutableStateOf(false) }
@@ -108,15 +110,19 @@ class MainActivity : ComponentActivity() {
                         if (stringResId == null) "" else stringResource(id = stringResId)
                     }
 
+                // Determine whether to show TopAppBar and the Up/Back button
                 if (currentDestination?.route?.contains(OtherScreens.Details.route) == true) {
-                    showTopAppBar.value = false
-                    showUpButton.value = false
+                    showTopAppBar = false
+                    showUpButton = false
                 } else if (currentDestination?.route?.contains(OtherScreens.TitleList.route) == true) {
-                    showTopAppBar.value = false
-                    showUpButton.value = false
+                    showTopAppBar = false
+                    showUpButton = false
+                } else if (currentDestination?.route == TopLevelScreens.Discover.route) {
+                    showTopAppBar = false
+                    showUpButton = false
                 } else {
-                    showTopAppBar.value = true
-                    showUpButton.value = false
+                    showTopAppBar = true
+                    showUpButton = false
                 }
 
                 val placeholderPoster = if (isSystemInDarkTheme()) {
@@ -179,7 +185,7 @@ class MainActivity : ComponentActivity() {
                 Scaffold(
                     topBar = {
                         AnimatedVisibility(
-                            visible = showTopAppBar.value,
+                            visible = showTopAppBar,
                             enter =
                                 fadeIn(tween(durationMillis = TRANSITION_DURATION, delayMillis = 0)),
                             exit =
@@ -187,7 +193,7 @@ class MainActivity : ComponentActivity() {
                         ) {
                             MyTopAppBar(
                                 title = topBarTitle,
-                                showUpButton = showUpButton.value,
+                                showUpButton = showUpButton,
                                 onNavigateUp = { navController.navigateUp() }
                             )
                         }
@@ -287,13 +293,15 @@ class MainActivity : ComponentActivity() {
                                 getExitTransition(initialState, targetState, true)
                             }
                         ) {
+                            Log.d(TAG, "onCreate: padding passed to Search screen. top =${paddingValues.calculateTopPadding()}. bottom = ${paddingValues.calculateBottomPadding()}. start = ${paddingValues.calculateLeftPadding(LayoutDirection.Ltr)}. end = ${paddingValues.calculateRightPadding(LayoutDirection.Ltr)}}")
                             DiscoverScreen(
                                 placeHolderPoster = placeholderPoster,
                                 onTitleClicked = { title ->
                                     navController.navigate(route = OtherScreens.Details.route +
                                             "/${title.mediaId}&${title.type.name}")
                                 },
-                                modifier = Modifier.padding(paddingValues)
+                                paddingValues = paddingValues,
+//                                modifier = Modifier.padding(paddingValues)
                             )
                         }
                         composable(
