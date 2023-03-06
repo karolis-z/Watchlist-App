@@ -9,6 +9,7 @@ import com.myapplications.mywatchlist.data.local.titles.TitlesLocalDataSource
 import com.myapplications.mywatchlist.data.mappers.toTitleItemFull
 import com.myapplications.mywatchlist.data.mediators.TitlesRemoteMediatorProvider
 import com.myapplications.mywatchlist.data.remote.TitlesRemoteDataSource
+import com.myapplications.mywatchlist.domain.entities.RecentSearch
 import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 import com.myapplications.mywatchlist.domain.entities.TitleListFilter
 import com.myapplications.mywatchlist.domain.repositories.GenresRepository
@@ -320,6 +321,12 @@ class TitleItemsRepositoryImpl @Inject constructor(
         initialLoadSize = initialLoadSize,
         maxSize = maxSize
     )
+
+    override fun getRecentSearches(): Flow<List<RecentSearch>> = localDataSource.getRecentSearches()
+
+    override suspend fun saveNewRecentSearch(newSearch: String) = withContext(dispatcher) {
+        localDataSource.saveNewRecentSearch(newSearch = newSearch)
+    }
 
     private sealed class TitleItemsRequestType {
         object TrendingMoviesAndTV : TitleItemsRequestType()

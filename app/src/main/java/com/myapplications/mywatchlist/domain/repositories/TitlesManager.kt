@@ -1,10 +1,7 @@
 package com.myapplications.mywatchlist.domain.repositories
 
 import androidx.paging.PagingData
-import com.myapplications.mywatchlist.domain.entities.Title
-import com.myapplications.mywatchlist.domain.entities.TitleItemFull
-import com.myapplications.mywatchlist.domain.entities.TitleListFilter
-import com.myapplications.mywatchlist.domain.entities.TitleType
+import com.myapplications.mywatchlist.domain.entities.*
 import com.myapplications.mywatchlist.domain.result.ResultOf
 import kotlinx.coroutines.flow.Flow
 
@@ -136,4 +133,14 @@ interface TitlesManager {
 
     /** Removes the [Title] from user's watchlist */
     suspend fun unBookmarkTitle(title: Title)
+
+    /**
+     * @return [Flow] of list of [RecentSearch] which represent what the user has searched for
+     */
+    fun getRecentSearches(): Flow<List<RecentSearch>>
+
+    /**
+     * Inserts a new searched string into the database.
+     */
+    suspend fun saveNewRecentSearch(newSearch: String)
 }

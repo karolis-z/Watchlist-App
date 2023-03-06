@@ -2,14 +2,19 @@ package com.myapplications.mywatchlist.data.local.titles
 
 import androidx.paging.PagingSource
 import com.myapplications.mywatchlist.core.di.IoDispatcher
+import com.myapplications.mywatchlist.data.entities.RecentSearchEntity
 import com.myapplications.mywatchlist.data.entities.cached.*
 import com.myapplications.mywatchlist.data.local.titles.cache.*
+import com.myapplications.mywatchlist.data.mappers.toRecentSearchList
 import com.myapplications.mywatchlist.data.mappers.toTitleItemsFull
+import com.myapplications.mywatchlist.domain.entities.RecentSearch
 import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import java.time.LocalDateTime
 import javax.inject.Inject
 
 interface TitlesLocalDataSource {
@@ -90,6 +95,17 @@ interface TitlesLocalDataSource {
      * @return a [PagingSource] for cached Upcoming Movies.
      */
     fun getCachedUpcomingMovies(): PagingSource<Int, TitleItemCacheUpcomingMovieFull>
+
+    /**
+     * @return [Flow] of list of [RecentSearch] which represent what the user has searched for
+     */
+    fun getRecentSearches(): Flow<List<RecentSearch>>
+
+    /**
+     * Inserts a new searched string into the database. If the are already 100 searches stored, the
+     * oldest search will be deleted as there is no need to store an infinite number of searches.
+     */
+    suspend fun saveNewRecentSearch(newSearch: String)
 }
 
 class TitlesLocalDataSourceImpl @Inject constructor(
@@ -104,6 +120,7 @@ class TitlesLocalDataSourceImpl @Inject constructor(
     private val topRatedMoviesDao: TopRatedMoviesCacheDao,
     private val topRatedTVDao: TopRatedTVCacheDao,
     private val upcomingMoviesDao: UpcomingMoviesCacheDao,
+    private val recentSearchesDao: RecentSearchesDao,
     @IoDispatcher private val dispatcher: CoroutineDispatcher
 ) : TitlesLocalDataSource {
 
@@ -151,7 +168,10 @@ class TitlesLocalDataSourceImpl @Inject constructor(
 
     override suspend fun checkIfTitleItemWatchlisted(titleItemFull: TitleItemFull): Boolean =
         withContext(dispatcher) {
-            titlesDao.checkIfTitleItemExists(type = titleItemFull.type, mediaId = titleItemFull.mediaId)
+            titlesDao.checkIfTitleItemExists(
+                type = titleItemFull.type,
+                mediaId = titleItemFull.mediaId
+            )
         }
 
     override fun getCachedDiscoverMovies(): PagingSource<Int, TitleItemCacheDiscoverMovieFull> =
@@ -183,4 +203,21 @@ class TitlesLocalDataSourceImpl @Inject constructor(
 
     override fun getCachedUpcomingMovies(): PagingSource<Int, TitleItemCacheUpcomingMovieFull> =
         upcomingMoviesDao.getCachedTitles()
+
+    override fun getRecentSearches(): Flow<List<RecentSearch>> =
+        recentSearchesDao.getRecentSearches()
+            .flowOn(dispatcher)
+            .map { it.toRecentSearchList() }
+
+    override suspend fun saveNewRecentSearch(newSearch: String) = withContext(dispatcher) {
+        if (recentSearchesDao.getCountOfEntries() >= 100) {
+            recentSearchesDao.deleteOldestRecentSearch()
+        }
+        recentSearchesDao.insertRecentSearch(
+            RecentSearchEntity(
+                searchedString = newSearch,
+                searchedDateTime = LocalDateTime.now()
+            )
+        )
+    }
 }

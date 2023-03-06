@@ -71,5 +71,4 @@ interface TitlesDao {
         )
         deleteTitleItemEntity(titleItemEntity)
     }
-
 }

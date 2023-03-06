@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 private const val TAG = "DISCOVER_VIEWMODEL"
+private const val RECENT_SEARCHES_COUNT = 15
 
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 @HiltViewModel
@@ -23,12 +24,18 @@ class DiscoverViewModel @Inject constructor(
     private val titlesManager: TitlesManager
 ) : ViewModel() {
 
-    // TODO: Create a flow of searched in the TitlesManager
     private val recentSearchesFlow: StateFlow<List<String>> =
-        titlesManager.getRecentSearches().stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
+        titlesManager.getRecentSearches()
+            .map { searchesList ->
+                searchesList
+                    .sortedByDescending { it.searchedDateTime }
+                    .map { it.searchedString }
+                    .take(RECENT_SEARCHES_COUNT)
+            }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = emptyList()
         )
 
     // Used to store the search string for when 'Retry' button is clicked

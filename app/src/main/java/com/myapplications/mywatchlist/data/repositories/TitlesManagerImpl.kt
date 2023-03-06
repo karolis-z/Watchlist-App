@@ -177,4 +177,11 @@ class TitlesManagerImpl @Inject constructor(
             is TV -> titleItemsRepository.unBookmarkTitleItem(title.toTitleItemFull())
         }
     }
+
+    override fun getRecentSearches(): Flow<List<RecentSearch>> =
+        titleItemsRepository.getRecentSearches()
+
+    override suspend fun saveNewRecentSearch(newSearch: String) = withContext(dispatcher) {
+        titleItemsRepository.saveNewRecentSearch(newSearch = newSearch)
+    }
 }

@@ -100,4 +100,8 @@ object AppModule {
     @Provides
     fun provideTrendingCacheDao(db: WatchlistDatabase) = db.trendingCacheDao()
 
+    @Singleton
+    @Provides
+    fun provideRecentSearchesDao(db: WatchlistDatabase) = db.recentSearchesDao()
+
 }

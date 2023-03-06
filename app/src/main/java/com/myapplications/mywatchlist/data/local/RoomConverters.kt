@@ -4,10 +4,7 @@ import android.util.Log
 import androidx.room.TypeConverter
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.ZoneOffset
+import java.time.*
 
 private const val TAG = "ROOM_CONVERTERS"
 
@@ -24,6 +21,20 @@ class RoomConverters {
             return null
         } else {
             Instant.ofEpochSecond(timeStamp).atZone(ZoneId.systemDefault()).toLocalDate()
+        }
+    }
+
+    @TypeConverter
+    fun localDateTimeToTimeStamp(date: LocalDateTime?): Long? {
+        return date?.atZone(ZoneOffset.UTC)?.toInstant()?.epochSecond
+    }
+
+    @TypeConverter
+    fun timestampToLocalDateTime(timeStamp: Long?): LocalDateTime? {
+        return if (timeStamp == null) {
+            return null
+        } else {
+            Instant.ofEpochSecond(timeStamp).atZone(ZoneId.systemDefault()).toLocalDateTime()
         }
     }
 

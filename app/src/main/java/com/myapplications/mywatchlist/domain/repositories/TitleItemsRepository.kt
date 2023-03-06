@@ -1,6 +1,7 @@
 package com.myapplications.mywatchlist.domain.repositories
 
 import androidx.paging.PagingData
+import com.myapplications.mywatchlist.domain.entities.RecentSearch
 import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 import com.myapplications.mywatchlist.domain.entities.TitleListFilter
 import com.myapplications.mywatchlist.domain.result.ResultOf
@@ -124,4 +125,14 @@ interface TitleItemsRepository {
      */
     suspend fun getUpcomingMoviesPaginated(filter: TitleListFilter): Flow<PagingData<TitleItemFull>>
 
+
+    /**
+     * @return [Flow] of list of [RecentSearch] which represent what the user has searched for
+     */
+    fun getRecentSearches(): Flow<List<RecentSearch>>
+
+    /**
+     * Inserts a new searched string into the database.
+     */
+    suspend fun saveNewRecentSearch(newSearch: String)
 }
