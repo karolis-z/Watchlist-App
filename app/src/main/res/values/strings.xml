@@ -19,6 +19,8 @@
     <string name="search_not_searched_yet">Let\'s find something to watch!</string>
     <string name="search_nothing_found">Oops… No titles found</string>
     <string name="search_searchfield_label">Search for movies, tv shows…</string>
+    <string name="search_button_custom_filter">Custom Filter</string>
+    <string name="search_label_browse_categories">Browse Categories</string>
 
     <!-- HOME SCREEN -->
     <string name="home_no_data">No data available…</string>

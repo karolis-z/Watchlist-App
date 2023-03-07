@@ -5,32 +5,28 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.isContainer
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -208,7 +204,11 @@ fun DiscoverScreen(
                             listState = rememberLazyListState()
                         )
                     }
-                    false -> SearchScreenContent()
+                    false -> SearchScreenContent(
+                        // TODO: Temporary implementation just to show some content
+                        categoryTiles = listOf("Most Popular Comedies", "Most Popular Action Movies", "Most Popular Dramas", "Most Popular Comedies", "Most Popular Action Movies", "Most Popular Dramas", "Most Popular Comedies", "Most Popular Action Movies", "Most Popular Comedies", "Most Popular Action Movies", "Most Popular Comedies", "Most Popular Action Movies"),
+
+                    )
                 }
             }
         }
@@ -318,15 +318,61 @@ fun SearchViewContent(
 
 @Composable
 fun SearchScreenContent(
+    // TODO: Should later introduce a Tile object here and get info which Tiles to
+    //  display from the data layer
+    categoryTiles: List<String>,
     modifier: Modifier = Modifier
 ) {
-    // TODO:
-    Column(
-        modifier = modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(text = "THIS WILL CONTAIN CUSTOM FILTER & CATEGORY TILES")
+    Column(modifier = modifier.fillMaxSize()) {
+        Spacer(modifier = Modifier.height(24.dp))
+        Button(
+            onClick = { /*TODO*/ },
+            shape = RoundedCornerShape(8.dp),
+            contentPadding = ButtonDefaults.ButtonWithIconContentPadding
+        ) {
+            Icon(
+                imageVector = Icons.Default.Tune,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = stringResource(id = R.string.search_button_custom_filter),
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.padding(bottom = 2.dp)
+            )
+        }
+        Spacer(modifier = Modifier.height(22.dp))
+        Text(
+            text = stringResource(id = R.string.search_label_browse_categories),
+            style = MaterialTheme.typography.displaySmall
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(bottom = 16.dp)
+        ) {
+            items(categoryTiles){ categoryLabel ->
+                CategoryTileCard(label = categoryLabel)
+            }
+        }
+    }
+}
+
+@Composable
+fun CategoryTileCard(
+    label: String,
+    modifier: Modifier = Modifier
+) {
+    Card(modifier = modifier.height(100.dp)) {
+        Text(
+            text = label,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(8.dp)
+        )
     }
 }
 
@@ -370,76 +416,3 @@ fun DiscoverListCenteredErrorMessage(
         }
     }
 }
-
-@OptIn(
-    ExperimentalMaterial3Api::class,
-    ExperimentalComposeUiApi::class,
-    ExperimentalAnimationApi::class
-)
-@Composable
-fun SearchTextField(
-    viewModel: DiscoverViewModel,
-    onSearchClicked: () -> Unit,
-    focusManager: FocusManager,
-    focusRequester: FocusRequester,
-    keyboardController: SoftwareKeyboardController?,
-    modifier: Modifier = Modifier
-) {
-    val searchValue by viewModel.searchString.collectAsState()
-    val showClearButton = searchValue.isNotEmpty()
-
-    TextField(
-        value = searchValue,
-        onValueChange = { viewModel.setSearchString(it) },
-        modifier = modifier
-            .focusRequester(focusRequester)
-            .onFocusChanged {
-                if (it.isFocused) keyboardController?.show()
-            },
-        label = { Text(text = stringResource(id = R.string.search_searchfield_label)) },
-        colors = TextFieldDefaults.textFieldColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent
-        ),
-        shape = MaterialTheme.shapes.medium,
-        singleLine = true,
-        trailingIcon = {
-            AnimatedVisibility(
-                visible = showClearButton,
-                enter = fadeIn() + scaleIn(),
-                exit = fadeOut() + scaleOut()
-            ) {
-                IconButton(onClick = {
-                    viewModel.clearSearch()
-                    focusManager.clearFocus()
-                }) {
-                    Icon(
-                        imageVector = Icons.Default.Clear,
-                        contentDescription = stringResource(id = R.string.cd_clear_field)
-                    )
-                }
-            }
-        },
-        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
-        keyboardActions = KeyboardActions(onSearch = {
-            keyboardController?.hide()
-            onSearchClicked()
-            focusManager.clearFocus()
-        })
-    )
-}
-
-@OptIn(ExperimentalComposeUiApi::class)
-@Preview
-@Composable
-fun SearchTextFieldPreview() {
-    SearchTextField(
-        viewModel = hiltViewModel<DiscoverViewModel>(),
-        onSearchClicked = {},
-        focusManager = LocalFocusManager.current,
-        keyboardController = null,
-        focusRequester = FocusRequester()
-    )
-}
-
