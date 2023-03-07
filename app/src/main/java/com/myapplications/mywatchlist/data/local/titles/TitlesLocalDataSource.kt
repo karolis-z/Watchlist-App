@@ -210,14 +210,21 @@ class TitlesLocalDataSourceImpl @Inject constructor(
             .map { it.toRecentSearchList() }
 
     override suspend fun saveNewRecentSearch(newSearch: String) = withContext(dispatcher) {
-        if (recentSearchesDao.getCountOfEntries() >= 100) {
-            recentSearchesDao.deleteOldestRecentSearch()
-        }
-        recentSearchesDao.insertRecentSearch(
-            RecentSearchEntity(
-                searchedString = newSearch,
-                searchedDateTime = LocalDateTime.now()
+        if (recentSearchesDao.checkIfSearchExists(newSearch)) {
+            val existingRecentSearch = recentSearchesDao.getRecentSearchBySearchText(newSearch)
+            recentSearchesDao.insertRecentSearch(
+                recentSearchEntity = existingRecentSearch.copy(searchedDateTime = LocalDateTime.now())
             )
-        )
+        } else {
+            if (recentSearchesDao.getCountOfEntries() >= 100) {
+                recentSearchesDao.deleteOldestRecentSearch()
+            }
+            recentSearchesDao.insertRecentSearch(
+                RecentSearchEntity(
+                    searchedString = newSearch,
+                    searchedDateTime = LocalDateTime.now()
+                )
+            )
+        }
     }
 }

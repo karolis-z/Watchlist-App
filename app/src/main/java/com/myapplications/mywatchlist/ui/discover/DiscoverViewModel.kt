@@ -8,6 +8,7 @@ import androidx.paging.map
 import com.myapplications.mywatchlist.data.ApiGetTitleItemsExceptions
 import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 import com.myapplications.mywatchlist.domain.repositories.TitlesManager
+import com.myapplications.mywatchlist.ui.components.TitleTypeFilter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -42,6 +43,20 @@ class DiscoverViewModel @Inject constructor(
     private val _searchString = MutableStateFlow("")
     val searchString = _searchString.asStateFlow()
 
+    private val _searchTitleType: MutableStateFlow<TitleTypeFilter> = MutableStateFlow(TitleTypeFilter.All)
+    val searchTitleType = _searchTitleType.asStateFlow()
+
+    /* A pair which holds both the search string and the title type filter value to have one single
+    * state flow that provides all information about what search is being requested from the user */
+    private val searchCriteria: StateFlow<Pair<String, TitleTypeFilter>> =
+        searchString.combine(searchTitleType) { searchString, titleType ->
+            Pair(searchString, titleType)
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = Pair("", TitleTypeFilter.All)
+        )
+
     private lateinit var titlesFlow: Flow<PagingData<TitleItemFull>>
 
     private val watchlistedTitles = titlesManager.allWatchlistedTitleItems()
@@ -49,13 +64,12 @@ class DiscoverViewModel @Inject constructor(
     val searchViewState: StateFlow<SearchViewState> =
         combine(
             recentSearchesFlow,
-            searchString
-        ) { recentSearched, searchString ->
-            if (searchString.isBlank()) {
+            searchCriteria
+        ) { recentSearched, searchCriteria ->
+            if (searchCriteria.first.isBlank()) {
                 SearchViewState.ShowingRecent(recentSearched = recentSearched)
             } else {
                 SearchViewState.Ready(titles = titlesFlow)
-
             }
         }.stateIn(
             scope = viewModelScope,
@@ -70,10 +84,17 @@ class DiscoverViewModel @Inject constructor(
 
     private fun initializeSearch() {
         viewModelScope.launch {
-            titlesFlow = searchString
+            titlesFlow = searchCriteria
                 .debounce(400)
-                .flatMapLatest { searchString ->
-                    titlesManager.searchAllPaginated(query = searchString)
+                .flatMapLatest { searchCriteria ->
+                    when (searchCriteria.second) {
+                        TitleTypeFilter.All ->
+                            titlesManager.searchAllPaginated(query = searchCriteria.first)
+                        TitleTypeFilter.Movies ->
+                            titlesManager.searchMoviesPaginated(query = searchCriteria.first)
+                        TitleTypeFilter.TV ->
+                            titlesManager.searchTVPaginated(query = searchCriteria.first)
+                    }
                         .cachedIn(viewModelScope)
                         .combine(watchlistedTitles) { pagingData, watchlistedTitles ->
                             pagingData.map { pagedTitle ->
@@ -122,11 +143,26 @@ class DiscoverViewModel @Inject constructor(
         _searchString.update { value }
     }
 
+    fun setTitleTypeFilter(filter: TitleTypeFilter) {
+        _searchTitleType.update { filter }
+    }
+
     fun clearSearch() {
         _searchString.update { "" }
     }
 
-    fun retrySearch() {
-        initializeSearch()
+    fun onSearchClicked() {
+        /* If user typed in a space (or multiple spaces) but no actual characters then we can
+        * consider search not being performed and we can make the searchString empty so that
+        * SearchBar shows the hint text again once search view is exited */
+        if (searchString.value.isBlank() && searchString.value.isNotEmpty()) {
+            _searchString.update { "" }
+        }
+        // Saving the most recent search to database of recent searches
+        if (searchString.value.isNotBlank()) {
+            viewModelScope.launch {
+                titlesManager.saveNewRecentSearch(searchString.value)
+            }
+        }
     }
 }

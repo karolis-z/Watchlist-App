@@ -34,6 +34,10 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
     * and then navigates back so that we can know that user got back and we don't need to refresh
     * the search results */
     private var lastSuccessfulQuery: String = ""
+    /* lastSuccessfulSearchRequestType is used to store last used request type so that in case query
+    * is the same, but request type is different - a refresh will be called because it means user
+    * wants to search for a different category of titles (movies, tv or both) but with the same text */
+    private var lastSuccessfulSearchRequestType: TitleItemsRequestType? = null
 
     override fun getDiscoverMovieRemoteMediator(
         filter: TitleListFilter,
@@ -352,7 +356,6 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
                     ?: return RemoteMediator.MediatorResult.Success(endOfPaginationReached = remoteKeys != null)
             }
         }
-
         val apiResult = when (requestType) {
             is TitleItemsRequestType.DiscoverMovies ->
                 titlesRemoteDataSource.getDiscoverMovies(
@@ -502,6 +505,7 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
                             createdOn = Instant.now().toEpochMilli()
                         )
                         lastSuccessfulQuery = requestType.query
+                        lastSuccessfulSearchRequestType = requestType
                     }
                     is TitleItemsRequestType.SearchMovies -> {
                         database.searchMoviesCacheDao().insertCachedTrendingItems(
@@ -512,6 +516,7 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
                             createdOn = Instant.now().toEpochMilli()
                         )
                         lastSuccessfulQuery = requestType.query
+                        lastSuccessfulSearchRequestType = requestType
                     }
                     is TitleItemsRequestType.SearchTV -> {
                         database.searchTvCacheDao().insertCachedTrendingItems(
@@ -522,6 +527,7 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
                             createdOn = Instant.now().toEpochMilli()
                         )
                         lastSuccessfulQuery = requestType.query
+                        lastSuccessfulSearchRequestType = requestType
                     }
                     is TitleItemsRequestType.TopRatedMovies -> {
                         database.topRatedMoviesCacheDao().insertCachedTrendingItems(
@@ -653,25 +659,32 @@ class TitlesRemoteMediatorProviderImpl @Inject constructor(
                 }
             }
             /* For search - we will always launch new requests except for when the
-            lastSuccessfulQuery matches the requestType.query which will happen when user clicks on
-            a title and then navigates back to the search results. Then we need to display the
-            cached data again so that user doesn't have to search again. */
+            lastSuccessfulQuery matches the requestType.query but does NOT equal the last
+            requestType (when same query text is called but for different a search list) which will
+            happen when user clicks on a title and then navigates back to the search results. Then
+            we need to display the cached data again so that user doesn't have to search again. */
             is TitleItemsRequestType.SearchAll -> {
-                if (requestType.query == lastSuccessfulQuery) {
+                if (requestType.query == lastSuccessfulQuery &&
+                    requestType == lastSuccessfulSearchRequestType
+                ) {
                     RemoteMediator.InitializeAction.SKIP_INITIAL_REFRESH
                 } else {
                     RemoteMediator.InitializeAction.LAUNCH_INITIAL_REFRESH
                 }
             }
             is TitleItemsRequestType.SearchMovies -> {
-                if (requestType.query == lastSuccessfulQuery) {
+                if (requestType.query == lastSuccessfulQuery &&
+                    requestType == lastSuccessfulSearchRequestType
+                ) {
                     RemoteMediator.InitializeAction.SKIP_INITIAL_REFRESH
                 } else {
                     RemoteMediator.InitializeAction.LAUNCH_INITIAL_REFRESH
                 }
             }
             is TitleItemsRequestType.SearchTV -> {
-                if (requestType.query == lastSuccessfulQuery) {
+                if (requestType.query == lastSuccessfulQuery &&
+                    requestType == lastSuccessfulSearchRequestType
+                ) {
                     RemoteMediator.InitializeAction.SKIP_INITIAL_REFRESH
                 } else {
                     RemoteMediator.InitializeAction.LAUNCH_INITIAL_REFRESH

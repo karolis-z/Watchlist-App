@@ -21,4 +21,10 @@ interface RecentSearchesDao {
     )
     suspend fun deleteOldestRecentSearch()
 
+    @Query("SELECT EXISTS(SELECT * FROM recent_searches " +
+            "WHERE searchedString = :searchText COLLATE NOCASE)")
+    suspend fun checkIfSearchExists(searchText: String): Boolean
+
+    @Query("SELECT * FROM recent_searches WHERE searchedString = :searchText COLLATE NOCASE")
+    suspend fun getRecentSearchBySearchText(searchText: String): RecentSearchEntity
 }

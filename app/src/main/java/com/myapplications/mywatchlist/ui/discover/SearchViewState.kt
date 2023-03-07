@@ -8,8 +8,6 @@ import kotlinx.coroutines.flow.Flow
 sealed class SearchViewState {
     data class ShowingRecent(val recentSearched: List<String>) : SearchViewState()
     data class Ready(val titles: Flow<PagingData<TitleItemFull>>) : SearchViewState()
-    object Loading : SearchViewState()
-    data class Error(val error: SearchViewError) : SearchViewState()
 }
 
 enum class SearchViewError : UiError {
