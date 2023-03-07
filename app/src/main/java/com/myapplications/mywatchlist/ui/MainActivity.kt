@@ -1,7 +1,6 @@
 package com.myapplications.mywatchlist.ui
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.StringRes
@@ -21,7 +20,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
@@ -293,7 +291,6 @@ class MainActivity : ComponentActivity() {
                                 getExitTransition(initialState, targetState, true)
                             }
                         ) {
-                            Log.d(TAG, "onCreate: padding passed to Search screen. top =${paddingValues.calculateTopPadding()}. bottom = ${paddingValues.calculateBottomPadding()}. start = ${paddingValues.calculateLeftPadding(LayoutDirection.Ltr)}. end = ${paddingValues.calculateRightPadding(LayoutDirection.Ltr)}}")
                             DiscoverScreen(
                                 placeHolderPoster = placeholderPoster,
                                 onTitleClicked = { title ->
@@ -301,7 +298,12 @@ class MainActivity : ComponentActivity() {
                                             "/${title.mediaId}&${title.type.name}")
                                 },
                                 paddingValues = paddingValues,
-//                                modifier = Modifier.padding(paddingValues)
+                                onCustomFilterClicked = {
+                                    navController.navigate(
+                                        route = OtherScreens.TitleList.route +
+                                                "/${TitleListType.DiscoverMovies.name}"
+                                    )
+                                }
                             )
                         }
                         composable(

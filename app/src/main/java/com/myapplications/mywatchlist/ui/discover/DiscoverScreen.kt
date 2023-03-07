@@ -38,7 +38,6 @@ import com.myapplications.mywatchlist.R
 import com.myapplications.mywatchlist.domain.entities.TitleItemFull
 import com.myapplications.mywatchlist.ui.components.*
 import com.myapplications.mywatchlist.ui.entities.UiError
-import com.myapplications.mywatchlist.ui.titlelist.*
 
 private const val TAG = "SEARCH_SCREEN"
 private val SearchBarVerticalPadding: Dp = 8.dp
@@ -50,9 +49,10 @@ private val SearchBarHeight: Dp = 56.dp
 )
 @Composable
 fun DiscoverScreen(
+    paddingValues: PaddingValues,
     placeHolderPoster: Painter,
     onTitleClicked: (TitleItemFull) -> Unit,
-    paddingValues: PaddingValues,
+    onCustomFilterClicked: () -> Unit,
     modifier: Modifier = Modifier,
     systemUiController: SystemUiController = rememberSystemUiController()
 ) {
@@ -207,7 +207,7 @@ fun DiscoverScreen(
                     false -> SearchScreenContent(
                         // TODO: Temporary implementation just to show some content
                         categoryTiles = listOf("Most Popular Comedies", "Most Popular Action Movies", "Most Popular Dramas", "Most Popular Comedies", "Most Popular Action Movies", "Most Popular Dramas", "Most Popular Comedies", "Most Popular Action Movies", "Most Popular Comedies", "Most Popular Action Movies", "Most Popular Comedies", "Most Popular Action Movies"),
-
+                        onCustomFilterClicked = onCustomFilterClicked
                     )
                 }
             }
@@ -320,13 +320,14 @@ fun SearchViewContent(
 fun SearchScreenContent(
     // TODO: Should later introduce a Tile object here and get info which Tiles to
     //  display from the data layer
+    onCustomFilterClicked: () -> Unit,
     categoryTiles: List<String>,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         Spacer(modifier = Modifier.height(24.dp))
         Button(
-            onClick = { /*TODO*/ },
+            onClick = onCustomFilterClicked,
             shape = RoundedCornerShape(8.dp),
             contentPadding = ButtonDefaults.ButtonWithIconContentPadding
         ) {
