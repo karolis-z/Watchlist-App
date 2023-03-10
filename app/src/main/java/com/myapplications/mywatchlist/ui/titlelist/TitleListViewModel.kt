@@ -68,6 +68,21 @@ class TitleListViewModel @Inject constructor(
             } else {
                 titleListType = TitleListType.valueOf(titleListTypeString)
                 _screenTitle.update { titleListType }
+                /* Setting the filter's TitleType based on list type on init. For some lists the
+                title type can change by filtering, for some - it can't. */
+                val titleType = when (titleListType) {
+                    TitleListType.PopularMovies,
+                    TitleListType.PopularTV,
+                    TitleListType.TopRatedMovies,
+                    TitleListType.TopRatedTV,
+                    TitleListType.UpcomingMovies,
+                    null -> null
+                    TitleListType.DiscoverMovies -> TitleType.MOVIE
+                    TitleListType.DiscoverTV -> TitleType.TV
+                }
+                if (titleType != null) {
+                    _filterState.update { it.copy(titleType = titleType) }
+                }
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to get TitleListType from savedStateHandle. Reason: $e", e)
@@ -99,20 +114,32 @@ class TitleListViewModel @Inject constructor(
                         TitleListType.UpcomingMovies -> titlesManager.getUpcomingMoviesPaginated(
                             filter = filter.toTitleListFilter()
                         )
-                        TitleListType.DiscoverMovies -> titlesManager.getDiscoverMoviesPaginated(
-                            filter = filter.toTitleListFilter(
-                                sortByParameter = filter.sortByApiParam?.toSortByParameter(
-                                    titleType = TitleType.MOVIE
+                        /* If the TitleListType is either one of the Discover types, then the user
+                        should have the option to change to discover TV or Movies and that should be
+                        set in the filterState. The initially set screenTitle will not get changed,
+                        but filterState will and so we should determine which query to call based
+                        on that state.
+                        If listType happens to be null (but it shouldn't), default to search for
+                        movies */
+                        TitleListType.DiscoverMovies,
+                        TitleListType.DiscoverTV -> {
+                            when(filter.titleType) {
+                                TitleType.MOVIE, null -> titlesManager.getDiscoverMoviesPaginated(
+                                    filter = filter.toTitleListFilter(
+                                        sortByParameter = filter.sortByApiParam?.toSortByParameter(
+                                            titleType = TitleType.MOVIE
+                                        )
+                                    )
                                 )
-                            )
-                        )
-                        TitleListType.DiscoverTV -> titlesManager.getDiscoverTVPaginated(
-                            filter = filter.toTitleListFilter(
-                                sortByParameter = filter.sortByApiParam?.toSortByParameter(
-                                    titleType = TitleType.TV
+                                TitleType.TV -> titlesManager.getDiscoverTVPaginated(
+                                    filter = filter.toTitleListFilter(
+                                        sortByParameter = filter.sortByApiParam?.toSortByParameter(
+                                            titleType = TitleType.TV
+                                        )
+                                    )
                                 )
-                            )
-                        )
+                            }
+                        }
                     }
                 }.cachedIn(viewModelScope)
                     .combine(watchlistedTitles) { pagingData, watchlistedTitles ->
@@ -179,6 +206,35 @@ class TitleListViewModel @Inject constructor(
                 sortByApiParam = filter.sortByApiParam
             )
         }
+    }
+
+    /**
+     * Updates the [filterState] with a newly select range of release years for the list
+     */
+    fun setYearsRangeFilter(range: Pair<Int, Int>) {
+        _filterState.update { it.copy(yearsRange = range) }
+    }
+
+    /**
+     * Updates the [filterState] with a newly select range of scores for the list
+     */
+    fun setScoreRangeFilter(range: Pair<Int, Int>) {
+        _filterState.update { it.copy(scoreRange = range) }
+    }
+
+    /**
+     * Updates the [filterState] with a newly select list of [Genre]s. Pass [emptyList] if list
+     * shouldn't filter by any genre.
+     */
+    fun setGenresFilter(genres: List<Genre>) {
+        _filterState.update { it.copy(genres = genres) }
+    }
+
+    /**
+     * Updates the [filterState] with a newly select type of titles for the list
+     */
+    fun setTitleTypeFilter(titleType: TitleType) {
+        _filterState.update { it.copy(titleType = titleType) }
     }
 
     /**

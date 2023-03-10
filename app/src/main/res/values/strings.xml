@@ -42,11 +42,12 @@
     <string name="titlelist_no_data">No data available…</string>
     <string name="titlelist_filter_label_all_filters">All Filters</string>
     <string name="titlelist_filter_button_apply">Show Results</string>
-    <string name="titlelist_filter_button_clear">Reset All</string>
+    <string name="titlelist_filter_button_clear_all">Reset All</string>
+    <string name="titlelist_filter_button_clear">Reset</string>
     <string name="titlelist_filter_label_genres">Genres</string>
-    <string name="titlelist_filter_label_score">Score</string>
-    <string name="titlelist_filter_label_release_year">Release Year</string>
-    <string name="titlelist_filter_label_type">Type</string>
+    <string name="titlelist_filter_label_score">Score Range</string>
+    <string name="titlelist_filter_label_release_year">Year Range</string>
+    <string name="titlelist_filter_label_type">Title Type</string>
 
     <!-- DETAILS SCREEN -->
     <string name="details_summary_label">Summary</string>
@@ -115,7 +116,7 @@
     <!-- FILTER LABELS -->
     <string name="filter_all">All</string>
     <string name="filter_movies">Movies</string>
-    <string name="filter_tv">TV</string>
+    <string name="filter_tv">TV Shows</string>
 
     <!-- CONTENT DESCRIPTIONS -->
     <string name="cd_home_icon">Home</string>
