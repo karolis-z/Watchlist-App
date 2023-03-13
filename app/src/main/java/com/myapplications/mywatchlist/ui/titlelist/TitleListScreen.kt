@@ -14,9 +14,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextDecoration
@@ -37,6 +38,7 @@ import com.myapplications.mywatchlist.ui.entities.UiError
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
+private val AppBarHeight = 64.dp
 private const val TAG = "TITLE_LIST_SCREEN"
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,18 +58,51 @@ fun TitleListScreen(
     val titleListUiState by viewModel.titleListState.collectAsState()
     val filterState by viewModel.filterState.collectAsState()
 
-    val showFilterState = rememberDrawerState(initialValue = DrawerValue.Closed)
-
     val navigationBarPadding = contentPadding.calculateBottomPadding()
 
     var showFullFilterBottomSheet by rememberSaveable { mutableStateOf(false) }
     val skipHalfExpanded by remember { mutableStateOf(true) }
-    val fullFilterBottomSheetState = rememberSheetState(skipHalfExpanded = skipHalfExpanded)
+    val fullFilterBottomSheetState = rememberSheetState(
+        skipHalfExpanded = skipHalfExpanded,
+        /* For some reason when bottomsheet is closed by dragging NOT by the handle, onDismissRequest
+        * is not called and showFullFilterBottomSheet doesn't get changed to false. Using this
+        * confirmValueChange callback to set showFullFilterBottomSheet to false in such cases so
+        * that the bottom sheet doesn't freeze when 'incorrectly' closed */
+        confirmValueChange = {
+            if (it == SheetValue.Hidden && showFullFilterBottomSheet) {
+                showFullFilterBottomSheet = false 
+                false
+            } else {
+                true
+            }
+        }
+    )
 
     var showIndividualFilterBottomSheet by rememberSaveable { mutableStateOf(false) }
-    val individualFilterBottomSheetState = rememberSheetState(skipHalfExpanded = false)
-    var individualFilterTypeToShow: FilterBottomSheetType? by remember {
-        mutableStateOf<FilterBottomSheetType?>(null)
+    val individualFilterBottomSheetState = rememberSheetState(
+        skipHalfExpanded = true,
+        /* For some reason when bottomsheet is closed by dragging NOT by the handle, onDismissRequest
+        * is not called and showIndividualFilterBottomSheet doesn't get changed to false. Using this
+        * confirmValueChange callback to set showIndividualFilterBottomSheet to false in such cases
+        * so that the bottom sheet doesn't freeze when 'incorrectly' closed */
+        confirmValueChange = {
+            if (it == SheetValue.Hidden && showIndividualFilterBottomSheet) {
+                showIndividualFilterBottomSheet = false
+                false
+            } else {
+                true
+            }
+        }
+    )
+    var individualFilterTypeToShow: FilterBottomSheetType? by remember { mutableStateOf(null) }
+
+    fun closeIndividualBottomSheet() {
+        scope.launch { individualFilterBottomSheetState.hide() }
+            .invokeOnCompletion {
+                if (!individualFilterBottomSheetState.isVisible) {
+                    showIndividualFilterBottomSheet = false
+                }
+            }
     }
 
     Scaffold(
@@ -78,7 +113,7 @@ fun TitleListScreen(
         }
     ) { paddingValues ->
         BoxWithConstraints(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize()
                 .padding(
                     start = 16.dp,
@@ -108,12 +143,7 @@ fun TitleListScreen(
                             onRetryEntireListClick = { viewModel.retryGetData() },
                             onWatchlistClicked = viewModel::onWatchlistClicked,
                             onTitleClicked = onTitleClicked,
-                            onAllFiltersClicked = {
-                                scope.launch {
-//                                    showFilterState.open()
-                                    showFullFilterBottomSheet = !showFullFilterBottomSheet
-                                }
-                            },
+                            onAllFiltersClicked = { showFullFilterBottomSheet = true },
                             onIndividualFilterButtonClicked = {
                                 individualFilterTypeToShow = it
                                 showIndividualFilterBottomSheet = true
@@ -124,27 +154,68 @@ fun TitleListScreen(
                     }
                 }
             }
+
             if (showFullFilterBottomSheet) {
                 ModalBottomSheet(
                     onDismissRequest = { showFullFilterBottomSheet = false },
-                    sheetState = fullFilterBottomSheetState
+                    sheetState = fullFilterBottomSheetState,
+                    shape = RectangleShape,
+                    dragHandle = null
                 ) {
-                    FullFilterBottomSheetContent(
-                        filterState = filterState ,
-                        defaultScoreRange = TitleListUiFilter().getScoreRange(),
-                        defaultYearsRange = TitleListUiFilter().getYearsRange(),
-                        allGenres = viewModel.getAllGenres(),
-                        onFilterApplied = {
-                            viewModel.setFilter(it)
-                            scope.launch { showFullFilterBottomSheet = false }
-                        },
-                        onCloseClicked = {
-                            scope.launch { showFullFilterBottomSheet = false }
-                        },
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
+                    Column(modifier = Modifier) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 4.dp)
+                                .height(AppBarHeight)
+                        ) {
+                            IconButton(
+                                onClick = {
+                                    scope.launch { fullFilterBottomSheetState.hide() }
+                                        .invokeOnCompletion {
+                                            if (!fullFilterBottomSheetState.isVisible) {
+                                                showFullFilterBottomSheet = false
+                                            }
+                                        }
+                                },
+                                modifier = Modifier.align(Alignment.CenterStart)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ExpandMore,
+                                    contentDescription = stringResource(id = R.string.cd_close_filter),
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                            Text(
+                                text = stringResource(id = R.string.titlelist_filter_label_all_filters),
+                                style = MaterialTheme.typography.titleLarge,
+                                modifier = Modifier
+                                    .padding(bottom = 2.dp)
+                                    .align(Alignment.Center)
+                            )
+                        }
+                        FullFilterBottomSheetContent(
+                            filterState = filterState,
+                            defaultScoreRange = filterState.getDefaultScoreRange(),
+                            defaultYearsRange = filterState.getDefaultYearsRange(),
+                            allGenres = viewModel.getAllGenres(),
+                            onFilterApplied = {
+                                viewModel.setFilter(it)
+                                scope.launch { fullFilterBottomSheetState.hide() }
+                                    .invokeOnCompletion {
+                                        if (!fullFilterBottomSheetState.isVisible) {
+                                            showFullFilterBottomSheet = false
+                                        }
+                                    }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                        )
+                    }
                 }
             }
+
             if (showIndividualFilterBottomSheet) {
                 ModalBottomSheet(
                     onDismissRequest = { showIndividualFilterBottomSheet = false },
@@ -158,23 +229,21 @@ fun TitleListScreen(
                             defaultYearsRange = TitleListUiFilter().getYearsRange(),
                             onYearsRangeFilterApplied = {
                                 viewModel.setYearsRangeFilter(it)
-                                scope.launch { showIndividualFilterBottomSheet = false }
+                                closeIndividualBottomSheet()
                             },
                             onScoreRangeFilterApplied = {
                                 viewModel.setScoreRangeFilter(it)
-                                scope.launch { showIndividualFilterBottomSheet = false }
+                                closeIndividualBottomSheet()
                             },
                             onGenresFilterApplied = {
                                 viewModel.setGenresFilter(it)
-                                scope.launch { showIndividualFilterBottomSheet = false }
+                                closeIndividualBottomSheet()
                             },
                             onTitleTypeFilterApplied = {
                                 viewModel.setTitleTypeFilter(it)
-                                scope.launch { showIndividualFilterBottomSheet = false }
+                                closeIndividualBottomSheet()
                             },
-                            onCloseFilterClicked = {
-                                scope.launch { showIndividualFilterBottomSheet = false }
-                            },
+                            onCloseFilterClicked = { closeIndividualBottomSheet() },
                             allGenres = viewModel.getAllGenres(),
                             modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
                         )
@@ -183,53 +252,8 @@ fun TitleListScreen(
             }
         }
     }
-
-//    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-//        ModalNavigationDrawer(
-//            modifier = modifier,
-//            drawerState = showFilterState,
-//            drawerContent = {
-//                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-//                    BoxWithConstraints {
-//                        val defaultFilter = TitleListUiFilter()
-//                        /* Need to have the FilterSection invisible when it's closed because during
-//                        * transition of 'sliding to the left' it is briefly visible because it
-//                        * actually exists on the right side of this screen when closed */
-//                        if (showFilterState.isAnimationRunning || showFilterState.isOpen) {
-//                            FilterSection(
-//                                modifier = Modifier
-//                                    .width((maxWidth.value * 0.7).dp)
-//                                    .statusBarsPadding(),
-//                                filterState = filterState,
-//                                defaultScoreRange = defaultFilter.getScoreRange(),
-//                                defaultYearsRange = defaultFilter.getYearsRange(),
-//                                allGenres = viewModel.getAllGenres(),
-//                                onFilterApplied = {
-//                                    viewModel.setFilter(it)
-//                                    scope.launch {
-//                                        showFilterState.close()
-//                                    }
-//                                },
-//                                onCloseClicked = {
-//                                    scope.launch {
-//                                        showFilterState.close()
-//                                    }
-//                                }
-//                            )
-//                        }
-//                    }
-//                }
-//            }
-//        ) {
-//            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-//
-//            }
-//        }
-//    }
-
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TitleListScreenContentNew(
     titlesList: LazyPagingItems<TitleItemFull>,
@@ -252,7 +276,7 @@ fun TitleListScreenContentNew(
             onAllFiltersClicked = onAllFiltersClicked,
             onIndividualFilterButtonClicked = onIndividualFilterButtonClicked
         )
-
+        Spacer(modifier = Modifier.height(8.dp))
         TitleItemsListPaginated(
             titles = titlesList,
             error = error,
@@ -278,7 +302,6 @@ fun FullFilterBottomSheetContent(
     defaultYearsRange: ClosedFloatingPointRange<Float>,
     allGenres: List<Genre>,
     onFilterApplied: (TitleListUiFilter) -> Unit,
-    onCloseClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var titleTypeFilterSelected by remember { mutableStateOf(filterState.titleType) }
@@ -301,134 +324,152 @@ fun FullFilterBottomSheetContent(
         }
     }
 
-    Column(modifier = modifier
-        .fillMaxWidth()
-        .verticalScroll(rememberScrollState())) {
-        Box(modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight()) {
-            Row(modifier = Modifier
+    Column(modifier = modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
                 .fillMaxWidth()
-                .align(Alignment.Center), horizontalArrangement = Arrangement.Center){
-                Text(text = stringResource(id = R.string.titlelist_filter_label_all_filters), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 2.dp))
-            }
-            IconButton(onClick = onCloseClicked, modifier = modifier.padding(start = 30.dp)) {
-                Icon(imageVector = Icons.Default.Close, contentDescription = stringResource(id = R.string.cd_close_filter))
-            }
-        }
-        // TITLE TYPE 
-        /* null value for filterState.titleType means this titles list will not have the option to
-        be filtered differently based on title type, and so we shouldn't show the filter chips */
-        if (filterState.titleType != null) {
-            Divider(modifier = Modifier.padding(vertical = 5.dp))
-            FilterLabel(label = stringResource(id = R.string.titlelist_filter_label_type))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                FilterChip(
-                    label = {
-                        Text(
-                            text = stringResource(id = R.string.filter_movies),
-                            modifier = Modifier.padding(bottom = 2.dp)
-                        )
-                    },
-                    selected = (titleTypeFilterSelected == TitleType.MOVIE),
-                    onClick = {
-                        if (titleTypeFilterSelected != TitleType.MOVIE) {
-                            titleTypeFilterSelected = TitleType.MOVIE
-                        }
-                    }
-                )
-                FilterChip(
-                    label = { 
-                        Text(
-                            text = stringResource(id = R.string.filter_tv),
-                            modifier = Modifier.padding(bottom = 2.dp)
-                        )
-                    },
-                    selected = (titleTypeFilterSelected == TitleType.TV),
-                    onClick = {
-                        if (titleTypeFilterSelected != TitleType.TV) {
-                            titleTypeFilterSelected = TitleType.TV
-                        }
-                    }
-                )
-            }
-        }
-        Divider(modifier = Modifier.padding(vertical = 5.dp))
-        
-        // YEARS RANGE
-        FilterLabel(label = stringResource(id = R.string.titlelist_filter_label_release_year))
-        Spacer(modifier = Modifier.height(5.dp))
-        SliderValueBoxRow(
-            fromText = "From",  // TODO: Stringresource once design is finalized
-            toText = "To",  // TODO: Stringresource once design is finalized
-            fromValue = { yearsRange.start.roundToInt().toString() },
-            toValue = { yearsRange.endInclusive.roundToInt().toString() }
-        )
-        RangeSlider(
-            value = yearsRange,
-            onValueChange = { yearsRange = it },
-            valueRange = defaultYearsRange,
-            modifier = Modifier.fillMaxWidth()
-        )
-        Divider(modifier = Modifier.padding(vertical = 5.dp))
-        
-        // SCORE RANGE
-        FilterLabel(label = stringResource(id = R.string.titlelist_filter_label_score))
-        Spacer(modifier = Modifier.height(5.dp))
-        SliderValueBoxRow(
-            fromText = "From",  // TODO: Stringresource once design is finalized
-            toText = "To",  // TODO: Stringresource once design is finalized
-            fromValue = { scoreRange.start.roundToInt().toString() },
-            toValue = { scoreRange.endInclusive.roundToInt().toString() }
-        )
-        RangeSlider(
-            value = scoreRange,
-            onValueChange = { scoreRange = it },
-            valueRange = defaultScoreRange,
-            modifier = Modifier.fillMaxWidth()
-        )
-        Divider(modifier = Modifier.padding(vertical = 5.dp))
-        
-        // GENRES
-        FilterLabel(label = stringResource(id = R.string.titlelist_filter_label_genres))
-        LazyColumn(modifier = Modifier.height(600.dp)) {
-            items(allGenres) { genre ->
+                .verticalScroll(rememberScrollState())
+                .weight(1f)
+        ) {
+            // LABEL AND CLOSE BUTTON
+//            Box(
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .wrapContentHeight()
+//            ) {
+//                Row(
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .align(Alignment.Center),
+//                    horizontalArrangement = Arrangement.Center
+//                ) {
+//                    Text(
+//                        text = stringResource(id = R.string.titlelist_filter_label_all_filters),
+//                        style = MaterialTheme.typography.titleLarge,
+//                        modifier = Modifier.padding(bottom = 2.dp)
+//                    )
+//                }
+//                IconButton(onClick = onCloseClicked, modifier = modifier.padding(start = 30.dp)) {
+//                    Icon(
+//                        imageVector = Icons.Default.Close,
+//                        contentDescription = stringResource(id = R.string.cd_close_filter)
+//                    )
+//                }
+//            }
+
+            // TITLE TYPE
+            /* null value for filterState.titleType means this titles list will not have the option to
+            be filtered differently based on title type, and so we shouldn't show the filter chips */
+            if (filterState.titleType != null) {
+                Divider(modifier = Modifier.padding(vertical = 5.dp))
+                FilterLabel(label = stringResource(id = R.string.titlelist_filter_label_type))
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                        .clip(RoundedCornerShape(25))
-                        .padding(start = 8.dp, end = 8.dp)
-                        .clickable {
-                            if (selectedGenres.contains(genre)) {
-                                selectedGenres.remove(genre)
-                            } else {
-                                selectedGenres.add(genre)
-                            }
-                        },
-                    verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    Text(text = genre.name)
-                    Spacer(modifier = Modifier.weight(1f))
-                    Checkbox(checked = selectedGenres.contains(genre), onCheckedChange = {
-                        if (it) selectedGenres.add(genre) else selectedGenres.remove(genre)
-                    })
+                    FilterChip(
+                        label = {
+                            Text(
+                                text = stringResource(id = R.string.filter_movies),
+                                modifier = Modifier.padding(bottom = 2.dp)
+                            )
+                        },
+                        selected = (titleTypeFilterSelected == TitleType.MOVIE),
+                        onClick = {
+                            if (titleTypeFilterSelected != TitleType.MOVIE) {
+                                titleTypeFilterSelected = TitleType.MOVIE
+                            }
+                        }
+                    )
+                    FilterChip(
+                        label = {
+                            Text(
+                                text = stringResource(id = R.string.filter_tv),
+                                modifier = Modifier.padding(bottom = 2.dp)
+                            )
+                        },
+                        selected = (titleTypeFilterSelected == TitleType.TV),
+                        onClick = {
+                            if (titleTypeFilterSelected != TitleType.TV) {
+                                titleTypeFilterSelected = TitleType.TV
+                            }
+                        }
+                    )
+                }
+            }
+            Divider(modifier = Modifier.padding(vertical = 5.dp))
+
+            // YEARS RANGE
+            FilterLabel(label = stringResource(id = R.string.titlelist_filter_label_release_year))
+            Spacer(modifier = Modifier.height(5.dp))
+            SliderValueBoxRow(
+                fromText = "From",  // TODO: Stringresource once design is finalized
+                toText = "To",  // TODO: Stringresource once design is finalized
+                fromValue = { yearsRange.start.roundToInt().toString() },
+                toValue = { yearsRange.endInclusive.roundToInt().toString() }
+            )
+            RangeSlider(
+                value = yearsRange,
+                onValueChange = { yearsRange = it },
+                valueRange = defaultYearsRange,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Divider(modifier = Modifier.padding(vertical = 5.dp))
+
+            // SCORE RANGE
+            FilterLabel(label = stringResource(id = R.string.titlelist_filter_label_score))
+            Spacer(modifier = Modifier.height(5.dp))
+            SliderValueBoxRow(
+                fromText = "From",  // TODO: Stringresource once design is finalized
+                toText = "To",  // TODO: Stringresource once design is finalized
+                fromValue = { scoreRange.start.roundToInt().toString() },
+                toValue = { scoreRange.endInclusive.roundToInt().toString() }
+            )
+            RangeSlider(
+                value = scoreRange,
+                onValueChange = { scoreRange = it },
+                valueRange = defaultScoreRange,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Divider(modifier = Modifier.padding(vertical = 5.dp))
+
+            // GENRES
+            FilterLabel(label = stringResource(id = R.string.titlelist_filter_label_genres))
+            LazyColumn(modifier = Modifier.height(600.dp)) {
+                items(allGenres) { genre ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .clip(RoundedCornerShape(25))
+                            .padding(start = 8.dp, end = 8.dp)
+                            .clickable {
+                                if (selectedGenres.contains(genre)) {
+                                    selectedGenres.remove(genre)
+                                } else {
+                                    selectedGenres.add(genre)
+                                }
+                            },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = genre.name)
+                        Spacer(modifier = Modifier.weight(1f))
+                        Checkbox(checked = selectedGenres.contains(genre), onCheckedChange = {
+                            if (it) selectedGenres.add(genre) else selectedGenres.remove(genre)
+                        })
+                    }
                 }
             }
         }
-        Divider(modifier = Modifier.padding(vertical = 5.dp))
-        
-        // BUTTONS
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = {
+        Divider(modifier = Modifier.padding(top = 8.dp))
+        ResetAllAndApplyFilterButtonsRow(
+            onResetFilterClicked = {
                 scoreRange = defaultScoreRange
                 yearsRange = defaultYearsRange
                 selectedGenres.removeAll(selectedGenres)
                 titleTypeFilterSelected = filterState.titleType
-            }) {
-                Text(text = stringResource(id = R.string.titlelist_filter_button_clear_all), textDecoration = TextDecoration.Underline, modifier = Modifier.padding(bottom = 2.dp))
-            }
-            Button(onClick = {
+            },
+            onFilterAppliedClicked = {
                 val mFilter = TitleListUiFilter(
                     genres = selectedGenres,
                     scoreRange = Pair(
@@ -442,11 +483,13 @@ fun FullFilterBottomSheetContent(
                     )
                 )
                 onFilterApplied(mFilter)
-            }) {
-                Text(text = stringResource(id = R.string.titlelist_filter_button_apply), modifier = Modifier.padding(bottom = 2.dp))
-            }
-        }
-        Spacer(modifier = Modifier.height(16.dp))
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 12.dp, top = 12.dp),
+            resetButtonText = stringResource(id = R.string.titlelist_filter_button_clear_all),
+            applyFilterButtonText = stringResource(id = R.string.titlelist_filter_button_apply)
+        )
     }
 }
 
@@ -464,10 +507,7 @@ fun IndividualBottomSheetContent(
     allGenres: List<Genre>,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier
-        .fillMaxWidth()
-//        .verticalScroll(rememberScrollState())
-    ){
+    Column(modifier = modifier.fillMaxWidth()){
         when (filterBottomSheetType) {
             FilterBottomSheetType.YearsRange -> {
                 RangeSliderWithLabelsSection(
@@ -565,10 +605,8 @@ fun GenresListSection(
         }
     }
     Column(modifier = modifier) {
-        LazyColumn() {
-            item {
-                FilterLabel(label = sectionLabel, onTrailingIconClicked = onCloseFilterClicked)
-            }
+        FilterLabel(label = sectionLabel, onTrailingIconClicked = onCloseFilterClicked)
+        LazyColumn(modifier = Modifier.height(400.dp)) {
             items(allGenres) { genre ->
                 Row(
                     modifier = Modifier
@@ -592,14 +630,12 @@ fun GenresListSection(
                     })
                 }
             }
-            item {
-                ResetAllAndApplyFilterButtonsRow(
-                    onResetFilterClicked = { selectedGenres.removeAll(selectedGenres) },
-                    onFilterAppliedClicked = { onGenresFilterApplied(selectedGenres) }
-                )
-            }
         }
     }
+    ResetAllAndApplyFilterButtonsRow(
+        onResetFilterClicked = { selectedGenres.removeAll(selectedGenres) },
+        onFilterAppliedClicked = { onGenresFilterApplied(selectedGenres) }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -633,6 +669,7 @@ fun TitleTypeSection(
                 onClick = {
                     if (titleTypeFilterSelected != TitleType.MOVIE) {
                         titleTypeFilterSelected = TitleType.MOVIE
+                        onTitleTypeFilterApplied(TitleType.MOVIE)
                     }
                 }
             )
@@ -647,18 +684,13 @@ fun TitleTypeSection(
                 onClick = {
                     if (titleTypeFilterSelected != TitleType.TV) {
                         titleTypeFilterSelected = TitleType.TV
+                        onTitleTypeFilterApplied(TitleType.TV)
                     }
                 }
             )
         }
-        ResetAllAndApplyFilterButtonsRow(
-            onResetFilterClicked = { titleTypeFilterSelected = filterState.titleType },
-            onFilterAppliedClicked = {
-                titleTypeFilterSelected?.let{
-                    onTitleTypeFilterApplied(it)
-                }
-            }
-        )
+        /* Now showing a Reset All and Apply Filter buttons, because there's no need to add one
+        * more click and the same can be achieved just by clicking on wanted title type */
     }
 }
 @Composable
@@ -751,17 +783,43 @@ fun FilterButtonsRow(
         titleTypeFilterSelected = filterState.titleType
     }
 
-    Row(modifier = modifier.horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
-        OutlinedButton(onClick = onAllFiltersClicked, modifier = modifier.padding(end = 5.dp)) {
+    val yearsRangeSelected = remember(key1 = filterState.isYearsRangeDefault()) {
+        !filterState.isYearsRangeDefault()
+    }
+    val scoreRangeSelected = remember(key1 = filterState.isScoreRangeDefault()) {
+        !filterState.isScoreRangeDefault()
+    }
+    val genresSelected = remember(key1 = filterState.genres.isEmpty()) {
+        !filterState.genres.isEmpty()
+    }
+
+    val titleTypeSelected = remember(key1 = filterState.titleType == null) {
+        filterState.titleType != null
+    }
+
+    Row(
+        modifier = modifier.horizontalScroll(rememberScrollState()), 
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        OutlinedButton(
+            onClick = onAllFiltersClicked,
+            modifier = modifier.padding(end = 5.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp)
+        ) {
             Text(text = stringResource(id = R.string.titlelist_filter_label_all_filters))
         }
 
+        // TITLE TYPE
         if (filterState.titleType != null) {
-            OutlinedButton(
+            SelectableOutlinedButton(
                 onClick = { onIndividualFilterButtonClicked(FilterBottomSheetType.TitleType) },
-                modifier = modifier.padding(end = 5.dp)
+                modifier = modifier
+                    .padding(end = 5.dp)
+                    .animateContentSize(),
+                selected = titleTypeSelected,
+                contentPadding = PaddingValues(horizontal = 16.dp)
             ) {
-                Text(text = "Title Type")
+                Text(text = getTitleTypeFilterButtonLabel(filterState.titleType))
                 Icon(
                     imageVector = Icons.Default.ExpandMore,
                     contentDescription = stringResource(id = R.string.cd_expand_more)
@@ -769,267 +827,56 @@ fun FilterButtonsRow(
             }
         }
 
-        OutlinedButton(
-            onClick = { onIndividualFilterButtonClicked(FilterBottomSheetType.YearsRange) },
-            modifier = modifier.padding(end = 5.dp)
+        // YEARS RANGE
+        SelectableOutlinedButton(
+            onClick = {
+                onIndividualFilterButtonClicked(FilterBottomSheetType.YearsRange)
+            },
+            modifier = modifier
+                .padding(end = 5.dp)
+                .animateContentSize(),
+            selected = yearsRangeSelected,
+            contentPadding = PaddingValues(horizontal = 16.dp)
         ) {
-            Text(text = "Year")
+            Text(text = getYearsFilterButtonLabel(yearsRange = filterState.getYearsRange(), defaultRange = filterState.getDefaultYearsRange()))
             Icon(
                 imageVector = Icons.Default.ExpandMore,
                 contentDescription = stringResource(id = R.string.cd_expand_more)
             )
         }
 
-        OutlinedButton(
+        // SCORE RANGE
+        SelectableOutlinedButton(
             onClick = { onIndividualFilterButtonClicked(FilterBottomSheetType.ScoreRange) },
-            modifier = modifier.padding(end = 5.dp)
+            modifier = modifier.padding(end = 5.dp),
+            selected = scoreRangeSelected,
+            contentPadding = PaddingValues(horizontal = 16.dp)
         ) {
-            Text(text = "Score")
+            Text(text = getScoreFilterButtonLabel(
+                scoreRange = filterState.getScoreRange(),
+                defaultRange = filterState.getDefaultScoreRange()
+            ))
             Icon(
                 imageVector = Icons.Default.ExpandMore,
                 contentDescription = stringResource(id = R.string.cd_expand_more)
             )
         }
 
-        OutlinedButton(
+        // GENRES
+        SelectableOutlinedButton(
             onClick = { onIndividualFilterButtonClicked(FilterBottomSheetType.Genres) },
-            modifier = modifier.padding(end = 5.dp)
+            modifier = modifier
+                .padding(end = 5.dp)
+                .animateContentSize(),
+            selected = genresSelected,
+            contentPadding = PaddingValues(horizontal = 16.dp)
         ) {
-            Text(text = "Genres")
+            Text(text = getGenresFilterButtonLabel(genres = filterState.genres))
             Icon(
                 imageVector = Icons.Default.ExpandMore,
                 contentDescription = stringResource(id = R.string.cd_expand_more)
             )
         }
-
-
-        /* TODO: commented out quick TV/Movie filter Chip group because currently displayed lists
-        *   are only separate movies OR tv lists. Need to review this and delete / remake once
-        *   Discover / Custom Filter screen is implemented.  */
-//        Spacer(modifier = Modifier.width(15.dp))
-//        Spacer( modifier = Modifier
-//            .height(ButtonDefaults.MinHeight)
-//            .padding(vertical = 2.dp)
-//            .width(0.5.dp)
-//            .background(MaterialTheme.colorScheme.onSurfaceVariant)
-//        )
-//        Spacer(modifier = Modifier.width(10.dp))
-//        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-//            FilterChipGroup(
-//                onFilterSelected = { titleTypeFilter ->
-//                    titleTypeFilterSelected = when (titleTypeFilter) {
-//                        TitleTypeFilter.All -> null
-//                        TitleTypeFilter.Movies -> TitleType.MOVIE
-//                        TitleTypeFilter.TV -> TitleType.TV
-//                    }
-//                    onTypeFilterSelected(titleTypeFilterSelected)
-//                },
-//                horizontalArrangement = Arrangement.spacedBy(10.dp),
-//                modifier = Modifier,
-//                filter = when (titleTypeFilterSelected) {
-//                    TitleType.MOVIE -> TitleTypeFilter.Movies
-//                    TitleType.TV -> TitleTypeFilter.TV
-//                    null -> TitleTypeFilter.All
-//                },
-//            )
-//        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
-@Composable
-fun FilterSection(
-    filterState: TitleListUiFilter,
-    defaultScoreRange: ClosedFloatingPointRange<Float>,
-    defaultYearsRange: ClosedFloatingPointRange<Float>,
-    allGenres: List<Genre>,
-    onFilterApplied: (TitleListUiFilter) -> Unit,
-    onCloseClicked: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var titleTypeFilterSelected by remember { mutableStateOf(filterState.titleType) }
-    /* Changing the rememberer TitleType filter variable each time the filterState's value changes.
-    This is required when the TitleType is changed in the filter menu above the list and
-    FilterSection needs to know that so that when it's opened it can properly show the selected
-    TitleType filer. */
-    LaunchedEffect(key1 = filterState.titleType) {
-        titleTypeFilterSelected = filterState.titleType
-    }
-    var scoreRange by remember {
-        mutableStateOf(filterState.getScoreRange())
-    }
-    var yearsRange by remember {
-        mutableStateOf(filterState.getYearsRange())
-    }
-    val selectedGenres = remember {
-        mutableStateListOf<Genre>().apply {
-            addAll(filterState.genres)
-        }
-    }
-    val scoreRangeText by remember {
-        derivedStateOf {
-            "${scoreRange.start.roundToInt()} - ${scoreRange.endInclusive.roundToInt()}"
-        }
-    }
-    val yearsRangeText by remember {
-        derivedStateOf {
-            "${yearsRange.start.roundToInt()} - ${yearsRange.endInclusive.roundToInt()}"
-        }
-    }
-
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp))
-            .verticalScroll(rememberScrollState())
-    ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.Center),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = stringResource(id = R.string.titlelist_filter_label_all_filters),
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(bottom = 2.dp) //Adjustment due to low font height
-                )
-            }
-            IconButton(onClick = onCloseClicked, modifier = Modifier.align(Alignment.CenterStart)) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = stringResource(id = R.string.cd_close_filter)
-                )
-            }
-        }
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 8.dp)
-        ) {
-            FilterSectionDivider(paddingValues = PaddingValues(bottom = 5.dp))
-
-            /* TODO: Commenting out because currently lists shall not be filtered by type because
-            *   we are displaying only movies or tv lists separately. This should be remade later
-            *   once Discover / Custom Filter screen is implemented */
-//            // Type Filter
-//            FilterLabel(label = stringResource(id = R.string.titlelist_filter_label_type))
-//            FilterChipGroup(
-//                onFilterSelected = { titleTypeFilter ->
-//                    titleTypeFilterSelected = when (titleTypeFilter) {
-//                        TitleTypeFilter.All -> null
-//                        TitleTypeFilter.Movies -> TitleType.MOVIE
-//                        TitleTypeFilter.TV -> TitleType.TV
-//                    }
-//                },
-//                modifier = Modifier,
-//                filter = when (titleTypeFilterSelected) {
-//                    TitleType.MOVIE -> TitleTypeFilter.Movies
-//                    TitleType.TV -> TitleTypeFilter.TV
-//                    null -> TitleTypeFilter.All
-//                },
-//            )
-//            FilterSectionDivider()
-
-            // Score Slider
-            FilterLabel(
-                label = stringResource(id = R.string.titlelist_filter_label_score),
-                rangeText = { scoreRangeText }
-            )
-            RangeSlider(
-                value = scoreRange,
-                onValueChange = { scoreRange = it },
-                valueRange = defaultScoreRange,
-                modifier = Modifier.fillMaxWidth()
-            )
-            FilterSectionDivider()
-
-            // Years Slider
-            FilterLabel(
-                label = stringResource(id = R.string.titlelist_filter_label_release_year),
-                rangeText = { yearsRangeText }
-            )
-            RangeSlider(
-                value = yearsRange,
-                onValueChange = { yearsRange = it },
-                valueRange = defaultYearsRange,
-                modifier = Modifier.fillMaxWidth()
-            )
-            FilterSectionDivider()
-
-            // Genres Flow
-            FilterLabel(label = stringResource(id = R.string.titlelist_filter_label_genres))
-            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                FlowRow(
-                    modifier = Modifier
-                        .width(maxWidth * 2)
-                        .horizontalScroll(rememberScrollState()),
-                    maxItemsInEachRow = (allGenres.count() / 3f).roundToInt(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    allGenres.forEach { genre ->
-                        FilterChip(
-                            label = {
-                                Text(
-                                    text = genre.name,
-                                    modifier = Modifier.padding(bottom = 2.dp)
-                                )
-                            },
-                            selected = selectedGenres.contains(genre),
-                            onClick = {
-                                if (selectedGenres.contains(genre)) {
-                                    selectedGenres.remove(genre)
-                                } else {
-                                    selectedGenres.add(genre)
-                                }
-                            },
-                            modifier = Modifier
-                                .animateContentSize()
-                                .padding(horizontal = 3.dp),
-                        )
-                    }
-                }
-            }
-
-            FilterSectionDivider()
-
-            // Buttons
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                TextButton(
-                    onClick = {
-                        scoreRange = defaultScoreRange
-                        yearsRange = defaultYearsRange
-                        selectedGenres.removeAll(selectedGenres)
-                        titleTypeFilterSelected = null
-                    },
-                    modifier = Modifier.widthIn(min = 60.dp)
-                ) {
-                    Text(text = stringResource(id = R.string.titlelist_filter_button_clear_all))
-                }
-                Button(
-                    onClick = {
-                        val mFilter = TitleListUiFilter(
-                            genres = selectedGenres,
-                            scoreRange = Pair(
-                                scoreRange.start.roundToInt(),
-                                scoreRange.endInclusive.roundToInt()
-                            ),
-                            titleType = titleTypeFilterSelected,
-                            yearsRange = Pair(
-                                yearsRange.start.roundToInt(),
-                                yearsRange.endInclusive.roundToInt()
-                            )
-                        )
-                        onFilterApplied(mFilter)
-                    },
-                    modifier = Modifier.widthIn(min = 60.dp)
-                ) {
-                    Text(text = stringResource(id = R.string.titlelist_filter_button_apply))
-                }
-            }
-
-        }
-        Spacer(modifier = Modifier.height(10.dp))
     }
 }
 
@@ -1081,30 +928,6 @@ fun FilterLabel(
 }
 
 @Composable
-fun FilterLabel(
-    label: String,
-    rangeText: () -> String,
-    modifier: Modifier = Modifier,
-    labelStyle: TextStyle = MaterialTheme.typography.titleLarge,
-    paddingValues: PaddingValues = PaddingValues(0.dp)
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(paddingValues),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(text = label, style = labelStyle)
-        Spacer(modifier = Modifier.weight(1f))
-        Text(
-            text = rangeText(),
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(0.dp)
-        )
-    }
-}
-
-@Composable
 fun SliderValueBoxRow(
     fromText: String,
     toText: String,
@@ -1145,16 +968,6 @@ fun SliderValueBoxRow(
 }
 
 @Composable
-fun FilterSectionDivider(
-    modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.onSurfaceVariant,
-    thickness: Dp = Dp.Hairline,
-    paddingValues: PaddingValues = PaddingValues(vertical = 5.dp)
-) {
-    Divider(modifier = modifier.padding(paddingValues), thickness = thickness, color = color)
-}
-
-@Composable
 fun getScreenTitle(titleListType: TitleListType?): String {
     return when (titleListType) {
         TitleListType.DiscoverMovies,
@@ -1173,6 +986,70 @@ fun getScreenTitle(titleListType: TitleListType?): String {
         null -> ""
     }
 }
+
+@Composable
+fun getTitleTypeFilterButtonLabel(titleType: TitleType?): String {
+    return when (titleType) {
+        TitleType.MOVIE -> stringResource(
+            id = R.string.filter_label_title_type_selected, stringResource(
+                id = R.string.filter_movies
+            )
+        )
+        TitleType.TV -> stringResource(
+            id = R.string.filter_label_title_type_selected, stringResource(
+                id = R.string.filter_tv
+            )
+        )
+        null -> ""
+    }
+}
+
+@Composable
+fun getYearsFilterButtonLabel(
+    yearsRange: ClosedFloatingPointRange<Float>,
+    defaultRange: ClosedFloatingPointRange<Float>
+): String {
+    return if (yearsRange == defaultRange) {
+        stringResource(id = R.string.filter_label_years_unselected)
+    } else {
+        stringResource(
+            id = R.string.filter_label_years_selected,
+            yearsRange.start.roundToInt().toString(),
+            yearsRange.endInclusive.roundToInt().toString()
+        )
+    }
+}
+
+@Composable
+fun getScoreFilterButtonLabel(
+    scoreRange: ClosedFloatingPointRange<Float>,
+    defaultRange: ClosedFloatingPointRange<Float>
+): String {
+    return if (scoreRange == defaultRange) {
+        stringResource(id = R.string.filter_label_score_unselected)
+    } else {
+        stringResource(
+            id = R.string.filter_label_score_selected,
+            scoreRange.start.roundToInt().toString(),
+            scoreRange.endInclusive.roundToInt().toString()
+        )
+    }
+}
+
+@Composable
+fun getGenresFilterButtonLabel(genres: List<Genre>, ): String {
+    return if (genres.isEmpty()) {
+        stringResource(id = R.string.filter_label_genres_unselected)
+    } else {
+        pluralStringResource(
+            id = R.plurals.filter_label_genres_selected,
+            genres.size,
+            if (genres.size > 1) genres.size.toString() else genres[0].name
+        )
+    }
+}
+
+
 
 enum class FilterBottomSheetType {
     YearsRange,

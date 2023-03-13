@@ -118,6 +118,17 @@
     <string name="filter_movies">Movies</string>
     <string name="filter_tv">TV Shows</string>
 
+    <string name="filter_label_title_type_selected">Type: %s</string>
+    <string name="filter_label_years_selected">Years: %s - %s</string>
+    <string name="filter_label_years_unselected">Years</string>
+    <string name="filter_label_score_selected">Score: %s - %s</string>
+    <string name="filter_label_score_unselected">Score</string>
+    <plurals name="filter_label_genres_selected">
+        <item quantity="one">Genre: %s</item>
+        <item quantity="other">Genres: %s</item>
+    </plurals>
+    <string name="filter_label_genres_unselected">Genres</string>
+
     <!-- CONTENT DESCRIPTIONS -->
     <string name="cd_home_icon">Home</string>
     <string name="cd_discover_icon">Discover</string>

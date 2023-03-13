@@ -15,17 +15,36 @@ import java.time.LocalDate
  */
 data class TitleListUiFilter(
     val genres: List<Genre> = emptyList(),
-    val scoreRange: Pair<Int, Int> = Pair(0,10),
+    val scoreRange: Pair<Int, Int> = FilterDefaults.defaultScoreRange,
     val titleType: TitleType? = null,
-    val yearsRange: Pair<Int, Int> = Pair(1900, LocalDate.now().year),
+    val yearsRange: Pair<Int, Int> = FilterDefaults.defaultYearsRange,
     val sortByApiParam: SortByParamUi? = null
 ) {
-    fun getScoreRange(): ClosedFloatingPointRange<Float> {
-        return scoreRange.first.toFloat()..scoreRange.second.toFloat()
-    }
+    fun getScoreRange(): ClosedFloatingPointRange<Float> =
+        scoreRange.first.toFloat()..scoreRange.second.toFloat()
 
-    fun getYearsRange(): ClosedFloatingPointRange<Float> {
-        return yearsRange.first.toFloat()..yearsRange.second.toFloat()
+    fun getYearsRange(): ClosedFloatingPointRange<Float> =
+        yearsRange.first.toFloat()..yearsRange.second.toFloat()
+
+    fun getDefaultScoreRange(): ClosedFloatingPointRange<Float> =
+        FilterDefaults.defaultScoreRange.first.toFloat()..FilterDefaults.defaultScoreRange.second.toFloat()
+
+    fun getDefaultYearsRange(): ClosedFloatingPointRange<Float> =
+        FilterDefaults.defaultYearsRange.first.toFloat()..FilterDefaults.defaultYearsRange.second.toFloat()
+
+    /**
+     * @return true if currently set [scoreRange] is the default range
+     */
+    fun isScoreRangeDefault(): Boolean = getScoreRange() == getDefaultScoreRange()
+
+    /**
+     * @return true if currently set [yearsRange] is the default range
+     */
+    fun isYearsRangeDefault(): Boolean = getYearsRange() == getDefaultYearsRange()
+
+    private object FilterDefaults {
+        val defaultScoreRange = Pair(0,10)
+        val defaultYearsRange = Pair(1900, LocalDate.now().year)
     }
 }
 
